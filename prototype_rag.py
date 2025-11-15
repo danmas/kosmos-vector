@@ -128,29 +128,25 @@ class EmbedRetriever:
                 full_sims[i] = sims[existing_ids.index(iid)]
         return full_sims
 
-# Функции (build_graph FIXED: хардкод + auto для L1)
+# Функции (build_graph FIXED: только auto, хардкод закомментирован)
 def build_graph(ai_items: List[AIItem], calls_dict: Dict[str, List[str]]) -> DiGraph:
     G = DiGraph()
     for item in ai_items:
         G.add_node(item.id, type=item.type, weight=item.contract.get('weight', 1.0))
-    # Хардкод релевантных edges (для демонстрации L1)
-    hardcode_edges = [
-        ('AIItem', 'AIItem.__init__', {'type': 'contains', 'weight': 1.0}),
-        ('AIItem.__init__', 'AIItem.generate_l2', {'type': 'calls', 'weight': 0.95}),
-        ('EmbedRetriever', 'EmbedRetriever._generate_if_needed', {'type': 'contains', 'weight': 1.0}),
-        ('EmbedRetriever._generate_if_needed', 'EmbedRetriever._encode', {'type': 'calls', 'weight': 0.95}),
-        ('retrieve_ai_items', 'EmbedRetriever.get_similarities', {'type': 'uses', 'weight': 0.9}),
-        ('build_rag', 'AIItem.generate_l2', {'type': 'calls', 'weight': 0.95}),
-        ('parse_self_to_ai_items', 'ImprovedCodeParser.visit_Call', {'type': 'calls', 'weight': 0.95}),
-        ('ImprovedCodeParser.visit_Call', 'ast.NodeVisitor.generic_visit', {'type': 'calls', 'weight': 0.9}),
-    ]
-    # Auto-edges из calls_dict
+    # Хардкод закомментирован для теста auto
+    # hardcode_edges = [
+    #     ('AIItem', 'AIItem.__init__', {'type': 'contains', 'weight': 1.0}),
+    #     # ... other hardcode
+    # ]
+    # G.add_edges_from(hardcode_edges)
+    
+    # Только auto-edges из calls_dict
     for caller, called_list in calls_dict.items():
         for called in called_list:
-            called_id = f"{caller.split('.')[0]}.{called}" if caller.split('.') and called.startswith('_') else called
+            called_id = called.split(' (')[0]  # Clean (assign/import)
             if called_id in [i.id for i in ai_items]:
-                hardcode_edges.append((caller, called_id, {'type': 'calls', 'weight': 0.95}))
-    G.add_edges_from(hardcode_edges)
+                edge_type = 'calls' if not ' (' in called else called.split(' (')[1].rstrip(')')
+                G.add_edge(caller, called_id, type=edge_type, weight=0.95)
     for item in ai_items:
         neighbors = list(G.successors(item.id)) + list(G.predecessors(item.id))
         item.l1_edges = [{'to': n, 'type': G[item.id][n].get('type', 'unknown') if n in G.successors(item.id) else G[n][item.id].get('type', 'unknown')} for n in set(neighbors)]
@@ -197,7 +193,7 @@ def retrieve_ai_items(query: str, G: DiGraph, ai_items: Dict[str, AIItem], retri
             matched.append(ai_items[n])
     return list(set(matched))[:top_k]
 
-# FIXED Self-indexing: ImprovedCodeParser с full ID и фильтром built-ins
+# UGLUBLENNY Self-indexing: Добавлен visit_Import и visit_Assign
 def parse_self_to_ai_items() -> tuple[Dict[str, AIItem], Dict[str, List[str]]]:
     with open(__file__, 'r', encoding='utf-8-sig') as f:
         code = f.read()
@@ -209,13 +205,21 @@ def parse_self_to_ai_items() -> tuple[Dict[str, AIItem], Dict[str, List[str]]]:
             self.current_class = None
             self.current_func = None
             self.calls_dict = {}
-            self.built_ins = ['print', 'len', 'str', 'list', 'dict', 'np', 'json', 'pickle', 'open', 'np.random', 'ast.parse']  # Фильтр
+            self.assigns_dict = {}  # FIXED: Инициализация
+            self.imports_dict = {}  # FIXED: Инициализация
+            self.built_ins = ['print', 'len', 'str', 'list', 'dict', 'np', 'json', 'pickle', 'open', 'np.random', 'ast.parse', 'cosine_similarity', 'np.stack', 'torch', 'sklearn', 'networkx', 'SentenceTransformer']
 
         def visit_ClassDef(self, node):
             self.current_class = node.name
             self.calls_dict[self.current_class] = []
+            self.assigns_dict[self.current_class] = []
+            self.imports_dict[self.current_class] = []
             snippet = ""
             if node.body:
+                # Углубление: Добавляем 'contains' edges к методам класса
+                method_ids = [stmt.name for stmt in node.body if isinstance(stmt, ast.FunctionDef)]
+                for m in method_ids:
+                    self.calls_dict[self.current_class].append(f"{self.current_class}.{m} (contains)")
                 snippet_lines = [ast.unparse(stmt) for stmt in node.body[:2] if not isinstance(stmt, ast.FunctionDef)]
                 snippet = "; ".join(snippet_lines)
             purpose = f"Класс {node.name} в прототипе RAG-системы."
@@ -258,6 +262,8 @@ def parse_self_to_ai_items() -> tuple[Dict[str, AIItem], Dict[str, List[str]]]:
             })
             caller_id = item_id
             self.calls_dict[caller_id] = []
+            self.assigns_dict[caller_id] = []
+            self.imports_dict[caller_id] = []
             self.generic_visit(node)
             self.current_func = None
 
@@ -270,9 +276,42 @@ def parse_self_to_ai_items() -> tuple[Dict[str, AIItem], Dict[str, List[str]]]:
                 called = node.func.id
             if called and self.current_func is not None:
                 caller_id = f"{self.current_class}.{self.current_func}" if self.current_class and self.current_func else self.current_func or 'global'
-                called_id = f"{self.current_class}.{called}" if self.current_class else called  # FIXED: Full ID for self.calls
-                if called_id not in self.built_ins and called_id not in self.calls_dict.get(caller_id, []):  # FIXED: Фильтр built-ins
+                called_id = f"{self.current_class}.{called}" if self.current_class else called
+                if called_id not in self.built_ins and called_id not in self.calls_dict.get(caller_id, []):
                     self.calls_dict[caller_id] = self.calls_dict.get(caller_id, []) + [called_id]
+            self.generic_visit(node)
+
+        def visit_Assign(self, node):
+            if self.current_func:
+                caller_id = f"{self.current_class}.{self.current_func}" if self.current_class and self.current_func else self.current_func or 'global'
+                if isinstance(node.value, ast.Call):
+                    called = node.value.func.id if isinstance(node.value.func, ast.Name) else node.value.func.attr if isinstance(node.value.func, ast.Attribute) else None
+                    if called and called not in self.built_ins:
+                        called_id = f"{self.current_class}.{called}" if self.current_class else called
+                        if called_id not in self.assigns_dict.get(caller_id, []):
+                            self.assigns_dict[caller_id] = self.assigns_dict.get(caller_id, []) + [called_id]
+            self.generic_visit(node)
+
+        def visit_Import(self, node):
+            if self.current_func or self.current_class:
+                caller_id = f"{self.current_class}.{self.current_func}" if self.current_class and self.current_func else self.current_class or 'global'
+                for alias in node.names:
+                    lib = alias.name.split('.')[0]
+                    if lib not in self.built_ins:
+                        lib_id = f"lib.{lib}"
+                        if lib_id not in self.imports_dict.get(caller_id, []):
+                            self.imports_dict[caller_id] = self.imports_dict.get(caller_id, []) + [lib_id]
+            self.generic_visit(node)
+
+        def visit_ImportFrom(self, node):
+            if self.current_func or self.current_class:
+                caller_id = f"{self.current_class}.{self.current_func}" if self.current_class and self.current_func else self.current_class or 'global'
+                lib = node.module.split('.')[0]
+                for alias in node.names:
+                    imported = alias.name
+                    lib_id = f"lib.{lib}.{imported}"
+                    if lib_id not in self.built_ins and lib_id not in self.imports_dict.get(caller_id, []):
+                        self.imports_dict[caller_id] = self.imports_dict.get(caller_id, []) + [lib_id]
             self.generic_visit(node)
 
     parser = ImprovedCodeParser()
@@ -281,7 +320,14 @@ def parse_self_to_ai_items() -> tuple[Dict[str, AIItem], Dict[str, List[str]]]:
     ai_items = {}
     for item_data in parser.items:
         ai_items[item_data["id"]] = AIItem(**item_data)
+    
+    # Объединяем calls + assigns + imports в calls_dict для L1
     calls_dict = parser.calls_dict
+    for k, v in parser.assigns_dict.items():
+        calls_dict.setdefault(k, []).extend([f"{x} (assign)" for x in v])
+    for k, v in parser.imports_dict.items():
+        calls_dict.setdefault(k, []).extend([f"{x} (import)" for x in v])
+    
     print(f"Parsed calls example: {list(calls_dict.items())[:3]}")  # Debug
     return ai_items, calls_dict
 
