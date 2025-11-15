@@ -194,7 +194,7 @@ def retrieve_ai_items(query: str, G: DiGraph, ai_items: Dict[str, AIItem], retri
     return list(set(matched))[:top_k]
 
 # UGLUBLENNY Self-indexing: Добавлен visit_Import и visit_Assign
-def parse_self_to_ai_items() -> tuple[Dict[str, AIItem], Dict[str, List[str]]]:
+def parse_self_to_ai_items(auto_l1: bool = True, llm_l1: bool = False, api_url: str = 'http://usa:3002/api/send-request') -> tuple[Dict[str, AIItem], Dict[str, List[str]]]:
     with open(__file__, 'r', encoding='utf-8-sig') as f:
         code = f.read()
     tree = ast.parse(code)
@@ -331,6 +331,6 @@ def parse_self_to_ai_items() -> tuple[Dict[str, AIItem], Dict[str, List[str]]]:
     print(f"Parsed calls example: {list(calls_dict.items())[:3]}")  # Debug
     return ai_items, calls_dict
 
-# Глобальная база
-ai_items_data, calls_dict = parse_self_to_ai_items()
-print(f"Self-indexed: {len(ai_items_data)} AI_ITEM из прототипа.")
+# Глобальная база (убрана, теперь lazy в CLI)
+# ai_items_data, calls_dict = parse_self_to_ai_items()
+# print(f"Self-indexed: {len(ai_items_data)} AI_ITEM из прототипа.")
