@@ -5,8 +5,17 @@ import json  # FIXED: Для json.loads
 import time  # Для sleep
 from typing import Dict, List, Any
 from prototype_rag import (
-    parse_self_to_ai_items, build_graph, choose_levels, build_rag, retrieve_ai_items, EmbedRetriever, AIItem
+    parse_self_to_ai_items,
+    build_graph,
+    choose_levels,
+    build_rag,
+    retrieve_ai_items,
+    EmbedRetriever,
+    AIItem,
+    L2Generator,
 )
+from l1_cache_utils import load_l1_cache, save_l1_cache, merge_l1_cache, stat_l1_cache
+from l2_cache_utils import load_l2_cache, save_l2_cache, merge_l2_cache, stat_l2_cache
 
 def polish_l1_with_llm(item: AIItem, raw_edges: List[str], api_url: str, model: str, max_retries: int = 3, dry_run: bool = False) -> List[Dict[str, Any]]:
     """LLM-polish: Генерирует аннотированные edges с retry."""
@@ -61,17 +70,106 @@ def polish_l1_with_llm(item: AIItem, raw_edges: List[str], api_url: str, model: 
     else:
         return [{'to': 'self', 'type': 'unknown', 'reason': 'LLM failed, no raw edges'}]
 
-def cli_chat(pickle_path: str = 'ai_embeddings.pkl', clean: bool = False, no_auto_l1: bool = False, llm_l1: bool = False, api_url: str = 'http://usa:3002/api/send-request', model: str = 'FAST', dry_run: bool = False):
+def cli_chat(
+    pickle_path: str = 'ai_embeddings.pkl',
+    clean: bool = False,
+    no_auto_l1: bool = False,
+    llm_l1: bool = False,
+    api_url: str = 'http://usa:3002/api/send-request',
+    model: str = 'FAST',
+    dry_run: bool = False,
+    llm_l2: bool = False,
+    l2_batch_size: int = 5,
+    load_l1_cache_flag: bool = False,
+    l1_stat_flag: bool = False,
+    load_l2_cache_flag: bool = False,
+    l2_stat_flag: bool = False,
+):
     if clean:
+        # Очистка pickle
         if os.path.exists(pickle_path):
             os.remove(pickle_path)
             print(f"Pickle cleared: {pickle_path}")
         else:
             print(f"Pickle not found: {pickle_path} (nothing to clear)")
+        
+        # Очистка L1 кэша
+        from l1_cache_utils import L1_CACHE_FILE
+        if os.path.exists(L1_CACHE_FILE):
+            os.remove(L1_CACHE_FILE)
+            print(f"L1 cache cleared: {L1_CACHE_FILE}")
+        else:
+            print(f"L1 cache not found: {L1_CACHE_FILE} (nothing to clear)")
+        
+        # Очистка L2 кэша
+        from l2_cache_utils import L2_CACHE_FILE
+        if os.path.exists(L2_CACHE_FILE):
+            os.remove(L2_CACHE_FILE)
+            print(f"L2 cache cleared: {L2_CACHE_FILE}")
+        else:
+            print(f"L2 cache not found: {L2_CACHE_FILE} (nothing to clear)")
     
     # Lazy parse с флагами
     auto_l1 = not no_auto_l1  # FIXED: Default True, --no-auto-l1 отключает
     ai_items_data, raw_calls_dict = parse_self_to_ai_items(auto_l1=auto_l1)
+    
+    # Загрузка L1 кэша
+    if load_l1_cache_flag:
+        l1_cache = load_l1_cache()
+        for item_id, item in ai_items_data.items():
+            if item_id in l1_cache:
+                cache_entry = l1_cache[item_id]
+                item.l1_edges = json.loads(cache_entry['l1_edges'])
+                print(f"Loaded L1 for {item_id} from cache (source: {cache_entry.get('source', 'unknown')})")
+    
+    # Загрузка L2 кэша
+    l2_cache = {}
+    l2_cache_loaded_ids = set()  # Отслеживаем загруженные из кэша
+    if load_l2_cache_flag:
+        l2_cache = load_l2_cache()
+        for item_id, item in ai_items_data.items():
+            if item_id in l2_cache:
+                cache_entry = l2_cache[item_id]
+                item.l2 = json.loads(cache_entry['l2'])
+                l2_cache_loaded_ids.add(item_id)
+                print(f"Loaded L2 for {item_id} from cache (source: {cache_entry.get('source', 'unknown')})")
+    
+    # Создаем generator для LLM или fallback
+    # Если llm_l2=False, создаем generator с dry_run=True для fallback генерации
+    # Generator нужен всегда, чтобы L2 генерировался через fallback, если не указан --llm-l2
+    # dry_run=True если: не указан --llm-l2 (fallback) ИЛИ указан --dry-run (тест)
+    generator_dry_run = (not llm_l2) or dry_run
+    generator = L2Generator(api_url=api_url, model=model, dry_run=generator_dry_run)
+    l2_llm_generated_ids = set()  # Отслеживаем сгенерированные LLM
+
+    if llm_l2:
+        print("Generating L2 with LLM...")
+        # Генерируем только для тех, у кого нет L2
+        items_to_generate = [item for item in ai_items_data.values() if item.l2 is None]
+        if items_to_generate:
+            generator.generate_l2_batch(items_to_generate, batch_size=l2_batch_size)
+            
+            # Сохранение L2 кэша после LLM генерации
+            l2_cache_new = {}
+            for item in items_to_generate:
+                if item.l2:
+                    l2_llm_generated_ids.add(item.id)
+                    # source = "LLM" только если llm_l2=True и не dry_run, иначе "Fallback"
+                    source = "LLM" if (llm_l2 and not dry_run) else "Fallback"
+                    l2_cache_new[item.id] = {
+                        "l2": json.dumps(item.l2, ensure_ascii=False),
+                        "type": item.type,
+                        "file_path": __file__,
+                        "source": source,
+                        "timestamp": time.time()
+                    }
+            if l2_cache_new:
+                merge_l2_cache(l2_cache_new)
+                print("L2 cache updated.")
+            print(f"L2 stats: {stat_l2_cache()}")
+        else:
+            print("All L2 already loaded from cache.")
+        print("L2 done.")
     
     if llm_l1:
         print("Applying LLM polish to L1...")
@@ -82,15 +180,108 @@ def cli_chat(pickle_path: str = 'ai_embeddings.pkl', clean: bool = False, no_aut
             item.l1_edges = polished_edges  # Override raw
             time.sleep(1)  # FIXED: Anti-overload sleep 1s between calls
         print("LLM L1 polish done.")
+        
+        # Сохранение L1 кэша после LLM polish
+        l1_cache_new = {}
+        for item_id, item in ai_items_data.items():
+            if item.l1_edges:
+                l1_cache_new[item_id] = {
+                    "l1_edges": json.dumps(item.l1_edges, ensure_ascii=False),
+                    "type": item.type,
+                    "file_path": __file__,
+                    "source": "LLM",
+                    "timestamp": time.time()
+                }
+        if l1_cache_new:
+            merge_l1_cache(l1_cache_new)
+            print("L1 cache updated.")
+        print(f"L1 stats: {stat_l1_cache()}")
     
     retriever = EmbedRetriever(dim=384, pickle_path=pickle_path)
-    retriever.add_items(ai_items_data)
+    
+    # Проверяем, нужно ли генерировать L2 через fallback
+    items_without_l2 = [item for item in ai_items_data.values() if item.l2 is None]
+    if items_without_l2 and not llm_l2:
+        print(f"Generating L2 with Fallback for {len(items_without_l2)} items...")
+    elif items_without_l2 and llm_l2:
+        print(f"L2 will be generated with LLM for {len(items_without_l2)} items...")
+    
+    retriever.add_items(ai_items_data, generator=generator, l2_batch_size=l2_batch_size)
+    
+    # Сохранение L2 кэша для fallback (если есть items без L2, сгенерированные через fallback)
+    # Это происходит когда EmbedRetriever.add_items вызывает generate_l2 с fallback
+    # Сохраняем только те, которые не были загружены из кэша и не были сгенерированы LLM
+    l2_cache_fallback = {}
+    fallback_count = 0
+    for item_id, item in ai_items_data.items():
+        if item.l2 and item_id not in l2_cache_loaded_ids and item_id not in l2_llm_generated_ids:
+            # Новый L2, не из кэша и не сгенерированный LLM - значит fallback
+            fallback_count += 1
+            l2_cache_fallback[item_id] = {
+                "l2": json.dumps(item.l2, ensure_ascii=False),
+                "type": item.type,
+                "file_path": __file__,
+                "source": "Fallback",
+                "timestamp": time.time()
+            }
+    if l2_cache_fallback:
+        merge_l2_cache(l2_cache_fallback)
+        print(f"L2 cache updated (fallback): {fallback_count} items.")
+    elif fallback_count > 0:
+        print(f"L2 generated with Fallback: {fallback_count} items.")
     G = build_graph(list(ai_items_data.values()), raw_calls_dict if not llm_l1 else {k: [] for k in ai_items_data})  # If LLM, G from polished
+    
+    # Сохранение L1 кэша после auto_l1 (build_graph)
+    if auto_l1 and not llm_l1:
+        l1_cache_new = {}
+        for item_id, item in ai_items_data.items():
+            if item.l1_edges:
+                l1_cache_new[item_id] = {
+                    "l1_edges": json.dumps(item.l1_edges, ensure_ascii=False),
+                    "type": item.type,
+                    "file_path": __file__,
+                    "source": "AST",
+                    "timestamp": time.time()
+                }
+        if l1_cache_new:
+            merge_l1_cache(l1_cache_new)
+            print("L1 cache updated (AST).")
+    
     ai_index = ai_items_data
+    
+    # Вывод статистики L1 кэша
+    if l1_stat_flag:
+        print(f"L1 stats: {stat_l1_cache()}")
+    
+    # Вывод статистики L2 кэша
+    if l2_stat_flag:
+        print(f"L2 stats: {stat_l2_cache()}")
     
     print("=== RAG Chat по прототипу RAG-системы ===")
     print(f"Pickle path: {pickle_path}")
     print(f"Auto L1: {auto_l1}, LLM L1: {llm_l1}, Dry run: {dry_run}")
+    
+    # Подсчитываем статистику L2
+    l2_llm_count = len(l2_llm_generated_ids)
+    l2_cache_count = len(l2_cache_loaded_ids)
+    l2_fallback_count = len([item for item in ai_items_data.values() if item.l2 and item.id not in l2_cache_loaded_ids and item.id not in l2_llm_generated_ids])
+    l2_total = len([item for item in ai_items_data.values() if item.l2])
+    
+    l2_info = []
+    if l2_cache_count > 0:
+        l2_info.append(f"cache: {l2_cache_count}")
+    if l2_llm_count > 0:
+        l2_info.append(f"LLM: {l2_llm_count}")
+    if l2_fallback_count > 0:
+        l2_info.append(f"Fallback: {l2_fallback_count}")
+    
+    l2_status = f"L2: {l2_total}/{len(ai_items_data)} items"
+    if l2_info:
+        l2_status += f" ({', '.join(l2_info)})"
+    else:
+        l2_status += " (none generated)"
+    
+    print(f"L2: {l2_status}")
     print("Задавай вопросы по коду (e.g., 'Как работает AIItem?', 'связи AIItem'). Выход: 'exit'")
     
     while True:
@@ -105,7 +296,7 @@ def cli_chat(pickle_path: str = 'ai_embeddings.pkl', clean: bool = False, no_aut
         
         retrieved = retrieve_ai_items(query, G, ai_index, retriever)
         levels = choose_levels(query)
-        rag = build_rag(retrieved, levels)
+        rag = build_rag(retrieved, levels, generator=generator)
         
         prompt = f"""Ты эксперт по прототипу RAG-системы. Ответь на вопрос на русском, кратко, опираясь только на RAG. Если не покрыто — "Информация не найдена".
 
@@ -131,6 +322,12 @@ if __name__ == "__main__":
     parser.add_argument('--api-url', type=str, default='http://usa:3002/api/send-request', help='API URL for LLM L1 (default your server)')
     parser.add_argument('--model', type=str, default='FAST', help='Model for LLM L1 (default FAST)')
     parser.add_argument('--dry-run', action='store_true', help='Mock LLM for testing (default False)')  # FIXED: Added to parser
+    parser.add_argument('--llm-l2', action='store_true', help='Use LLM for L2 generation')
+    parser.add_argument('--l2-batch-size', type=int, default=5, help='Batch size for L2 generation (default 5)')
+    parser.add_argument('--load-l1-cache', action='store_true', help='Load L1 from cache')
+    parser.add_argument('--l1-stat', action='store_true', help='Print L1 cache stats')
+    parser.add_argument('--load-l2-cache', action='store_true', help='Load L2 from cache')
+    parser.add_argument('--l2-stat', action='store_true', help='Print L2 cache stats')
     args = parser.parse_args()
     cli_chat(
         args.custom_pickle,
@@ -140,4 +337,10 @@ if __name__ == "__main__":
         args.api_url,
         args.model,
         args.dry_run,
+        args.llm_l2,
+        args.l2_batch_size,
+        args.load_l1_cache,
+        args.l1_stat,
+        args.load_l2_cache,
+        args.l2_stat,
     )
