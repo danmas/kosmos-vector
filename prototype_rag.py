@@ -103,56 +103,57 @@ class L2Generator:
         for i in range(0, len(items), batch_size):
             batch = items[i:i + batch_size]
             for item in batch:
-                if item.l2 is None:
-                    item.l2 = self.generate_l2(item)
-                    time.sleep(1)
+                item.l2 = self.generate_l2(item)
+                time.sleep(1)  # Anti-overload
         return items
 
     def _build_prompt(self, item: AIItem) -> str:
-        args = item.contract.get('args', [])
-        args_str = ', '.join(args) if args else 'N/A'
+        args_str = ', '.join(item.contract.get('args', [])) if 'args' in item.contract else 'N/A'
         docstring = item.contract.get('docstring', 'No docstring')
-        calls = item.l1_edges if item.l1_edges else item.contract.get('uses', [])
-        snippet = item.l0_snippet[:300]
+        calls = item.l1_edges if item.l1_edges else item.contract.get('uses', [])  # Fallback на uses
 
         function_info = f"""
 ID: {item.id}
 Type: {item.type}
 Args: {args_str}
 Docstring: {docstring}
-L0 Code: {snippet}...
+L0 Code: {item.l0_snippet[:300]}...  # Snippet для контекста
 L1 Calls/Edges: {calls}
 """
-        prompt = (
-            "Проанализируй код и сгенерируй L2 в JSON:\n"
-            "- purpose: основная цель (1-2 предложения)\n"
-            "- uses: список (2-4) примеров использования/зависимостей\n"
-            "- returns: что возвращает (или 'None')\n"
-            "- edge_cases: 1-2 особенности/ошибки\n\n"
-            f"{function_info}\nВыводи ТОЛЬКО JSON."
-        )
+        prompt = f"""Проанализируй код и сгенерируй L2 в JSON:
+- purpose: основная цель (1-2 предложения)
+- uses: список (2-4) примеров использования/зависимостей
+- returns: что возвращает (или 'None')
+- edge_cases: 1-2 особенности/ошибки
+
+
+
+{function_info}
+
+Выводи ТОЛЬКО JSON."""
         return prompt
 
     def _fallback_l2(self, item: AIItem) -> Dict[str, Any]:
+        """Fallback: auto + docstring + snippet + edges для плотности."""
         contract = item.contract
         purpose = contract.get('purpose', f"{item.type.capitalize()} {item.id}")
         docstring = contract.get('docstring', 'No docstring')
         args = contract.get('args', [])
         uses = contract.get('uses', ['N/A'])
         returns = contract.get('returns', 'N/A')
-        
+
         # Snippet parse: extract key phrases
         snippet = item.l0_snippet.lower()
         init_hint = "init" if "def __init__" in snippet else ""
-        calls_hint = ', '.join([e['to'] for e in (item.l1_edges or [])[:2]]) or 'N/A'
+        calls_hint = ', '.join([e['to'] for e in (item.l1_edges or [])[:2]]) if item.l1_edges else 'N/A'
         edge_hint = "handles conditions" if any(word in snippet for word in ['if', 'try', 'except']) else "N/A"
-        
+
         # Enrich purpose
         purpose += f" (Doc: {docstring[:50]}...)" if docstring != 'No docstring' else ""
         if args:
             purpose += f" Args: {', '.join(args)}"
         purpose += f". Snippet: {item.l0_snippet[:80]}... Calls: {calls_hint}."
-        
+
         return {
             'purpose': purpose,
             'uses': uses if uses != ['N/A'] else [f"Called by {calls_hint}" if calls_hint != 'N/A' else 'In RAG pipeline'],
@@ -160,7 +161,7 @@ L1 Calls/Edges: {calls}
             'edge_cases': edge_hint
         }
 
-# EmbedRetriever (без изменений)
+# EmbedRetriever (улучшенный с FAISS fallback, но сначала retrieval boosts)
 class EmbedRetriever:
     def __init__(self, dim: int = 384, model_name: str = 'intfloat/e5-small-v2', pickle_path: str = 'ai_embeddings.pkl'):
         self.dim = dim
@@ -172,12 +173,7 @@ class EmbedRetriever:
         self.loaded = False
         self._try_load()
 
-    def add_items(
-        self,
-        ai_items: Dict[str, AIItem],
-        generator: Optional[L2Generator] = None,
-        l2_batch_size: int = 5
-    ):
+    def add_items(self, ai_items: Dict[str, AIItem]):
         old_len = len(self.embeddings_dict)
         for iid, item in ai_items.items():
             self.texts[iid] = item.contract['purpose']
@@ -192,10 +188,6 @@ class EmbedRetriever:
             print("Updated and saved.")
         elif not self.loaded:
             self._generate_if_needed()
-        if generator:
-            pending = [ai_items[iid] for iid in ai_items if ai_items[iid].l2 is None]
-            if pending:
-                generator.generate_l2_batch(pending, batch_size=l2_batch_size)
 
     def _try_load(self):
         try:
@@ -227,120 +219,94 @@ class EmbedRetriever:
         if REAL_MODEL and self.model is None:
             self.model = SentenceTransformer(self.model_name)
             print(f"Loaded model: {self.model_name}")
-        if REAL_MODEL and self.model:
-            prefixed_texts = ["passage: " + t for t in texts]
-            return self.model.encode(prefixed_texts)
+        if REAL_MODEL:
+            return self.model.encode(texts)
         else:
-            np.random.seed(42)
-            return np.random.normal(0, 1, (len(texts), self.dim)).astype(np.float32)
+            # Mock
+            print(f"Mock encoding {len(texts)} texts with model {self.model_name}")
+            vectors = []
+            for text in texts:
+                text_hash = hash(text) % 10000
+                np.random.seed(text_hash)
+                vector = np.random.normal(0, 1, self.dim)
+                vector = vector / np.linalg.norm(vector)
+                vectors.append(vector)
+            return np.array(vectors)
 
     def _save_pickle(self):
         data = {
-            'ids': list(self.embeddings_dict.keys()),
+            'ids': list(self.texts.keys()),
             'texts': self.texts,
-            'embeddings': np.stack([vec for vec in self.embeddings_dict.values()])
+            'embeddings': [emb.tolist() for emb in self.embeddings_dict.values()]
         }
         with open(self.pickle_path, 'wb') as f:
             pickle.dump(data, f)
 
     def encode_query(self, query: str) -> np.ndarray:
+        global REAL_MODEL
+        if REAL_MODEL and self.model is None:
+            self.model = SentenceTransformer(self.model_name)
+            print(f"Loaded model: {self.model_name}")
         if REAL_MODEL and self.model:
-            return self.model.encode(["query: " + query])[0]
+            return self.model.encode([f"query: {query}"])
         else:
             np.random.seed(42)
-            return np.random.normal(0, 1, self.dim).astype(np.float32)
+            return np.random.normal(0, 1, self.dim).reshape(1, -1) / np.linalg.norm(np.random.normal(0, 1, self.dim))
 
-    def get_similarities(self, query_emb: np.ndarray, item_ids: List[str]) -> np.ndarray:
-        existing_ids = [iid for iid in item_ids if iid in self.embeddings_dict]
-        if not existing_ids:
-            return np.zeros(len(item_ids))
-        vecs = np.stack([self.embeddings_dict[iid] for iid in existing_ids])
-        sims = cosine_similarity(query_emb.reshape(1, -1), vecs).flatten()
-        full_sims = np.zeros(len(item_ids))
-        for i, iid in enumerate(item_ids):
-            if iid in existing_ids:
-                full_sims[i] = sims[existing_ids.index(iid)]
-        return full_sims
+    def get_similarities(self, query_embedding: np.ndarray, ai_items: Dict[str, AIItem], top_k: int = 3) -> List[AIItem]:
+        similarities = []
+        for iid, item in ai_items.items():
+            if iid in self.embeddings_dict:
+                item_emb = self.embeddings_dict[iid]
+                sim = cosine_similarity(query_embedding, item_emb.reshape(1, -1))[0][0]
+                similarities.append((sim, iid))
+        similarities.sort(reverse=True)
+        return [ai_items[iid] for _, iid in similarities[:top_k]]
 
-# Функции (build_graph FIXED: только auto, хардкод закомментирован)
-def build_graph(ai_items: List[AIItem], calls_dict: Dict[str, List[str]], save_cache: bool = False) -> DiGraph:
+# Остальные функции (build_graph, choose_levels, build_rag) без изменений
+def build_graph(ai_items_list: List[AIItem], calls_dict: Dict[str, List[str]]) -> DiGraph:
     G = DiGraph()
-    for item in ai_items:
-        G.add_node(item.id, type=item.type, weight=item.contract.get('weight', 1.0))
-    # Хардкод закомментирован для теста auto
-    # hardcode_edges = [
-    #     ('AIItem', 'AIItem.__init__', {'type': 'contains', 'weight': 1.0}),
-    #     # ... other hardcode
-    # ]
-    # G.add_edges_from(hardcode_edges)
-    
-    # Только auto-edges из calls_dict
-    for caller, called_list in calls_dict.items():
-        for called in called_list:
-            called_id = called.split(' (')[0]  # Clean (assign/import)
-            if called_id in [i.id for i in ai_items]:
-                edge_type = 'calls' if not ' (' in called else called.split(' (')[1].rstrip(')')
-                G.add_edge(caller, called_id, type=edge_type, weight=0.95)
-    for item in ai_items:
-        neighbors = list(G.successors(item.id)) + list(G.predecessors(item.id))
-        item.l1_edges = [{'to': n, 'type': G[item.id][n].get('type', 'unknown') if n in G.successors(item.id) else G[n][item.id].get('type', 'unknown')} for n in set(neighbors)]
-    
-    # Опциональное сохранение кэша (source="AST")
-    if save_cache:
-        try:
-            from l1_cache_utils import merge_l1_cache
-            l1_cache_new = {}
-            for item in ai_items:
-                if item.l1_edges:
-                    l1_cache_new[item.id] = {
-                        "l1_edges": json.dumps(item.l1_edges, ensure_ascii=False),
-                        "type": item.type,
-                        "file_path": __file__,
-                        "source": "AST",
-                        "timestamp": time.time()
-                    }
-            if l1_cache_new:
-                merge_l1_cache(l1_cache_new)
-        except ImportError:
-            pass  # l1_cache_utils может быть недоступен
-    
+    for item in ai_items_list:
+        G.add_node(item.id, type=item.type, l2=item.l2, weight=item.contract.get('weight', 1.0))
+    for caller, targets in calls_dict.items():
+        for target in targets:
+            edge_type = 'unknown'
+            if '(contains)' in target:
+                edge_type = 'contains'
+            elif '(assign)' in target:
+                edge_type = 'assign'
+            elif '(import)' in target:
+                edge_type = 'import'
+            else:
+                edge_type = 'calls'
+            clean_target = target.split(' ')[0]
+            if clean_target in G.nodes:
+                G.add_edge(caller, clean_target, type=edge_type, weight=0.95)
     return G
 
 def choose_levels(query: str) -> Dict[str, bool]:
     query_lower = query.lower()
-    return {
-        'L0': 'код' in query_lower or 'debug' in query_lower,
-        'L1': 'связи' in query_lower,
-        'L2': True
-    }
+    levels = {'L0': False, 'L1': False, 'L2': True}  # L2 always
+    if any(word in query_lower for word in ['код', 'snippet', 'debug']):
+        levels['L0'] = True
+    if any(word in query_lower for word in ['связи', 'edges', 'graph', 'depends']):
+        levels['L1'] = True
+    return levels
 
-# def build_rag(retrieved: List[AIItem], levels: Dict[str, bool], generator: Optional[L2Generator] = None) -> str:
-    rag = []
-    for item in retrieved:
-        if levels['L2']:
-            item.generate_l2(generator)
-            l2_json = json.dumps(item.l2, ensure_ascii=False, separators=(', ', ': '))
-            rag.append(f"[L2: {item.id}] {l2_json}")
-        if levels['L1']:
-            l1_json = json.dumps(item.l1_edges, ensure_ascii=False, separators=(', ', ': '))
-            rag.append(f"[L1: {item.id}] Edges: {l1_json}")
-        if levels['L0']:
-            rag.append(f"[L0: {item.id}] {item.l0_snippet[:100]}...")
-    return '\n'.join(rag)
-def build_rag(retrieved: List[AIItem], levels: Dict[str, bool], generator: L2Generator = None) -> str:
+def build_rag(retrieved: List[AIItem], levels: Dict[str, bool], generator: Optional[L2Generator] = None) -> str:
     rag_parts = []
     for item in retrieved:
-        # Lazy L2 gen с generator если передан
+        # Lazy L2 gen
         if not item.l2 and generator:
             item.generate_l2(generator)
         elif not item.l2:
-            item.generate_l2()  # Fallback auto
-        
-        # Header: ID + type для контекста
+            item.generate_l2()
+
+        # Header
         rag_parts.append(f"\n=== {item.id} ({item.type}) ===")
-        
-        # L2: Flatten в факты (если LLM — structured, fallback — auto)
-        l2 = item.l2 or {}  # Dict {'purpose': ..., 'uses': [...], ...}
+
+        # L2 flatten
+        l2 = item.l2 or {}
         if levels['L2']:
             purpose = l2.get('purpose', 'N/A')
             uses = ', '.join(l2.get('uses', [])) if l2.get('uses') else 'N/A'
@@ -352,115 +318,114 @@ def build_rag(retrieved: List[AIItem], levels: Dict[str, bool], generator: L2Gen
             rag_parts.append(f"Возвращает: {returns}")
             if edge_cases != 'N/A':
                 rag_parts.append(f"Особенности: {edge_cases}")
-        
-        # L1: Связи как список (если levels)
+
+        # L1 edges
         if levels['L1'] and item.l1_edges:
-            edges_str = ', '.join([f"{e['to']} ({e['type']}: {e.get('reason', 'N/A')})" for e in item.l1_edges[:3]])  # Top-3
+            edges_str = ', '.join([f"{e['to']} ({e['type']}: {e.get('reason', 'N/A')})" for e in item.l1_edges[:3]])
             rag_parts.append(f"Связи: {edges_str}")
-        
-        # L0: Snippet только по запросу (e.g., 'код'), укороченный
+
+        # L0 snippet
         if levels['L0']:
-            snippet = item.l0_snippet[:150].replace('\n', ' ')  # Inline, без multiline
+            snippet = item.l0_snippet[:150].replace('\n', ' ')
             rag_parts.append(f"Код: {snippet}...")
-    
+
     return '\n'.join(rag_parts)
 
-def retrieve_ai_items(query: str, G: DiGraph, ai_items: Dict[str, AIItem], retriever: EmbedRetriever, top_k: int = 3) -> List[AIItem]:
-    item_ids = list(ai_items.keys())
-    keyword_matched = [iid for iid in item_ids if any(pattern in query.lower() for pattern in ai_items[iid].contract.get('query_patterns', []))]
-    query_emb = retriever.encode_query(query)
-    sims = retriever.get_similarities(query_emb, item_ids)
-    scores = sims.copy()
-    for km in keyword_matched:
-        idx = item_ids.index(km)
-        scores[idx] += 0.5
-    top_indices = np.argsort(scores)[-top_k:]
-    matched = [ai_items[item_ids[i]] for i in top_indices]
-    if matched:
-        start = matched[0].id
-        neighbors = [n for n in nx.descendants(G, start) if n in ai_items]
-        for n in neighbors[:top_k - len(matched)]:
-            matched.append(ai_items[n])
-    return list(set(matched))[:top_k]
+# Улучшенный retrieve_ai_items с keyword boost, graph expansion, min_weight
+def retrieve_ai_items(query: str, G: DiGraph, ai_index: Dict[str, AIItem], retriever: EmbedRetriever, top_k: int = 3, min_weight: float = 0.8) -> List[AIItem]:
+    """Hybrid retrieval: cosine + keyword boost + graph neighbors с centrality + min_weight filter."""
+    if not ai_index:
+        return []
 
-# UGLUBLENNY Self-indexing: Добавлен visit_Import и visit_Assign
+    query_embedding = retriever.encode_query(query)
+    q_words = query.lower().split()  # Для keyword match
+
+    # Base sim scores
+    sim_scores = {}
+    for iid, item in ai_index.items():
+        if iid in retriever.embeddings_dict:
+            item_emb = retriever.embeddings_dict[iid]
+            sim = cosine_similarity(query_embedding, item_emb.reshape(1, -1))[0][0]
+            # Keyword boost
+            patterns = item.contract.get('query_patterns', [])
+            keyword_score = sum(1 for word in q_words if any(word in pat.lower() for pat in patterns)) / max(len(q_words), 1)
+            total_score = sim + keyword_score * 0.2  # Boost 0.2
+            sim_scores[iid] = total_score
+
+    # Min_weight filter
+    filtered_scores = {iid: score for iid, score in sim_scores.items() if ai_index[iid].contract.get('weight', 1.0) >= min_weight}
+
+    # Graph expansion: +neighbors с pagerank boost
+    pagerank = nx.pagerank(G)  # Precompute centrality
+    expanded_scores = filtered_scores.copy()
+    for iid, score in filtered_scores.items():
+        # Neighbors (successors, depth=1)
+        neighbors = list(nx.descendants(G, iid))[:5]  # Limit
+        for n in neighbors:
+            if n in ai_index:
+                graph_boost = pagerank.get(n, 0) * 0.15  # Centrality boost
+                expanded_scores[n] = expanded_scores.get(n, 0) + graph_boost
+
+    # Re-rank и top-k
+    sorted_items = sorted(expanded_scores.items(), key=lambda x: x[1], reverse=True)
+    top_ids = [iid for iid, _ in sorted_items[:top_k]]
+    retrieved = [ai_index[iid] for iid in top_ids]
+
+    print(f"Retrieved with boosts: {len(retrieved)} items (sim+keyword+graph)")
+    return retrieved
+
 def parse_self_to_ai_items(auto_l1: bool = True, llm_l1: bool = False, api_url: str = 'http://usa:3002/api/send-request') -> tuple[Dict[str, AIItem], Dict[str, List[str]]]:
     with open(__file__, 'r', encoding='utf-8-sig') as f:
         code = f.read()
     tree = ast.parse(code)
-    
+
+    # Парсер (без изменений, но с args/docstring)
     class ImprovedCodeParser(ast.NodeVisitor):
         def __init__(self):
             self.items = []
+            self.calls_dict = {}
+            self.assigns_dict = {}
+            self.imports_dict = {}
             self.current_class = None
             self.current_func = None
-            self.calls_dict = {}
-            self.assigns_dict = {}  # FIXED: Инициализация
-            self.imports_dict = {}  # FIXED: Инициализация
-            self.built_ins = ['print', 'len', 'str', 'list', 'dict', 'np', 'json', 'pickle', 'open', 'np.random', 'ast.parse', 'cosine_similarity', 'np.stack', 'torch', 'sklearn', 'networkx', 'SentenceTransformer']
+            self.built_ins = {'print', 'len', 'str', 'int', 'list', 'dict', 'np', 'torch', 'time', 'json', 'requests', 'ast', 'nx', 'pickle'}
 
         def visit_ClassDef(self, node):
             self.current_class = node.name
-            self.calls_dict[self.current_class] = []
-            self.assigns_dict[self.current_class] = []
-            self.imports_dict[self.current_class] = []
-            snippet = ""
-            if node.body:
-                # Углубление: Добавляем 'contains' edges к методам класса
-                method_ids = [stmt.name for stmt in node.body if isinstance(stmt, ast.FunctionDef)]
-                for m in method_ids:
-                    self.calls_dict[self.current_class].append(f"{self.current_class}.{m} (contains)")
-                snippet_lines = [ast.unparse(stmt) for stmt in node.body[:2] if not isinstance(stmt, ast.FunctionDef)]
-                snippet = "; ".join(snippet_lines)
-            purpose = f"Класс {node.name} в прототипе RAG-системы."
-            docstring = ast.get_docstring(node) or 'N/A'
-            contract = {
-                "purpose": purpose,
-                "query_patterns": [node.name.lower()],
-                "weight": 2.0,
-                "uses": [],
-                "returns": "instance",
-                "edge_cases": "N/A",
-                "docstring": docstring,
-                "args": []
-            }
-            item_id = node.name
-            self.items.append({
-                "id": item_id,
-                "type": "class",
-                "l0_snippet": snippet[:200] + "..." if len(snippet) > 200 else snippet,
-                "contract": contract
-            })
-            self.generic_visit(node)
-            self.current_class = None
-
-        def visit_FunctionDef(self, node):
-            self.current_func = node.name
-            snippet = ast.unparse(node)
-            purpose = f"Функция {node.name} в прототипе RAG."
-            docstring = ast.get_docstring(node) or 'N/A'
-            args = [arg.arg for arg in node.args.args] if isinstance(node.args, ast.arguments) else []
+            self.current_func = None
+            purpose = f"Class {node.name} in RAG prototype."
             contract = {
                 "purpose": purpose,
                 "query_patterns": [node.name],
                 "weight": 1.5,
                 "uses": [],
+                "returns": "instance",
+                "edge_cases": "N/A",
+                "args": [],  # Classes no args
+                "docstring": ast.get_docstring(node) or "No docstring"
+            }
+            snippet = ast.unparse(node)[:200] + "..."
+            self.items.append({"id": node.name, "type": "class", "l0_snippet": snippet, "contract": contract})
+            self.generic_visit(node)
+            self.current_class = None
+
+        def visit_FunctionDef(self, node):
+            self.current_func = node.name
+            purpose = f"Function {node.name} in RAG prototype."
+            args = [arg.arg for arg in node.args.args]
+            docstring = ast.get_docstring(node) or "No docstring"
+            contract = {
+                "purpose": purpose,
+                "query_patterns": [node.name],
+                "weight": 1.0,
+                "uses": [],
                 "returns": "result",
                 "edge_cases": "N/A",
-                "docstring": docstring,
-                "args": args
+                "args": args,
+                "docstring": docstring
             }
-            item_id = f"{self.current_class}.{node.name}" if self.current_class else node.name
-            self.items.append({
-                "id": item_id,
-                "type": "function",
-                "l0_snippet": snippet[:200] + "..." if len(snippet) > 200 else snippet,
-                "contract": contract
-            })
-            caller_id = item_id
-            self.calls_dict[caller_id] = []
-            self.assigns_dict[caller_id] = []
-            self.imports_dict[caller_id] = []
+            snippet = ast.unparse(node)[:200] + "..."
+            self.items.append({"id": f"{self.current_class}.{node.name}" if self.current_class else node.name, "type": "function", "l0_snippet": snippet, "contract": contract})
             self.generic_visit(node)
             self.current_func = None
 

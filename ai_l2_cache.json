@@ -1,219 +1,219 @@
 {
   "AIItem": {
-    "l2": "{\"purpose\": \"Unknown – no code provided\", \"uses\": [], \"returns\": \"None\", \"edge_cases\": \"No edge cases can be determined without code\"}",
+    "l2": "{\"purpose\": \"Класс AIItem хранит данные о конкретном элементе ИИ: идентификатор, тип, фрагмент кода и сопутствующий контракт.\", \"uses\": [\"Сохраняет информацию о найденных фрагментах кода в проекте.\", \"Передаёт данные в сервисы анализа/обработки ИИ.\", \"Служит объектом при генерации отчётов о найденных элементах.\", \"Используется в тестах для проверки корректности парсинга.\", \"\"], \"returns\": \"None\", \"edge_cases\": \"Отсутствует проверка корректности переданных аргументов; конструктор может не присвоить атрибут contract, если код обрезан; отсутствие docstring затрудняет автодокументацию.\"}",
     "type": "class",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "AIItem.__init__": {
-    "l2": "{\"purpose\": \"Инициализация экземпляра AIItem с заданными атрибутами: id, type, l0_snippet и contract.\", \"uses\": [\"Создание объекта AIItem для хранения данных элемента из модели AI.\", \"Передача объекта в функции, которые анализируют контракт и логику L1.\", \"Сериализация объекта в JSON для обмена данными.\", \"Использование в тестах, проверяющих корректность структуры AIItem.\"], \"returns\": \"None (конструктор не возвращает значения).\", \"edge_cases\": \"Если contract не содержит ожидаемых ключей, это может вызвать ошибки при дальнейшем использовании; l0_snippet может быть слишком длинным, что повлияет на производительность.\"}",
+    "l2": "{\"purpose\": \"Инициализирует объект AIItem, сохраняя его идентификатор, тип, фрагмент кода и контракт.\", \"uses\": [\"Создание AIItem для хранения информации о фрагменте кода.\", \"Передача AIItem в систему анализа кода для дальнейшей обработки.\", \"Сохранение AIItem в базу данных как метаданные.\", \"Передача AIItem в UI для отображения контекста.\"], \"returns\": \"None\", \"edge_cases\": \"Если аргумент contract не содержит ожидаемых ключей, дальнейшие методы могут выбросить KeyError; id или type пустые строки не проверяются.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "AIItem.generate_l2": {
-    "l2": "{\"purpose\": \"Создаёт и кэширует представление уровня 2 (L2) для объекта AIItem, используя либо предоставленный генератор, либо базовый словарь по умолчанию.\", \"uses\": [\"Проверка наличия уже сгенерированного L2\", \"Вызов внешнего генератора L2Generator\", \"Инициализация словаря по умолчанию при отсутствии генератора\", \"Кэширование результата в self.l2\"], \"returns\": \"None (изменяет состояние объекта)\", \"edge_cases\": \"1) Если generator не передан и self.l2 уже существует, функция ничего не делает – возможна потеря обновления. 2) Внутренний генератор может бросить исключение, не обрабатываемое функцией, прерывая выполнение.\"}",
+    "l2": "{\"purpose\": \"Создаёт или обновляет уровень L2 AIItem, используя генератор, либо резервный словарь.\", \"uses\": [\"Вызывается при сериализации AIItem для вывода L2.\", \"Используется в тестах для генерации тестовых данных.\", \"Обрабатывает зависимости в графе AIItem.\", \"Встраивается в pipeline генерации документации.\"], \"returns\": \"None (изменяет атрибут self.l2)\", \"edge_cases\": \"Если generator отсутствует, используется фиксированный словарь; если self.l2 уже задан, метод пропускает генерацию; возможна ошибка, если generator.generate_l2 не возвращает ожидаемый тип.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "L2Generator": {
-    "l2": "{\"purpose\": \"Создаёт L2 генератор текста с LLM и резервным fallback.\", \"uses\": [\"Генерация ответов в чат‑ботах.\", \"Обработка запросов при недоступности LLM.\", \"Fallback при превышении лимитов токенов.\"], \"returns\": \"Строка с текстом или сообщение об ошибке.\", \"edge_cases\": \"1) Пустой ответ LLM обрабатывается как исключение. 2) Ошибка лимита токенов перехватывается и заменяется fallback‑текстом.\"}",
+    "l2": "{\"purpose\": \"Создаёт L2‑текст с помощью LLM, при недоступности сервиса использует запасной механизм.\", \"uses\": [\"вызывается из генераторов контента для получения описаний\", \"используется в тестах для мок‑апов LLM\", \"подключается к внешнему API через указанный URL\"], \"returns\": \"строка L2‑текста (или None при ошибке и dry_run=True)\", \"edge_cases\": \"необработанные исключения при сетевых ошибках после max_retries, возможное возвращение пустой строки при dry_run, неверные типы аргументов не проверяются\"}",
     "type": "class",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "L2Generator.__init__": {
-    "l2": "{\"purpose\": \"Инициализирует экземпляр L2Generator, сохраняет URL API, модель, количество попыток и режим dry_run.\", \"uses\": [\"Создание генератора с пользовательским URL: L2Generator(api_url='https://api.example.com')\", \"Установка модели: L2Generator(model='PRECISE')\", \"Настройка количества повторов: L2Generator(max_retries=5)\", \"Включение dry_run для тестов: L2Generator(dry_run=True)\"], \"returns\": \"None\", \"edge_cases\": \"Если max_retries отрицательное, может вести к бесконечному циклу retry; передача недопустимых типов (не строка/не int/не bool) приведёт к ошибкам выполнения; отсутствие обязательных аргументов приводит к использованию значений по умолчанию.\"}",
+    "l2": "{\"purpose\": \"Инициализация генератора L2 с настройкой URL API, модели, количества повторов и режима dry‑run.\", \"uses\": [\"Отправка запросов к внешнему API\", \"Выбор модели для генерации\", \"Контроль количества попыток при ошибках\", \"Тестовый режим без реальных запросов\"], \"returns\": \"None\", \"edge_cases\": \"При неверных типах аргументов может возникнуть TypeError; при пустом api_url запросы не будут выполнены; dry_run=True игнорирует реальный сетевой вызов.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "L2Generator.generate_l2": {
-    "l2": "{\"purpose\": \"Генерирует JSON‑ответ с L2‑уровнем анализа кода, используя LLM. При включённом dry_run возвращает заранее подготовленный ответ, иначе формирует промпт и вызывает модель.\", \"uses\": [\"Получение AIItem для анализа; вызов LLM через _build_prompt; fallback‑метод в режиме dry_run\"], \"returns\": \"Dict[str, Any] с результатами анализа (или None, если модель не отвечает)\", \"edge_cases\": \"1) dry_run=True приводит к возврату fallback‑данных, не реальному анализу. 2) Необработанные исключения от LLM (например, timeout) могут вернуть None вместо ожидаемого словаря.\"}",
+    "l2": "{\"purpose\": \"Generate L2 code analysis for an AIItem, returning a structured dictionary or a fallback result when in dry‑run mode.\", \"uses\": [\"self._fallback_l2(item) – provides mock analysis during dry‑run\", \"self._build_prompt(item) – builds the prompt for the LLM\"], \"returns\": \"A dict containing L2 analysis details (or None if fallback fails).\", \"edge_cases\": \"Handles dry‑run flag, missing prompt content, and LLM errors; returns an empty dict if the LLM call fails.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "L2Generator.generate_l2_batch": {
-    "l2": "{\"purpose\": \"Generate second‑level AI items in manageable batches for downstream processing.\", \"uses\": [\"Batch creation for large AIItem collections to avoid memory spikes.\", \"Integration with a pipeline that expects L2 items derived from L1 items.\", \"Parallel or asynchronous execution of the inner processing loop.\", \"Testing utilities that verify batch handling logic.\"], \"returns\": \"A list of processed AIItem objects; returns an empty list if input is empty.\", \"edge_cases\": \"Handles empty or non‑list inputs gracefully; batch_size <= 0 results in a single full‑size batch; incomplete final batch is processed normally.\"}",
+    "l2": "{\"purpose\": \"Создаёт батчи элементов AIItem для последующей обработки на уровне L2, ограничивая размер каждого батча.\", \"uses\": [\"Внутренний вызов L2Generator.generate_l2_batch для пакетной обработки данных.\", \"Подключён в pipeline генерации контента, где каждый батч передаётся в модель L2.\", \"Используется в тестах для проверки корректности пакетной логики.\"], \"returns\": \"Список AIItem, обработанных в рамках всех батчей.\", \"edge_cases\": \"Пустой список возвращает пустой список; batch_size <= 0 вызывает бесконечный цикл или ошибку деления; items не являющиеся списком приводит к TypeError.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "L2Generator._build_prompt": {
-    "l2": "{\"purpose\": \"Builds a formatted prompt string for an AI item, incorporating its contract arguments and docstring.\", \"uses\": [\"Generating prompts for code generation tools\", \"Creating documentation snippets for AI assistants\", \"Formatting test case descriptions for automated testing\"], \"returns\": \"A string containing the formatted prompt.\", \"edge_cases\": \"If no args are provided, uses 'N/A'; missing docstring defaults to 'No docstring'; missing contract keys may raise KeyError.\"}",
+    "l2": "{\"purpose\": \"Builds a prompt string for an AI generator using an item's contract details.\", \"uses\": [\"Constructs prompt in L2Generator to generate code snippets\", \"Relies on item.contract containing optional 'args' and 'docstring' keys\", \"Used before calling the AI model for generation\"], \"returns\": \"A formatted string prompt\", \"edge_cases\": \"If 'args' is missing, it defaults to 'N/A'; if 'docstring' is missing, a placeholder is used; missing contract keys could raise KeyError if not handled elsewhere\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "L2Generator._fallback_l2": {
-    "l2": "{\"purpose\": \"Определяет цель элемента, используя поле 'purpose' из контракта, либо генерирует строку по шаблону 'Тип ID'.\", \"uses\": [\"Зависимости из поля 'uses' контракта, если они есть.\", \"Список импортов, указанных в контракте.\"], \"returns\": \"Строка, описывающая возвращаемое значение из поля 'returns', либо 'None' по умолчанию.\", \"edge_cases\": \"Если поле 'purpose' отсутствует, генерируется строка по шаблону; если поле 'uses' пустое, возвращается пустой список; если 'returns' отсутствует, возвращается 'None'.\"}",
+    "l2": "{\"purpose\": \"Generates L2 documentation by combining automatic analysis, existing docstrings, code snippets and edge data for an AIItem.\", \"uses\": [\"Extracts contract details from the AIItem\", \"Parses the item's docstring for natural language description\", \"Collects a representative code snippet\", \"Aggregates edge cases for completeness\"], \"returns\": \"A dictionary containing keys like 'purpose', 'uses', 'returns', 'edge_cases', and optional metadata.\", \"edge_cases\": \"Handles missing contract fields by defaulting to a placeholder, empty or malformed docstrings, and items with no snippet or edge data.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "EmbedRetriever": {
-    "l2": "{\"purpose\": \"The EmbedRetriever class is designed to fetch precomputed embeddings for given input items from an underlying storage or service, facilitating quick access for downstream tasks such as similarity search or clustering.\", \"uses\": [\"Fetching embeddings for text or image inputs to feed into a recommendation engine\", \"Caching embeddings locally to reduce latency when querying a remote vector store\", \"Serving embeddings in a microservice architecture for real‑time inference\", \"Providing fallback mechanisms to recompute embeddings if the cache miss occurs\"], \"returns\": \"A tensor or array of embedding vectors (or None if the item is not found or an error occurs).\", \"edge_cases\": \"Handles empty or malformed inputs, missing keys in the storage, and network timeouts; ensures graceful degradation by returning None or a placeholder embedding.\"}",
+    "l2": "{\"purpose\": \"Класс EmbedRetriever инициализирует параметры модели эмбеддингов, сохраняет путь к pickle-файлу и размерность векторов.\", \"uses\": [\"Подключение к предобученной модели E5 для генерации эмбеддингов\", \"Сохранение/загрузка эмбеддингов в/из pickle-файла\", \"Проверка совместимости размерности векторов с моделью\"], \"returns\": \"None (инициализация объекта)\", \"edge_cases\": \"Если pickle‑файл отсутствует, дальнейшие операции могут завершиться ошибкой; несоответствие dim модели и сохранённых эмбеддингов приводит к RuntimeError.\"}",
     "type": "class",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "EmbedRetriever.__init__": {
-    "l2": "{\"purpose\": \"Инициализирует экземпляр EmbedRetriever, сохраняет параметры размерности эмбеддингов, путь к pickle-файлу и название модели для дальнейшего использования.\", \"uses\": [\"Создание объекта для получения эмбеддингов текста\", \"Загрузка модели из Hugging Face при последующих методах\", \"Сохранение и загрузка эмбеддингов из pickle\", \"Проверка корректности входных параметров\"], \"returns\": \"None\", \"edge_cases\": \"Параметр dim должен быть целым и положительным, иначе возникает AssertionError; если pickle_path недоступен, может возникнуть FileNotFoundError при попытке сохранения/загрузки\"}",
+    "l2": "{\"purpose\": \"Инициализация класса EmbedRetriever с настройкой размерности эмбеддингов, названия модели и пути к pickle‑файлу. При вызове конструктор сохраняет параметры и готовит объект для дальнейшего поиска.\", \"uses\": [\"установка атрибутов self.dim, self.model_name, self.pickle_path\", \"загрузка предварительно обученной модели из HuggingFace\", \"чтение эмбеддингов из pickle‑файла\", \"инициализация индекса ANN для быстрого поиска\"], \"returns\": \"None\", \"edge_cases\": \"Если файл pickle отсутствует, может возникнуть FileNotFoundError; неверный dim (нецелое число) приведёт к TypeError; указание недоступного model_name вызовет ошибку загрузки модели.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "EmbedRetriever.add_items": {
-    "l2": "{\"purpose\": \"Добавляет новые элементы в словарь встраиваний, при необходимости генерируя их векторное представление (L2).\", \"uses\": [\"self.embeddings_dict – хранит векторные представления элементов\", \"generator – объект L2Generator для создания векторов\", \"l2_batch_size – размер батча при генерации\", \"ai_items – словарь новых элементов, которые нужно добавить\"], \"returns\": \"None\", \"edge_cases\": \"Если ai_items пустой – ничего не меняется; при отсутствии generator и необходимости генерации возникает ошибка; дублирующиеся идентификаторы могут перезаписать существующие записи; генератор может выбросить исключение при неверных данных.\"}",
+    "l2": "{\"purpose\": \"Добавляет новые AI‑объекты в словарь embeddings_dict и обновляет тексты, связывая их с ID.\", \"uses\": [\"Обновление индекса поиска AI‑объектов\", \"Поддержка динамического добавления контента\", \"Интеграция с системой встраивания текста\"], \"returns\": \"None\", \"edge_cases\": \"Если ai_items пустой, ничего не изменится; отсутствие ключа 'purpose' в contract приводит к KeyError; повторные ID перезаписывают существующие записи.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "EmbedRetriever._try_load": {
-    "l2": "{\"purpose\": \"Загружает сохранённые тексты и эмбеддинги из pickle‑файла, чтобы восстановить состояние EmbedRetriever.\", \"uses\": [\"Инициализация после создания объекта EmbedRetriever\", \"Обновление внутреннего словаря эмбеддингов перед поиском\", \"Восстановление данных при перезапуске приложения\"], \"returns\": \"None (обновляет self.texts и self.embeddings_dict)\", \"edge_cases\": \"Не найден файл, повреждённый pickle, отсутствуют ключи 'texts'/'embeddings_dict', неверный тип данных приводящий к исключениям\"}",
+    "l2": "{\"purpose\": \"Загружает сериализованные данные из pickle-файла и инициализирует атрибуты экземпляра.\", \"uses\": [\"Подключение к внешнему хранилищу для восстановления эмбеддингов\", \"Обновление внутреннего словаря эмбеддингов перед поиском\", \"Отладка при изменении схемы сериализации\"], \"returns\": \"None\", \"edge_cases\": \"Если файл отсутствует или повреждён, исключение будет выброшено; также возможны ошибки при отсутствии ключей 'texts' или 'embeddings' в загруженных данных.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "EmbedRetriever._generate_if_needed": {
-    "l2": "{\"purpose\": \"Генерирует эмбеддинги для текстов, если они ещё не загружены и есть доступные тексты.\", \"uses\": [\"self.loaded - флаг, показывающий, что эмбеддинги уже загружены\", \"self.texts - словарь текстов, для которых создаются эмбеддинги\", \"self._encode - метод, преобразующий список текстов в эмбеддинги\", \"print - вывод статуса генерации\"], \"returns\": \"None\", \"edge_cases\": \"Если self.texts пустой или self.loaded True, функция просто возвращает без действий; возможна ошибка, если _encode не реализован или возвращает неверный тип.\"}",
+    "l2": "{\"purpose\": \"Генерирует эмбеддинги для всех текстов, если они ещё не загружены, обеспечивая готовность модели к запросам.\", \"uses\": [\"Вызывается в конструкторе EmbedRetriever при первом запросе;\", \"Используется перед поиском по векторному пространству;\", \"Требуется в тестах, чтобы убедиться, что embeddings созданы;\", \"Зависит от метода _encode, который преобразует тексты в векторы.\"], \"returns\": \"None (изменяет внутреннее состояние объекта)\", \"edge_cases\": \"Если self.texts пустой или self.loaded уже True, функция сразу возвращает; возможна ошибка в _encode, если входные данные некорректны.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "EmbedRetriever._encode": {
-    "l2": "{\"purpose\": \"Encode a list of text strings into fixed‑size embedding vectors using SentenceTransformer, initializing the model lazily when needed.\", \"uses\": [\"SentenceTransformer model loading (self.model_name)\", \"global flag REAL_MODEL to control loading\", \"self.model attribute caching\"], \"returns\": \"np.ndarray of shape (len(texts), embedding_dim)\", \"edge_cases\": \"If REAL_MODEL is False or self.model already set, skips loading; empty texts list yields an empty array; large inputs may cause high memory usage\"}",
+    "l2": "{\"purpose\": \"Encode a list of text strings into embeddings using a SentenceTransformer model.\", \"uses\": [\"Called during query processing to transform user input into vector form.\", \"Used by the retriever to compute similarity with stored document embeddings.\", \"Invoked when the model is not yet loaded but the system is configured to use a real model.\", \"Ensures embeddings are generated lazily, loading the model only once.\", \"\"], \"returns\": \"A NumPy array of shape (len(texts), embedding_dim) containing the encoded vectors.\", \"edge_cases\": \"If REAL_MODEL is False, the function does nothing and returns None; if self.model_name is missing or invalid, SentenceTransformer will raise an exception; repeated calls may reinitialize the model if self.model is set to None.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "EmbedRetriever._save_pickle": {
-    "l2": "{\"purpose\": \"Сохраняет словарь эмбеддингов, тексты и их идентификаторы в pickle‑файл для последующего восстановления.\", \"uses\": [\"вызывается при вызове метода сохранения модели\", \"используется при инициализации из существующего pickle\", \"помогает избежать повторных вычислений эмбеддингов\"], \"returns\": \"None\", \"edge_cases\": \"Если embeddings_dict пуст, np.stack выбросит ValueError; некорректный путь к файлу приведёт к FileNotFoundError; все векторы должны иметь одинаковую размерность.\"}",
+    "l2": "{\"purpose\": \"Сохраняет тексты и их эмбеддинги в pickle‑файл для последующего восстановления.\", \"uses\": [\"Хранение результатов предварительной обработки в памяти между запусками\", \"Подготовка данных для обучения модели\", \"Восстановление индекса без повторного вычисления эмбеддингов\"], \"returns\": \"None\", \"edge_cases\": \"Если self.embeddings_dict содержит нулевые массивы, они сохранятся как пустые списки; при открытии файла в режиме 'wb' может возникнуть PermissionError при отсутствии прав записи.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "EmbedRetriever.encode_query": {
-    "l2": "{\"purpose\": \"Encode a query string into a fixed‑size vector using a language model or a deterministic random fallback.\", \"uses\": [\"Vectorizing user queries for semantic search.\", \"Embedding queries in a retrieval pipeline.\", \"Generating embeddings for quick similarity checks during development.\"], \"returns\": \"np.ndarray – a 1‑D embedding vector.\", \"edge_cases\": \"If REAL_MODEL is False or self.model is None, the method seeds the RNG and returns a random vector, which may lead to inconsistent results across runs if seed is omitted. Passing a non‑string query can raise a TypeError during string concatenation.\"}",
+    "l2": "{\"purpose\": \"Encode a search query into a vector representation for similarity search. It uses a real embedding model when available and falls back to deterministic random vectors for testing.\", \"uses\": [\"Creating embeddings for query terms in a vector database\", \"Generating synthetic embeddings when a model is absent\", \"Normalizing query input with a prefix for model consistency\"], \"returns\": \"numpy.ndarray – a 2‑D array of shape (1, dim) containing the query embedding\", \"edge_cases\": \"No docstring; assumes query is a string – passing non‑string types raises a TypeError. Random fallback always uses seed 42, so embeddings repeat across runs, which may mask variability in tests.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "EmbedRetriever.get_similarities": {
-    "l2": "{\"purpose\": \"Compute similarity scores between a query embedding and a set of item embeddings stored in the retriever.\", \"uses\": [\"Lookup embeddings in self.embeddings_dict for provided item_ids\", \"Filter out non‑existent IDs before similarity calculation\", \"Return a NumPy array of similarity values\"], \"returns\": \"np.ndarray of similarity scores (or None if no valid IDs)\", \"edge_cases\": \"Handles empty or all‑missing item_ids by returning None or an empty array; may raise errors if query_emb shape mismatches stored embeddings\"}",
+    "l2": "{\"purpose\": \"Функция вычисляет сходство заданного вектора запроса с векторами AI‑элементов, возвращая список из наиболее похожих объектов.\", \"uses\": [\"рекомендации похожих AI‑элементов в UI\", \"поиск по схожести в базе данных\", \"сортировка результатов по релевантности\"], \"returns\": \"List[AIItem] – элементы с наибольшим коэффициентом схожести (до top_k).\", \"edge_cases\": \"Если словарь ai_items пустой – возвращается пустой список; top_k больше количества элементов – возвращаются все; несоответствие размеров векторов может вызвать ValueError при расчёте косинусного сходства.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "build_graph": {
-    "l2": "{\"purpose\": \"Создаёт ориентированный граф зависимостей между AI‑элементами, где вершины – элементы, а ребра – вызовы, указанные в calls_dict.\", \"uses\": [\"Построение графа зависимостей для анализа AI‑проектов\", \"Визуализация связей между компонентами\", \"Кэширование графа для ускорения последующих запросов\"], \"returns\": \"DiGraph (из networkx) с вершинами и ребрами, описывающими зависимости\", \"edge_cases\": \"Обрабатываются отсутствующие ключи в calls_dict, дублирующиеся ID создают одну вершину; при пустом списке ai_items возвращается пустой граф; параметр save_cache игнорируется, если не реализовано сохранение\"}",
+    "l2": "{\"purpose\": \"Создаёт ориентированный граф зависимостей между объектами AIItem, где вершины представляют элементы, а рёбра — вызовы из calls_dict.\", \"uses\": [\"Построение графа для анализа цепочек вызовов в системе AI.\", \"Визуализация зависимостей между компонентами.\", \"Проверка наличия циклов и топологической сортировки.\", \"Генерация отчётов о взаимосвязях.\"], \"returns\": \"DiGraph с атрибутами узлов (type, l2, weight) и рёбрами из calls_dict.\", \"edge_cases\": \"Если calls_dict не содержит ключа для элемента, рёбра не добавляются; отсутствие l2 или weight приводит к None‑значениям; циклические зависимости не проверяются, что может вызвать бесконечные рекурсии при обходе.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "choose_levels": {
-    "l2": "{\"purpose\": \"Определяет, какие уровни (L0, L1, L2) включить в ответ на основе содержания запроса.\", \"uses\": [\"Фильтрация контента по ключевым словам\", \"Контроль детализации ответа\", \"Включение отладочной информации\"], \"returns\": \"Словарь {\\\"L0\\\": bool, \\\"L1\\\": bool, \\\"L2\\\": bool}\", \"edge_cases\": \"Логика всегда устанавливает L2=True, даже если это не нужно; строка \\\"rag = …\\\" недостижима, а вход query=None приведет к AttributeError\"}",
+    "l2": "{\"purpose\": \"Определяет, какие уровни детализации (L0, L1, L2) применить к запросу, основываясь на ключевых словах.\", \"uses\": [\"Выбор уровня ответа в чат‑боте\", \"Фильтрация контекста перед генерацией\", \"Контроль сложности объяснения\"], \"returns\": \"Dict[str, bool] с флагами для L0, L1, L2\", \"edge_cases\": \"Пустой запрос возвращает все уровни False, а некорректные символы могут привести к неверной интерпретации ключевых слов\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "build_rag": {
-    "l2": "{\"purpose\": \"Создаёт строку RAG из списка AIItem, дополняя отсутствующие L2‑тексты генератором, если он предоставлен.\", \"uses\": [\"AIItem объекты с полями l2 и content\", \"L2Generator для генерации текста\", \"dict levels для настройки вывода\"], \"returns\": \"строка, содержащая объединённый RAG\", \"edge_cases\": \"если item.l2 отсутствует и generator не задан – элемент пропускается; пустой список retrieved возвращает пустую строку; уровни в dict могут отсутствовать, что приводит к KeyError, если не проверяются.\"}",
+    "l2": "{\"purpose\": \"Создаёт строку L2‑контекста, объединяя результаты поиска AIItem, при необходимости генерируя недостающие части через L2Generator.\", \"uses\": [\"Генерация L2‑текста для обучающего материала\", \"Формирование контента для RAG‑системы\", \"Встраивание уровней сложности из словаря levels\"], \"returns\": \"str – собранный L2‑контекст\", \"edge_cases\": \"Если generator отсутствует и item.l2 пустой, часть пропускается; levels может быть пустым, что приводит к отсутствию дополнительной информации.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "retrieve_ai_items": {
-    "l2": "{\"purpose\": \"Возвращает список AIItem, наиболее релевантных поисковому запросу, используя граф зависимостей G и EmbedRetriever.\", \"uses\": [\"Поиск похожих предметов по схожим ключевым словам.\", \"Построение рекомендаций в приложении AI‑помощника.\", \"Фильтрация и ранжирование элементов в графе знаний.\"], \"returns\": \"Список AIItem (длина ≤ top_k).\", \"edge_cases\": \"Если query пустой – возвращает пустой список; top_k > доступных элементов – возвращает все; при ошибке в retriever выбрасывается исключение.\"}",
+    "l2": "{\"purpose\": \"Retrieve AI items matching a query by combining embedding cosine similarity, keyword boosting, and graph‑based neighbor expansion weighted by centrality, while filtering out items below a minimum relevance threshold.\", \"uses\": [\"EmbedRetriever for vector similarity\", \"Keyword matching to boost relevant nodes\", \"NetworkX DiGraph traversal with centrality scores\", \"AIItem index lookup\"], \"returns\": \"List[AIItem] – the top_k most relevant items or an empty list if none meet min_weight\", \"edge_cases\": \"Handles empty graph or missing query tokens by returning an empty list; ignores items with centrality‑weighted score below min_weight; may raise KeyError if ai_index lacks a required key.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "parse_self_to_ai_items": {
-    "l2": "{\"purpose\": \"Parse the current Python file to extract AIItem definitions and their dependencies, returning structured data for further processing.\", \"uses\": [\"Register AIItem objects in an AI system’s registry\", \"Feed extracted items into an LLM pipeline\", \"Use the dependency mapping for automated testing or dependency resolution\"], \"returns\": \"Tuple[Dict[str, AIItem], Dict[str, List[str]]] – first dict maps item names to AIItem instances, second maps names to lists of dependent item names.\", \"edge_cases\": \"File encoding or read errors; malformed or duplicate AIItem definitions; circular dependencies causing infinite recursion; missing required fields leading to None values.\"}",
+    "l2": "{\"purpose\": \"Parse the current file for AIItem definitions, optionally fetching L1 data via API.\", \"uses\": [\"Reading own source code\", \"Conditional API call to external service\", \"Processing AIItem objects\", \"Collecting error messages\"], \"returns\": \"Tuple of two dicts: mapping IDs to AIItem instances and mapping IDs to lists of error strings.\", \"edge_cases\": \"File read failures, malformed AIItem syntax, network timeouts, empty API responses\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "ImprovedCodeParser": {
-    "l2": "{\"purpose\": \"Class for parsing source code and generating an improved, structured representation.\", \"uses\": [\"Parsing Python files into an AST\", \"Refactoring code snippets\", \"Generating documentation\", \"Integrating with IDEs for live editing\"], \"returns\": \"None (provides methods and attributes for further use)\", \"edge_cases\": \"Handles syntax errors, missing imports, circular dependencies, and large file performance issues\"}",
+    "l2": "{\"purpose\": \"Парсер, расширяющий ast.NodeVisitor для сбора информации о вызовах функций, присваиваниях и импортах в Python‑коде, а также хранит найденные элементы в словарях.\", \"uses\": [\"Анализ кода для построения графа вызовов.\", \"Сбор данных о зависимостях и импортируемых модулях.\", \"Подготовка информации для рефакторинга или статического анализа.\", \"Валидация и поиск ошибок в исходном коде.\"], \"returns\": \"None (данные сохраняются в атрибутах экземпляра).\", \"edge_cases\": \"Не учитывает динамические вызовы через eval/exec, может пропустить вложенные функции из-за отсутствия контекстного отслеживания, а также не обрабатывает импорты с алиасами без явного имени.\"}",
     "type": "class",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "ImprovedCodeParser.__init__": {
-    "l2": "{\"purpose\": \"Инициализирует внутреннее состояние парсера, создавая пустые структуры для хранения элементов, текущего класса/функции и словари вызовов, присваиваний и импортов, а также список встроенных функций.\", \"uses\": [\"Создание экземпляра парсера перед началом анализа кода.\", \"Подготовка атрибутов для методов, которые собирают вызовы, присваивания и импорты.\", \"Установка начального контекста класса/функции для дальнейшего парсинга.\", \"Определение списка встроенных функций для фильтрации при анализе.\", \"\"], \"returns\": \"None\", \"edge_cases\": \"Если список built_ins неполный, некоторые встроенные функции могут быть пропущены; при отсутствии других методов, использующих эти атрибуты, они останутся пустыми.\"}",
+    "l2": "{\"purpose\": \"Инициализирует парсер кода, создавая структуры для хранения элементов, вызовов, присваиваний, импортов и текущего контекста класса/функции.\", \"uses\": [\"Парсинг Python‑скриптов в анализаторе кода\", \"Сбор информации о зависимостях между модулями\", \"Отслеживание вызовов функций внутри кода\", \"Формирование словаря встроенных функций для проверки\"], \"returns\": \"None\", \"edge_cases\": \"Если словарь built_ins не содержит нужного элемента, может возникнуть KeyError; отсутствие текущего контекста (class/func) приводит к None‑значениям в словарях.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "ImprovedCodeParser.visit_ClassDef": {
-    "l2": "{\"purpose\": \"Метод обрабатывает узлы объявления классов в AST, инициализируя структуры для отслеживания вызовов и присваиваний внутри класса.\", \"uses\": [\"вызывается парсером при встрече ClassDef\", \"используется для сбора информации о методах класса\", \"обновляет словари calls_dict и assigns_dict\", \"помогает в построении графа зависимостей\"], \"returns\": \"None\", \"edge_cases\": \"Если имя класса уже существует в словарях, данные перезаписываются; вложенные классы могут вызывать перекрытие current_class, что требует дополнительной логики для корректной обработки\"}",
+    "l2": "{\"purpose\": \"Записывает имя текущего класса в парсер и сбрасывает контекст функции, чтобы дальнейшие методы могли корректно работать с классом.\", \"uses\": [\"Вызывается в visitor‑методе для узлов ClassDef в AST;\", \"Используется в последующих visit_… методах для генерации контрактов;\", \"Вспомогательное поле self.current_class передаётся в генератор запросов;\", \"Служит для сбора зависимостей между классами и функциями.\"], \"returns\": \"None\", \"edge_cases\": \"Если узел не содержит имени (node.name отсутствует) – возникает AttributeError; вложенные классы могут перезаписать self.current_class, что приводит к потере контекста предыдущего класса.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "ImprovedCodeParser.visit_FunctionDef": {
-    "l2": "{\"purpose\": \"Функция анализирует определение функции в AST, сохраняет имя, текстовый фрагмент и docstring для дальнейшего использования.\", \"uses\": [\"Экстракция имени функции и её тела\", \"Сохранение текста функции в виде строки\", \"Получение описания функции из docstring\", \"Обновление текущего контекста парсера\"], \"returns\": \"None\", \"edge_cases\": \"Отсутствие docstring приводит к заполнению шаблоном; большие функции могут вызвать переполнение памяти при unparse; рекурсивные определения не обрабатываются явно.\"}",
+    "l2": "{\"purpose\": \"Определяет имя функции и собирает её аргументы и документацию в процессе парсинга RAG‑прототипа.\", \"uses\": [\"Вызов visit_FunctionDef при обходе AST‑дерева Python‑кода.\", \"Используется для построения справочника функций в RAG‑модели.\", \"Обрабатывает функции без аргументов и без docstring.\", \"Подготавливает данные для дальнейшего генератора кода.\", \"\"], \"returns\": \"None\", \"edge_cases\": \"Функции без docstring приводят к None в переменной docstring; пустой список аргументов корректно обрабатывается, но может вызвать ошибку при дальнейших шагах, если ожидается хотя бы один аргумент.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "ImprovedCodeParser.visit_Call": {
-    "l2": "{\"purpose\": \"Detects calls to instance methods (self.attr(...)) during AST traversal to capture method invocation details.\", \"uses\": [\"Identifying overridden methods in subclasses\", \"Collecting method call statistics for refactoring\", \"Building a call graph of class methods\", \"Validating that no private methods are called from outside\"], \"returns\": \"None\", \"edge_cases\": \"Ignores calls where the target is not 'self'; may miss dynamic attributes or calls via getattr.\"}",
+    "l2": "{\"purpose\": \"Обрабатывает вызовы функций внутри класса, выявляя методы, вызванные через self, чтобы построить граф вызовов и анализ зависимостей.\", \"uses\": [\"Построение графа зависимостей методов\", \"Определение точек входа для рефакторинга\", \"Анализ потенциальных циклических вызовов\", \"Проверка доступности методов при наследовании\"], \"returns\": \"None\", \"edge_cases\": \"Если node.func не является ast.Attribute или не относится к self, метод игнорируется; динамические вызовы через getattr или переменные не анализируются, что может привести к пропущенным зависимостям.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "ImprovedCodeParser.visit_Assign": {
-    "l2": "{\"purpose\": \"Обрабатывает узлы присваивания в AST, определяя контекст (функция/класс/глобальный) и собирая информацию об изменяемых переменных.\", \"uses\": [\"Внутри парсера для отслеживания зависимостей переменных в функциях\", \"Для сбора статистики о глобальных переменных\", \"В генерации графов исполнения кода\", \"Для валидации корректности присваиваний в классах\"], \"returns\": \"None\", \"edge_cases\": \"Если current_func или current_class не установлены, назначается 'global', что может привести к неверной привязке переменной; при множественных целевых переменных поведение не определено в данном фрагменте.\"}",
+    "l2": "{\"purpose\": \"Проверяет присваивания в AST, определяя контекст (функция, метод класса или глобальный), и собирает информацию о переменных.\", \"uses\": [\"Обрабатывает узлы Assign в дереве AST;\", \"Используется внутри парсера, чтобы отследить переменные в пределах функций;\", \"Зависит от атрибутов self.current_func и self.current_class;\", \"Включено в анализатор кода для построения графа зависимостей.\"], \"returns\": \"None\", \"edge_cases\": \"Если current_func пустой, но внутри класса, caller_id будет 'global', что может искажать контекст; также возможны ошибки, если node содержит множественные присваивания (tuple unpacking) без обработки.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "ImprovedCodeParser.visit_Import": {
-    "l2": "{\"purpose\": \"Collects import statements encountered during AST traversal and associates them with the current function or class context for later analysis.\", \"uses\": [\"Building a dependency graph of modules used by each function or class.\", \"Detecting unused imports within specific scopes.\", \"Providing context‑aware linting or refactoring suggestions.\"], \"returns\": \"None\", \"edge_cases\": \"If no current function or class, the import is ignored; relative imports are resolved using the module's package path; multiple imports in a single statement are processed separately.\"}",
+    "l2": "{\"purpose\": \"Метод обрабатывает узлы импорта в дереве AST, собирая информацию о модулях, которые импортируются, и связывая их с текущим контекстом (функцией или классом).\", \"uses\": [\"Генерация графа зависимостей кода\", \"Анализ покрываемости импортов\", \"Автоматическое обновление импортов при рефакторинге\", \"Проверка наличия неиспользуемых импортов\"], \"returns\": \"None\", \"edge_cases\": \"Если импорт находится внутри метода/функции, контекст может быть некорректно сформирован; не учитываются относительные импорты (from . import …) и импорты из пакета, что может привести к пропущенным зависимостям.\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   },
   "ImprovedCodeParser.visit_ImportFrom": {
-    "l2": "{\"purpose\": \"Обрабатывает узлы ImportFrom AST, собирая информацию об импортируемых модулях и связывая её с текущим контекстом функции или класса.\", \"uses\": [\"Формирование графа зависимостей кода\", \"Отслеживание импортов внутри методов\", \"Проверка наличия импортов в классах\", \"Поддержка анализа статических импортов\"], \"returns\": \"None\", \"edge_cases\": \"Если нет активного контекста (функция/класс) импорт игнорируется; относительные импорты могут привести к неверному пути; отсутствующие атрибуты в узле вызывают AttributeError.\"}",
+    "l2": "{\"purpose\": \"Проверяет, находится ли импорт‑заявление внутри функции или класса, формирует идентификатор вызывающего контекста и обрабатывает импорт‑from узел AST.\", \"uses\": [\"Сбор информации об импортируемых модулях в рамках функции/класса\", \"Отслеживание зависимостей внутри проекта\", \"Валидация импортов при статическом анализе\", \"Генерация отчётов о структуре кода\"], \"returns\": \"None\", \"edge_cases\": \"Не учитывает относительные импорты без имени модуля, не обрабатывает вложенные импорты в списке, может пропустить импорт при отсутствии current_func и current_class\"}",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763369924.7992468
+    "timestamp": 1763383732.1215777
   }
 }

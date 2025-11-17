@@ -7,11 +7,11 @@
     "timestamp": 1763370031.6894214
   },
   "AIItem.generate_l2": {
-    "l1_edges": "[{\"to\": \"generator.generate_l2\", \"type\": \"calls\", \"reason\": \"generator provided\"}]",
+    "l1_edges": "[{\"to\": \"generator.generate_l2\", \"type\": \"calls\", \"reason\": \"генерация l2 при наличии генератора\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "L2Generator": {
     "l1_edges": "[{\"to\": \"L2Generator.generate_l2\", \"type\": \"calls\", \"reason\": \"batch calls single generate\"}, {\"to\": \"L2Generator._build_prompt\", \"type\": \"calls\", \"reason\": \"prepare prompt for LLM\"}, {\"to\": \"L2Generator._fallback_l2\", \"type\": \"calls\", \"reason\": \"fallback when LLM fails\"}]",
@@ -21,32 +21,32 @@
     "timestamp": 1763370031.6894214
   },
   "L2Generator.generate_l2": {
-    "l1_edges": "[{\"to\": \"_fallback_l2\", \"type\": \"calls\", \"reason\": \"if dry_run\"}, {\"to\": \"_build_prompt\", \"type\": \"calls\", \"reason\": \"always\"}]",
+    "l1_edges": "[{\"to\": \"_fallback_l2\", \"type\": \"calls\", \"reason\": \"if self.dry_run\"}, {\"to\": \"_build_prompt\", \"type\": \"calls\", \"reason\": \"always\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "L2Generator.generate_l2_batch": {
-    "l1_edges": "[{\"to\": \"L2Generator.range\", \"type\": \"calls\", \"reason\": \"iterate over items\"}, {\"to\": \"L2Generator.len\", \"type\": \"calls\", \"reason\": \"determine number of items\"}, {\"to\": \"L2Generator.generate_l2\", \"type\": \"calls\", \"reason\": \"process each item\"}]",
+    "l1_edges": "[{\"to\": \"L2Generator.range\", \"type\": \"calls\", \"reason\": \"итерация по элементам\"}, {\"to\": \"L2Generator.len\", \"type\": \"calls\", \"reason\": \"получение длины списка\"}, {\"to\": \"L2Generator.generate_l2\", \"type\": \"calls\", \"reason\": \"генерация L2 элемента\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "L2Generator._build_prompt": {
-    "l1_edges": "[{\"to\": \"item.contract.get\", \"type\": \"calls\", \"reason\": \"extract args\"}, {\"to\": \"item.contract.get\", \"type\": \"calls\", \"reason\": \"extract docstring\"}]",
+    "l1_edges": "[{\"to\": \"item.contract.get\", \"type\": \"calls\", \"reason\": \"retrieves args\"}, {\"to\": \"item.contract.get\", \"type\": \"calls\", \"reason\": \"retrieves docstring\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "L2Generator._fallback_l2": {
-    "l1_edges": "[{\"to\": \"L2Generator.any\", \"type\": \"calls\", \"reason\": \"генерирует L2 для любого случая\"}, {\"to\": \"L2Generator.get\", \"type\": \"calls\", \"reason\": \"получает значение из контракта\"}, {\"to\": \"L2Generator.lower\", \"type\": \"calls\", \"reason\": \"получает значение из контракта\"}]",
+    "l1_edges": "[{\"to\": \"L2Generator.any\", \"type\": \"calls\", \"reason\": \"calls any\"}, {\"to\": \"L2Generator.get\", \"type\": \"calls\", \"reason\": \"assigns get\"}, {\"to\": \"L2Generator.lower\", \"type\": \"calls\", \"reason\": \"assigns lower\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "EmbedRetriever": {
     "l1_edges": "[{\"to\": \"_try_load\", \"type\": \"calls\", \"reason\": \"инициализация пытается загрузить данные\"}, {\"to\": \"_encode\", \"type\": \"calls\", \"reason\": \"генерация эмбеддингов\"}, {\"to\": \"encode_query\", \"type\": \"calls\", \"reason\": \"получение эмбеддинга запроса\"}]",
@@ -56,60 +56,60 @@
     "timestamp": 1763370031.6894214
   },
   "EmbedRetriever.__init__": {
-    "l1_edges": "[{\"to\": \"_try_load\", \"type\": \"calls\", \"reason\": \"инициализация вызывает загрузку модели\"}]",
+    "l1_edges": "[{\"to\": \"EmbedRetriever._try_load\", \"type\": \"calls\", \"reason\": \"проверка pickle_path\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "EmbedRetriever.add_items": {
-    "l1_edges": "[{\"to\": \"EmbedRetriever._generate_if_needed\", \"type\": \"calls\", \"reason\": \"проверка необходимости генерации embeddings\"}, {\"to\": \"EmbedRetriever._encode\", \"type\": \"calls\", \"reason\": \"кодирование каждого элемента\"}, {\"to\": \"EmbedRetriever._save_pickle\", \"type\": \"calls\", \"reason\": \"сохранение обновленного словаря embeddings\"}]",
+    "l1_edges": "[{\"to\": \"EmbedRetriever._generate_if_needed\", \"type\": \"calls\", \"reason\": \"генерирует embeddings для новых элементов\"}, {\"to\": \"EmbedRetriever._encode\", \"type\": \"calls\", \"reason\": \"кодирует тексты новых элементов\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "EmbedRetriever._try_load": {
-    "l1_edges": "[{\"to\": \"EmbedRetriever.open\", \"type\": \"calls\", \"reason\": \"reads pickle file\"}, {\"to\": \"EmbedRetriever.load (assign)\", \"type\": \"calls\", \"reason\": \"assigns data to attributes\"}]",
+    "l1_edges": "[{\"to\": \"_try_load\", \"type\": \"calls\", \"reason\": \"загружает данные из pickle\"}, {\"to\": \"open\", \"type\": \"calls\", \"reason\": \"открывает файл\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "EmbedRetriever._generate_if_needed": {
-    "l1_edges": "[{\"to\": \"EmbedRetriever.print\", \"type\": \"calls\", \"reason\": \"выводит сообщение о генерации\"}, {\"to\": \"EmbedRetriever._encode\", \"type\": \"calls\", \"reason\": \"генерирует эмбеддинги для текста\"}]",
+    "l1_edges": "[{\"to\": \"_encode\", \"type\": \"calls\", \"reason\": \"generates embeddings from text_list\"}, {\"to\": \"print\", \"type\": \"calls\", \"reason\": \"debug message\"}, {\"to\": \"list\", \"type\": \"calls\", \"reason\": \"construct list from texts.values()\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "EmbedRetriever._encode": {
-    "l1_edges": "[{\"to\": \"SentenceTransformer\", \"type\": \"calls\", \"reason\": \"инициализация модели\"}, {\"to\": \"print\", \"type\": \"calls\", \"reason\": \"вывод сообщения\"}]",
+    "l1_edges": "[{\"to\": \"SentenceTransformer\", \"type\": \"calls\", \"reason\": \"создание модели при условии\"}, {\"to\": \"print\", \"type\": \"calls\", \"reason\": \"вывод сообщения при загрузке\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "EmbedRetriever._save_pickle": {
-    "l1_edges": "[{\"to\": \"EmbedRetriever.open\", \"type\": \"calls\", \"reason\": \"write data to file\"}, {\"to\": \"EmbedRetriever.list\", \"type\": \"calls\", \"reason\": \"collect ids\"}]",
+    "l1_edges": "[{\"to\": \"EmbedRetriever.open\", \"type\": \"calls\", \"reason\": \"writes pickle file\"}, {\"to\": \"EmbedRetriever.list\", \"type\": \"calls\", \"reason\": \"collects ids\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "EmbedRetriever.encode_query": {
-    "l1_edges": "[{\"to\": \"self.model.encode\", \"type\": \"calls\", \"reason\": \"if REAL_MODEL and self.model\"}, {\"to\": \"np.random.seed\", \"type\": \"calls\", \"reason\": \"else\"}, {\"to\": \"np.random.rand\", \"type\": \"calls\", \"reason\": \"else\"}]",
+    "l1_edges": "[{\"to\": \"self.model.encode\", \"type\": \"calls\", \"reason\": \"вызывает encode\"}, {\"to\": \"np.random.seed\", \"type\": \"calls\", \"reason\": \"вызывает seed\"}, {\"to\": \"np.random.normal\", \"type\": \"calls\", \"reason\": \"вызывает нормальное распределение\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "EmbedRetriever.get_similarities": {
-    "l1_edges": "[{\"to\": \"EmbedRetriever.enumerate\", \"type\": \"calls\", \"reason\": \"iterates over existing_ids\"}, {\"to\": \"EmbedRetriever.stack\", \"type\": \"calls\", \"reason\": \"stacks embeddings for similarity\"}, {\"to\": \"EmbedRetriever.zeros\", \"type\": \"calls\", \"reason\": \"creates zero array for missing items\"}]",
+    "l1_edges": "[{\"to\": \"EmbedRetriever.cosine_similarity\", \"type\": \"calls\", \"reason\": \"used to compute similarity between query embedding and item embeddings\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "build_graph": {
     "l1_edges": "[{\"to\": \"DiGraph\", \"type\": \"calls\", \"reason\": \"создание графа\"}, {\"to\": \"set\", \"type\": \"calls\", \"reason\": \"создание множества узлов\"}, {\"to\": \"merge_l1_cache\", \"type\": \"calls\", \"reason\": \"сохранение кэша при необходимости\"}]",
@@ -119,32 +119,32 @@
     "timestamp": 1763370031.6894214
   },
   "choose_levels": {
-    "l1_edges": "[{\"to\": \"lower\", \"type\": \"calls\", \"reason\": \"assign query_lower = query.lower()\"}]",
+    "l1_edges": "[{\"to\": \"lower\", \"type\": \"calls\", \"reason\": \"converts query to lowercase\"}, {\"to\": \"any\", \"type\": \"calls\", \"reason\": \"checks for keyword presence\"}, {\"to\": \"assign\", \"type\": \"calls\", \"reason\": \"sets default level flags\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "build_rag": {
-    "l1_edges": "[{\"to\": \"generator.generate\", \"type\": \"calls\", \"reason\": \"if generator provided and item.l2 false\"}, {\"to\": \"item.get\", \"type\": \"calls\", \"reason\": \"retrieve data\"}, {\"to\": \"item.join\", \"type\": \"calls\", \"reason\": \"concatenate strings\"}]",
+    "l1_edges": "[{\"to\": \"generator.generate\", \"type\": \"calls\", \"reason\": \"если not item.l2\"}, {\"to\": \"item.get\", \"type\": \"calls\", \"reason\": \"получаем текст\"}, {\"to\": \"str.join\", \"type\": \"calls\", \"reason\": \"объединяем части\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "retrieve_ai_items": {
-    "l1_edges": "[{\"to\": \"encode_query\", \"type\": \"calls\", \"reason\": \"encode query for embeddings\"}, {\"to\": \"get_similarities\", \"type\": \"calls\", \"reason\": \"compute similarity scores\"}, {\"to\": \"index\", \"type\": \"calls\", \"reason\": \"index results for retrieval\"}]",
+    "l1_edges": "[{\"to\": \"encode_query\", \"type\": \"calls\", \"reason\": \"для получения эмбеддингов запроса\"}, {\"to\": \"cosine_similarity\", \"type\": \"calls\", \"reason\": \"для сравнения запроса с элементами\"}, {\"to\": \"pagerank\", \"type\": \"calls\", \"reason\": \"для ранжирования результатов по графу\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "parse_self_to_ai_items": {
-    "l1_edges": "[{\"to\": \"read\", \"type\": \"calls\", \"reason\": \"reads file content\"}, {\"to\": \"parse\", \"type\": \"calls\", \"reason\": \"parses content\"}]",
+    "l1_edges": "[{\"to\": \"open\", \"type\": \"calls\", \"reason\": \"file opening\"}, {\"to\": \"read\", \"type\": \"calls\", \"reason\": \"reading file\"}, {\"to\": \"parse\", \"type\": \"calls\", \"reason\": \"parsing content\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "ImprovedCodeParser": {
     "l1_edges": "[{\"to\": \"ImprovedCodeParser.visit_ClassDef\", \"type\": \"calls\", \"reason\": \"initialization\"}, {\"to\": \"ImprovedCodeParser.visit_FunctionDef\", \"type\": \"calls\", \"reason\": \"initialization\"}, {\"to\": \"ImprovedCodeParser.visit_Call\", \"type\": \"calls\", \"reason\": \"initialization\"}]",
@@ -154,45 +154,45 @@
     "timestamp": 1763370031.6894214
   },
   "ImprovedCodeParser.visit_ClassDef": {
-    "l1_edges": "[{\"to\": \"ImprovedCodeParser.generic_visit\", \"type\": \"calls\", \"reason\": \"traverse node children\"}, {\"to\": \"ImprovedCodeParser.join (assign)\", \"type\": \"calls\", \"reason\": \"join strings for assignment\"}, {\"to\": \"ImprovedCodeParser.isinstance\", \"type\": \"calls\", \"reason\": \"check node type\"}]",
+    "l1_edges": "[{\"to\": \"generic_visit\", \"type\": \"calls\", \"reason\": \"visit_ClassDef calls generic_visit to traverse child nodes\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "ImprovedCodeParser.visit_FunctionDef": {
-    "l1_edges": "[{\"to\": \"ImprovedCodeParser.unparse\", \"type\": \"calls\", \"reason\": \"генерирует строку кода из узла\"}]",
+    "l1_edges": "[{\"to\": \"ImprovedCodeParser.generic_visit\", \"type\": \"calls\", \"reason\": \"continue traversal\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "ImprovedCodeParser.visit_Call": {
-    "l1_edges": "[{\"to\": \"ImprovedCodeParser.isinstance\", \"type\": \"calls\", \"reason\": \"используется в условии if\"}, {\"to\": \"ImprovedCodeParser.generic_visit\", \"type\": \"calls\", \"reason\": \"вызывается для остальных узлов\"}]",
+    "l1_edges": "[{\"to\": \"ImprovedCodeParser.isinstance\", \"type\": \"calls\", \"reason\": \"check node type\"}, {\"to\": \"ImprovedCodeParser.generic_visit\", \"type\": \"calls\", \"reason\": \"traverse child nodes\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "ImprovedCodeParser.visit_Assign": {
-    "l1_edges": "[{\"to\": \"ImprovedCodeParser.generic_visit\", \"type\": \"calls\", \"reason\": \"calls generic_visit to traverse child nodes\"}, {\"to\": \"ImprovedCodeParser.isinstance\", \"type\": \"calls\", \"reason\": \"uses isinstance to check node type\"}]",
+    "l1_edges": "[{\"to\": \"ImprovedCodeParser.isinstance\", \"type\": \"calls\", \"reason\": \"проверка типа узла\"}, {\"to\": \"ImprovedCodeParser.generic_visit\", \"type\": \"calls\", \"reason\": \"обработка остальных узлов\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "ImprovedCodeParser.visit_Import": {
-    "l1_edges": "[{\"to\": \"generic_visit\", \"type\": \"calls\", \"reason\": \"unconditionally called\"}]",
+    "l1_edges": "[{\"to\": \"ImprovedCodeParser.generic_visit\", \"type\": \"calls\", \"reason\": \"processes Import node\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   },
   "ImprovedCodeParser.visit_ImportFrom": {
-    "l1_edges": "[{\"to\": \"ImprovedCodeParser.generic_visit\", \"type\": \"calls\", \"reason\": \"visits child nodes\"}]",
+    "l1_edges": "[{\"to\": \"generic_visit\", \"type\": \"calls\", \"reason\": \"при обработке ImportFrom\"}]",
     "type": "function",
     "file_path": "C:\\ERV\\projects-ex\\kosmos-vector\\prototype_rag_cli.py",
     "source": "LLM",
-    "timestamp": 1763370031.6894214
+    "timestamp": 1763383854.2253635
   }
 }
