@@ -1,0 +1,555 @@
+openapi: 3.0.3
+info:
+  title: AiItem RAG Architect API
+  description: |
+    RESTful API для системы RAG-анализа кодовой базы.
+
+    Версия 2.1.1 — Production Ready:
+    • Полностью решена проблема общей файловой системы между UI и бэкендом
+    • Добавлена новая модель точного выбора файлов через дерево + чекбоксы
+    • KnowledgeBaseConfig сохранён, расширен и остаётся центральным объектом настроек
+    • Поддерживаются оба подхода: glob-маски и точная выборка файлов
+  version: 2.1.1
+  contact:
+    name: AiItem RAG Architect Team
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3200
+    description: Development server
+  - url: https://api.aiitem.example.com
+    description: Production server
+
+tags:
+  - name: Core
+    description: AiItems, статистика, граф зависимостей
+  - name: Project
+    description: Новая модель — дерево файлов + точный выбор
+  - name: Knowledge Base
+    description: Классическая настройка проекта (полностью поддерживается и расширена)
+  - name: RAG Chat
+    description: Чат с RAG-движком
+  - name: Pipeline
+    description: Управление pipeline обработки
+  - name: Streaming
+    description: Server-Sent Events (логи, прогресс)
+  - name: System
+    description: Health, логи, контракт
+
+components:
+  schemas:
+    # ────────────────────────────────────── Основные типы
+    AiItemType:
+      type: string
+      enum: [function, class, method, module, interface, struct]
+    Language:
+      type: string
+      enum: [python, javascript, typescript, java, go, unknown]
+
+    AiItem:
+      type: object
+      required: [id, type, language, l0_code, l1_deps, l2_desc, filePath]
+      properties:
+        id: { type: string, example: "utils.fetchData" }
+        type: { $ref: '#/components/schemas/AiItemType' }
+        language: { $ref: '#/components/schemas/Language' }
+        l0_code: { type: string }
+        l1_deps: { type: array, items: { type: string } }
+        l2_desc: { type: string }
+        filePath: { type: string, example: "./src/utils/api.ts" }
+
+    # ────────────────────────────────────── Граф
+    GraphNode:
+      type: object
+      required: [id, type, language, filePath, l2_desc]
+      properties:
+        id: { type: string }
+        type: { $ref: '#/components/schemas/AiItemType' }
+        language: { $ref: '#/components/schemas/Language' }
+        filePath: { type: string }
+        l2_desc: { type: string }
+
+    GraphLink:
+      type: object
+      required: [source, target]
+      properties:
+        source: { type: string }
+        target: { type: string }
+
+    GraphData:
+      type: object
+      required: [nodes, links]
+      properties:
+        nodes: { type: array, items: { $ref: '#/components/schemas/GraphNode' } }
+        links: { type: array, items: { $ref: '#/components/schemas/GraphLink' } }
+
+    # ────────────────────────────────────── Статистика
+    TypeStat:
+      type: object
+      required: [name, count]
+      properties:
+        name: { type: string }
+        count: { type: integer }
+
+    LanguageStat:
+      type: object
+      required: [name, value]
+      properties:
+        name: { type: string }
+        value: { type: integer }
+
+    DashboardStats:
+      type: object
+      required: [totalItems, totalDeps, averageDependencyDensity, typeStats, languageStats, vectorIndexSize, lastScan]
+      properties:
+        totalItems: { type: integer }
+        totalDeps: { type: integer }
+        averageDependencyDensity: { type: string }
+        typeStats: { type: array, items: { $ref: '#/components/schemas/TypeStat' } }
+        languageStats: { type: array, items: { $ref: '#/components/schemas/LanguageStat' } }
+        vectorIndexSize: { type: string }
+        lastScan: { type: string, format: date-time }
+
+    # ────────────────────────────────────── Новая модель файловой системы
+    ProjectFile:
+      type: object
+      required: [path, name, type, size, selected]
+      properties:
+        path:
+          type: string
+          description: Относительный путь от корня проекта (всегда с ./)
+          example: "./src/utils/api.ts"
+        name: { type: string }
+        type: { type: string, enum: [file, directory] }
+        size: { type: integer }
+        selected: { type: boolean, default: true }
+        children: { type: array, items: { $ref: '#/components/schemas/ProjectFile' } }
+        language:
+          type: string
+          nullable: true
+          enum: [python, javascript, typescript, java, go, unknown, null]
+        error: { type: boolean, default: false }
+        errorMessage: { type: string, nullable: true }
+
+    # ────────────────────────────────────── KnowledgeBaseConfig — полностью восстановлен и расширен
+    KnowledgeBaseConfig:
+      type: object
+      required: [rootPath, includeMask, ignorePatterns, lastUpdated]
+      properties:
+        rootPath:
+          type: string
+          description: Абсолютный путь к проекту на стороне бэкенда
+          example: "/app/projects/my-awesome-app"
+        includeMask:
+          type: string
+          description: Glob-паттерн включаемых файлов (для обратной совместимости)
+          example: "**/*.{py,js,ts,tsx,go,java}"
+        ignorePatterns:
+          type: string
+          description: Паттерны игнорирования (через запятую)
+          example: "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**"
+        fileSelection:
+          type: array
+          items: { type: string }
+          description: |
+            Точный список выбранных относительных путей.
+            Если массив не пустой — имеет приоритет над includeMask/ignorePatterns.
+          example:
+            - "./src/utils/api.ts"
+            - "./src/components/Button.tsx"
+            - "./backend/main.py"
+        lastUpdated:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          description: Произвольные метаданные проекта
+          example:
+            projectName: "My Awesome App"
+            description: "Full-stack монолит"
+            tags: ["react", "fastapi", "docker"]
+
+    # ────────────────────────────────────── Запросы
+    FileSelectionRequest:
+      type: object
+      required: [rootPath, files]
+      properties:
+        rootPath: { type: string, example: "/app/projects/my-app" }
+        files:
+          type: array
+          items: { type: string }
+          example:
+            - "./src/utils/api.ts"
+            - "./src/components/Button.tsx"
+
+    ChatRequest:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+
+    ChatResponse:
+      type: object
+      required: [response, timestamp]
+      properties:
+        response: { type: string }
+        usedContextIds: { type: array, items: { type: string } }
+        timestamp: { type: string, format: date-time }
+
+    SuccessResponse:
+      type: object
+      required: [success]
+      properties:
+        success: { type: boolean, enum: [true] }
+        message: { type: string }
+
+    ErrorResponse:
+      type: object
+      required: [success, error]
+      properties:
+        success: { type: boolean, enum: [false] }
+        error: { type: string }
+
+    HealthResponse:
+      type: object
+      required: [status, timestamp, version]
+      properties:
+        status: { type: string, enum: [ok] }
+        timestamp: { type: string, format: date-time }
+        version: { type: string, example: "2.1.1" }
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    NotFound:
+      description: Не найдено
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    InternalError:
+      description: Внутренняя ошибка
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+paths:
+  # ────────────────────────────────────── SYSTEM
+  /api/health:
+    get:
+      tags: [System]
+      summary: Health Check
+      operationId: getHealth
+      responses:
+        '200':
+          description: API работает
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HealthResponse' }
+
+  /api/contract:
+    get:
+      tags: [System]
+      summary: Получить OpenAPI спецификацию
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [yaml, json]
+            default: yaml
+      responses:
+        '200':
+          description: Контракт
+          content:
+            application/x-yaml: { schema: { type: string } }
+            application/json: { schema: { type: object } }
+
+  /api/logs:
+    get:
+      tags: [System]
+      summary: Серверные логи
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 100, maximum: 1000 }
+        - name: level
+          in: query
+          schema: { type: string, enum: [INFO, WARN, ERROR] }
+        - name: since
+          in: query
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: string }
+                    timestamp: { type: string, format: date-time }
+                    level: { type: string }
+                    message: { type: string }
+
+  # ────────────────────────────────────── KNOWLEDGE BASE — центральный объект настроек
+  /api/kb-config:
+    get:
+      tags: [Knowledge Base]
+      summary: Получить текущую конфигурацию базы знаний
+      responses:
+        '200':
+          description: Текущая конфигурация
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    required: [config]
+                    properties:
+                      config:
+                        $ref: '#/components/schemas/KnowledgeBaseConfig'
+
+    post:
+      tags: [Knowledge Base]
+      summary: Обновить конфигурацию базы знаний
+      description: |
+        Можно обновлять любые поля. Поле `fileSelection` имеет наивысший приоритет.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rootPath: { type: string }
+                includeMask: { type: string }
+                ignorePatterns: { type: string }
+                fileSelection: { type: array, items: { type: string } }
+                metadata: { type: object }
+      responses:
+        '200':
+          description: Конфигурация обновлена
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    required: [config]
+                    properties:
+                      config:
+                        $ref: '#/components/schemas/KnowledgeBaseConfig'
+
+  # ────────────────────────────────────── PROJECT — новый UX (дерево + чекбоксы)
+  /api/project/tree:
+    get:
+      tags: [Project]
+      summary: Получить дерево файлов проекта
+      parameters:
+        - name: rootPath
+          in: query
+          required: true
+          description: Абсолютный путь к проекту на бэкенде
+          schema: { type: string }
+          example: "/app/projects/my-app"
+        - name: depth
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 20, default: 12 }
+      responses:
+        '200':
+          description: Дерево файлов
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ProjectFile' }
+
+  /api/project/selection:
+    post:
+      tags: [Project]
+      summary: Сохранить точную выборку файлов (синхронизируется с KB config)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FileSelectionRequest' }
+      responses:
+        '200':
+          description: Выборка сохранена → KB config обновлён
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      config:
+                        $ref: '#/components/schemas/KnowledgeBaseConfig'
+
+  # ────────────────────────────────────── CORE
+  /api/items:
+    get:
+      tags: [Core]
+      summary: Все AiItems
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AiItem' }
+
+  /api/items/{id}:
+    get:
+      tags: [Core]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AiItem' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/stats:
+    get:
+      tags: [Core]
+      summary: Статистика дашборда
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DashboardStats' }
+
+  /api/graph:
+    get:
+      tags: [Core]
+      summary: Граф зависимостей
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GraphData' }
+
+  # ────────────────────────────────────── RAG CHAT
+  /api/chat:
+    post:
+      tags: [RAG Chat]
+      summary: Задать вопрос по коду
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChatRequest' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChatResponse' }
+
+  # ────────────────────────────────────── PIPELINE
+  /api/pipeline/start:
+    post:
+      tags: [Pipeline]
+      summary: Запустить pipeline
+      description: |
+        Использует текущую конфигурацию из /api/kb-config.
+        Если fileSelection не пуст — используется только он.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                forceRescan:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Pipeline запущен
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      pipeline:
+                        type: object
+                        properties:
+                          id: { type: string }
+                          status: { type: string, enum: [running, completed, error, cancelled] }
+                          startTime: { type: string, format: date-time }
+
+        '428':
+          description: Нет выбранных файлов
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example:
+                success: false
+                error: "No files configured. Set up project via /api/kb-config or /api/project/selection"
+
+  /api/pipeline:
+    get:
+      tags: [Pipeline]
+      summary: Список всех pipeline
+      responses: { '200': { description: OK } }
+
+  /api/pipeline/{id}:
+    get:
+      tags: [Pipeline]
+      summary: Статус pipeline
+    delete:
+      tags: [Pipeline]
+      summary: Отменить pipeline
+
+  /api/pipeline/{id}/progress:
+    get:
+      tags: [Pipeline]
+      summary: Детальный прогресс
+
+  # ────────────────────────────────────── STREAMING
+  /api/logs/stream:
+    get:
+      tags: [Streaming]
+      summary: SSE поток логов
+      responses:
+        '200':
+          content:
+            text/event-stream: { schema: { type: string } }
+
+  /api/pipeline/{id}/stream:
+    get:
+      tags: [Streaming]
+      summary: SSE прогресс pipeline
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            text/event-stream: { schema: { type: string } }
+
+  # ────────────────────────────────────── DEPRECATED (обратная совместимость)
+  /api/files:
+    get:
+      deprecated: true
+      tags: [Knowledge Base]
+      summary: Устаревшее получение дерева
+      description: Используйте /api/project/tree
+      responses:
+        '410':
+          description: Gone — используйте новые эндпоинты

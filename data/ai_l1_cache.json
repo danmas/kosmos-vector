@@ -1,0 +1,219 @@
+{
+  "AIItem": {
+    "l1_edges": "[{\"to\": \"AIItem.__init__\", \"type\": \"contains\"}, {\"to\": \"AIItem.generate_l2\", \"type\": \"contains\"}]",
+    "type": "class",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "AIItem.__init__": {
+    "l1_edges": "[{\"to\": \"AIItem\", \"type\": \"contains\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "AIItem.generate_l2": {
+    "l1_edges": "[{\"to\": \"AIItem\", \"type\": \"contains\"}, {\"to\": \"AIItem.generate_l2\", \"type\": \"assign\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "get_l0_snippet": {
+    "l1_edges": "[{\"to\": \"polish_l1_with_llm\", \"type\": \"assign\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "polish_l1_with_llm": {
+    "l1_edges": "[{\"to\": \"get_l0_snippet\", \"type\": \"assign\"}, {\"to\": \"init_engine\", \"type\": \"assign\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "L2Generator": {
+    "l1_edges": "[{\"to\": \"L2Generator.__init__\", \"type\": \"contains\"}, {\"to\": \"L2Generator._fallback_l2\", \"type\": \"contains\"}, {\"to\": \"L2Generator.generate_l2\", \"type\": \"contains\"}, {\"to\": \"L2Generator._build_prompt\", \"type\": \"contains\"}, {\"to\": \"L2Generator.generate_l2_batch\", \"type\": \"contains\"}, {\"to\": \"init_engine\", \"type\": \"assign\"}]",
+    "type": "class",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "L2Generator.__init__": {
+    "l1_edges": "[{\"to\": \"L2Generator\", \"type\": \"contains\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "L2Generator.generate_l2": {
+    "l1_edges": "[{\"to\": \"L2Generator._fallback_l2\", \"type\": \"calls\"}, {\"to\": \"L2Generator\", \"type\": \"contains\"}, {\"to\": \"L2Generator._build_prompt\", \"type\": \"assign\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "L2Generator.generate_l2_batch": {
+    "l1_edges": "[{\"to\": \"L2Generator._fallback_l2\", \"type\": \"assign\"}, {\"to\": \"L2Generator\", \"type\": \"contains\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "L2Generator._build_prompt": {
+    "l1_edges": "[{\"to\": \"L2Generator\", \"type\": \"contains\"}, {\"to\": \"L2Generator.generate_l2\", \"type\": \"assign\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "L2Generator._fallback_l2": {
+    "l1_edges": "[{\"to\": \"L2Generator.generate_l2_batch\", \"type\": \"assign\"}, {\"to\": \"L2Generator\", \"type\": \"contains\"}, {\"to\": \"L2Generator.generate_l2\", \"type\": \"calls\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "EmbedRetriever": {
+    "l1_edges": "[{\"to\": \"EmbedRetriever._generate_if_needed\", \"type\": \"contains\"}, {\"to\": \"EmbedRetriever.add_items\", \"type\": \"contains\"}, {\"to\": \"EmbedRetriever.encode_query\", \"type\": \"contains\"}, {\"to\": \"EmbedRetriever.get_similarities\", \"type\": \"contains\"}, {\"to\": \"EmbedRetriever._encode\", \"type\": \"contains\"}, {\"to\": \"EmbedRetriever._save_pickle\", \"type\": \"contains\"}, {\"to\": \"init_engine\", \"type\": \"assign\"}, {\"to\": \"EmbedRetriever.__init__\", \"type\": \"contains\"}, {\"to\": \"EmbedRetriever._try_load\", \"type\": \"contains\"}]",
+    "type": "class",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "EmbedRetriever.__init__": {
+    "l1_edges": "[{\"to\": \"EmbedRetriever\", \"type\": \"contains\"}, {\"to\": \"EmbedRetriever._try_load\", \"type\": \"calls\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "EmbedRetriever.add_items": {
+    "l1_edges": "[{\"to\": \"EmbedRetriever._encode\", \"type\": \"assign\"}, {\"to\": \"EmbedRetriever._save_pickle\", \"type\": \"calls\"}, {\"to\": \"EmbedRetriever._generate_if_needed\", \"type\": \"calls\"}, {\"to\": \"EmbedRetriever\", \"type\": \"contains\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "EmbedRetriever._try_load": {
+    "l1_edges": "[{\"to\": \"EmbedRetriever\", \"type\": \"contains\"}, {\"to\": \"EmbedRetriever.__init__\", \"type\": \"calls\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "EmbedRetriever._generate_if_needed": {
+    "l1_edges": "[{\"to\": \"EmbedRetriever._encode\", \"type\": \"assign\"}, {\"to\": \"EmbedRetriever._save_pickle\", \"type\": \"calls\"}, {\"to\": \"EmbedRetriever\", \"type\": \"contains\"}, {\"to\": \"EmbedRetriever.add_items\", \"type\": \"calls\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "EmbedRetriever._encode": {
+    "l1_edges": "[{\"to\": \"EmbedRetriever\", \"type\": \"contains\"}, {\"to\": \"EmbedRetriever.add_items\", \"type\": \"assign\"}, {\"to\": \"EmbedRetriever._generate_if_needed\", \"type\": \"assign\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "EmbedRetriever._save_pickle": {
+    "l1_edges": "[{\"to\": \"EmbedRetriever\", \"type\": \"contains\"}, {\"to\": \"EmbedRetriever.add_items\", \"type\": \"calls\"}, {\"to\": \"EmbedRetriever._generate_if_needed\", \"type\": \"calls\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "EmbedRetriever.encode_query": {
+    "l1_edges": "[{\"to\": \"EmbedRetriever\", \"type\": \"contains\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "EmbedRetriever.get_similarities": {
+    "l1_edges": "[{\"to\": \"EmbedRetriever\", \"type\": \"contains\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "build_graph": {
+    "l1_edges": "[{\"to\": \"init_engine\", \"type\": \"assign\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "parse_self_to_ai_items": {
+    "l1_edges": "[{\"to\": \"init_engine\", \"type\": \"assign\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "ImprovedCodeParser": {
+    "l1_edges": "[{\"to\": \"ImprovedCodeParser.visit_Call\", \"type\": \"contains\"}, {\"to\": \"ImprovedCodeParser.visit_Import\", \"type\": \"contains\"}, {\"to\": \"ImprovedCodeParser.visit_ImportFrom\", \"type\": \"contains\"}, {\"to\": \"ImprovedCodeParser.__init__\", \"type\": \"contains\"}, {\"to\": \"ImprovedCodeParser.visit_Assign\", \"type\": \"contains\"}, {\"to\": \"ImprovedCodeParser.visit_FunctionDef\", \"type\": \"contains\"}, {\"to\": \"ImprovedCodeParser.visit_ClassDef\", \"type\": \"contains\"}]",
+    "type": "class",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "ImprovedCodeParser.__init__": {
+    "l1_edges": "[{\"to\": \"ImprovedCodeParser\", \"type\": \"contains\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "ImprovedCodeParser.visit_ClassDef": {
+    "l1_edges": "[{\"to\": \"ImprovedCodeParser\", \"type\": \"contains\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "ImprovedCodeParser.visit_FunctionDef": {
+    "l1_edges": "[{\"to\": \"ImprovedCodeParser\", \"type\": \"contains\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "ImprovedCodeParser.visit_Call": {
+    "l1_edges": "[{\"to\": \"ImprovedCodeParser\", \"type\": \"contains\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "ImprovedCodeParser.visit_Assign": {
+    "l1_edges": "[{\"to\": \"ImprovedCodeParser\", \"type\": \"contains\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "ImprovedCodeParser.visit_Import": {
+    "l1_edges": "[{\"to\": \"ImprovedCodeParser\", \"type\": \"contains\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "ImprovedCodeParser.visit_ImportFrom": {
+    "l1_edges": "[{\"to\": \"ImprovedCodeParser\", \"type\": \"contains\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  },
+  "init_engine": {
+    "l1_edges": "[{\"to\": \"polish_l1_with_llm\", \"type\": \"assign\"}, {\"to\": \"build_graph\", \"type\": \"assign\"}, {\"to\": \"L2Generator\", \"type\": \"assign\"}, {\"to\": \"parse_self_to_ai_items\", \"type\": \"assign\"}, {\"to\": \"EmbedRetriever\", \"type\": \"assign\"}]",
+    "type": "function",
+    "file_path": "C:\\ERV\\projects-ex\\kosmos-backend\\rag_engine.py",
+    "source": "AST",
+    "timestamp": 1764153421.8257399
+  }
+}
