@@ -1,0 +1,1376 @@
+openapi: 3.0.3
+info:
+  title: AiItem RAG Architect API
+  info:
+    version: 2.2.0
+    description: |
+      RESTful API для системы RAG-анализа кодовой базы.
+
+      Версия 2.2.0:
+      • Добавлена поддержка Logic Graph: сохранение и получение графов логики функций через /api/items/{id}/logic-graph
+      • Интеграция с Logic Architect для визуализации потока управления функций
+      
+      Версия 2.1.2:
+      • Расширена поддержка языков: language теперь свободное поле (sql, csharp, rust и любые другие)
+      • Убрано жёсткое ограничение enum для гибкости
+      • Полная совместимость с предыдущими версиями
+  contact:
+    name: AiItem RAG Architect Team
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3200
+    description: Development server
+  - url: https://api.aiitem.example.com
+    description: Production server
+
+tags:
+  - name: Core
+    description: AiItems, статистика, граф зависимостей
+  - name: Project
+    description: Новая модель — дерево файлов + точный выбор
+  - name: Knowledge Base
+    description: Классическая настройка проекта (полностью поддерживается и расширена)
+  - name: RAG Chat
+    description: Чат с RAG-движком
+  - name: Pipeline
+    description: Управление pipeline обработки
+  - name: Streaming
+    description: Server-Sent Events (логи, прогресс)
+  - name: System
+    description: Health, логи, контракт
+
+components:
+  schemas:
+    # ────────────────────────────────────── Основные типы
+    AiItemType:
+      type: string
+      enum: [function, class, method, module, interface, struct, table, view, procedure, trigger, index, sequence, type, domain, schema, role, grant]
+    Language:
+          type: string
+          nullable: true
+          description: Язык кода, определённый по расширению файла (например: python, javascript, sql, unknown и т.д.)
+          example: sql
+    AiItem:
+      type: object
+      required: [id, type, language, l0_code, l1_deps, l2_desc, filePath]
+      properties:
+        id: { type: string, example: "utils.fetchData" }
+        type: { $ref: '#/components/schemas/AiItemType' }
+        language: { $ref: '#/components/schemas/Language' }
+        l0_code: { type: string }
+        l1_deps: { type: array, items: { type: string } }
+        l2_desc: { type: string }
+        filePath: { type: string, example: "./src/utils/api.ts" }
+    ProjectFile:
+          type: object
+          required: [path, name, type, size, selected]
+          properties:
+            path:
+              type: string
+              description: Относительный путь от корня проекта (всегда с ./)
+              example: "./src/utils/api.ts"
+            name: { type: string }
+            type: { type: string, enum: [file, directory] }
+            size: { type: integer }
+            selected: { type: boolean, default: true }
+            children: { type: array, items: { $ref: '#/components/schemas/ProjectFile' } }
+            language:
+              $ref: '#/components/schemas/Language'
+              description: Язык файла (nullable для папок и неизвестных)
+            error: { type: boolean, default: false }
+            errorMessage: { type: string, nullable: true }
+    AiItemSummary:
+      type: object
+      required: [id, type, language, filePath]
+      properties:
+        id: { type: string, example: "utils.fetchData" }
+        type: { $ref: '#/components/schemas/AiItemType' }
+        language: { $ref: '#/components/schemas/Language' }
+        filePath: { type: string, example: "./src/utils/api.ts" }
+
+    # ────────────────────────────────────── Граф
+    GraphNode:
+      type: object
+      required: [id, type, language, filePath, l2_desc]
+      properties:
+        id: { type: string }
+        type: { $ref: '#/components/schemas/AiItemType' }
+        language: { $ref: '#/components/schemas/Language' }
+        filePath: { type: string }
+        l2_desc: { type: string }
+
+    GraphLink:
+      type: object
+      required: [source, target]
+      properties:
+        source: { type: string }
+        target: { type: string }
+        label:
+          type: string
+          nullable: true
+          description: Опциональное имя/метка связи (например, имя функции или метода)
+
+    GraphData:
+      type: object
+      required: [nodes, links]
+      properties:
+        nodes: { type: array, items: { $ref: '#/components/schemas/GraphNode' } }
+        links: { type: array, items: { $ref: '#/components/schemas/GraphLink' } }
+
+    # ────────────────────────────────────── Logic Graph (для Logic Architect)
+    LogicNodeType:
+      type: string
+      enum: [start, end, decision, process, db_call, exception]
+      description: Тип узла в графе логики функции
+
+    LogicNode:
+      type: object
+      required: [id, type, label]
+      properties:
+        id:
+          type: string
+          description: Уникальный идентификатор узла
+          example: "node_1"
+        type:
+          $ref: '#/components/schemas/LogicNodeType'
+        label:
+          type: string
+          description: Краткая метка узла
+          example: "Проверка условия"
+        details:
+          type: string
+          nullable: true
+          description: Детальное описание узла
+          example: "Проверяет, превышает ли доход пороговое значение"
+        x:
+          type: number
+          nullable: true
+          description: Координата X для визуализации
+        y:
+          type: number
+          nullable: true
+          description: Координата Y для визуализации
+
+    LogicEdge:
+      type: object
+      required: [id, from, to]
+      properties:
+        id:
+          type: string
+          description: Уникальный идентификатор связи
+          example: "edge_1"
+        from:
+          type: string
+          description: ID узла-источника
+          example: "node_1"
+        to:
+          type: string
+          description: ID узла-цели
+          example: "node_2"
+        label:
+          type: string
+          nullable: true
+          description: Метка связи (например, "True", "False", "Да", "Нет")
+          example: "True"
+
+    LogicGraph:
+      type: object
+      required: [nodes, edges]
+      properties:
+        nodes:
+          type: array
+          items: { $ref: '#/components/schemas/LogicNode' }
+          description: Массив узлов графа логики
+        edges:
+          type: array
+          items: { $ref: '#/components/schemas/LogicEdge' }
+          description: Массив связей между узлами
+
+    LogicAnalysisResponse:
+      type: object
+      required: [logic, graph]
+      properties:
+        logic:
+          type: string
+          description: Текстовое описание логики функции на русском языке
+          example: "Функция проверяет условие и возвращает результат в зависимости от значения"
+        graph:
+          $ref: '#/components/schemas/LogicGraph'
+
+    LogicGraphResponse:
+      type: object
+      required: [success, itemId, logicGraph]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        itemId:
+          type: string
+          description: ID AiItem, к которому привязан анализ логики
+          example: "utils.fetchData"
+        logicGraph:
+          $ref: '#/components/schemas/LogicAnalysisResponse'
+          description: Полный результат анализа, содержащий и текстовое описание логики (logic), и граф потока управления (graph)
+        savedAt:
+          type: string
+          format: date-time
+          description: Время сохранения анализа
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время последнего обновления анализа
+
+    # ────────────────────────────────────── Статистика
+    TypeStat:
+      type: object
+      required: [name, count]
+      properties:
+        name: { type: string }
+        count: { type: integer }
+
+    LanguageStat:
+      type: object
+      required: [name, value]
+      properties:
+        name: { type: string }
+        value: { type: integer }
+
+    DashboardStats:
+      type: object
+      required: [totalItems, totalDeps, averageDependencyDensity, typeStats, languageStats, vectorIndexSize, lastScan]
+      properties:
+        totalItems: { type: integer }
+        totalDeps: { type: integer }
+        averageDependencyDensity: { type: string }
+        typeStats: { type: array, items: { $ref: '#/components/schemas/TypeStat' } }
+        languageStats: { type: array, items: { $ref: '#/components/schemas/LanguageStat' } }
+        vectorIndexSize: { type: string }
+        lastScan: { type: string, format: date-time }
+
+    # ────────────────────────────────────── Новая модель файловой системы
+    ProjectFile:
+      type: object
+      required: [path, name, type, size, selected]
+      properties:
+        path:
+          type: string
+          description: Относительный путь от корня проекта (всегда с ./)
+          example: "./src/utils/api.ts"
+        name: { type: string }
+        type: { type: string, enum: [file, directory] }
+        size: { type: integer }
+        selected: { type: boolean, default: true }
+        children: { type: array, items: { $ref: '#/components/schemas/ProjectFile' } }
+        language:
+          $ref: '#/components/schemas/Language'
+          description: Язык файла (nullable для папок и неизвестных)
+        error: { type: boolean, default: false }
+        errorMessage: { type: string, nullable: true }
+
+    # ────────────────────────────────────── KnowledgeBaseConfig — полностью восстановлен и расширен
+    KnowledgeBaseConfig:
+      type: object
+      required: [rootPath, includeMask, ignorePatterns, lastUpdated]
+      properties:
+        rootPath:
+          type: string
+          description: Абсолютный путь к проекту на стороне бэкенда
+          example: "/app/projects/my-awesome-app"
+        includeMask:
+          type: string
+          description: Glob-паттерн включаемых файлов (для обратной совместимости)
+          example: "**/*.{py,js,ts,tsx,go,java}"
+        ignorePatterns:
+          type: string
+          description: Паттерны игнорирования (через запятую)
+          example: "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**"
+        fileSelection:
+          type: array
+          items: { type: string }
+          description: |
+            Точный список выбранных относительных путей.
+            Если массив не пустой — имеет приоритет над includeMask/ignorePatterns.
+          example:
+            - "./src/utils/api.ts"
+            - "./src/components/Button.tsx"
+            - "./backend/main.py"
+        lastUpdated:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          description: Произвольные метаданные проекта
+          example:
+            projectName: "My Awesome App"
+            description: "Full-stack монолит"
+            tags: ["react", "fastapi", "docker"]
+
+    # ────────────────────────────────────── Запросы
+    FileSelectionRequest:
+      type: object
+      required: [rootPath, files]
+      properties:
+        rootPath: { type: string, example: "/app/projects/my-app" }
+        files:
+          type: array
+          items: { type: string }
+          example:
+            - "./src/utils/api.ts"
+            - "./src/components/Button.tsx"
+
+    ChatRequest:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+
+    ChatResponse:
+      type: object
+      required: [response, timestamp]
+      properties:
+        response: { type: string }
+        usedContextIds: { type: array, items: { type: string } }
+        timestamp: { type: string, format: date-time }
+
+    SuccessResponse:
+      type: object
+      required: [success]
+      properties:
+        success: { type: boolean, enum: [true] }
+        message: { type: string }
+
+    ErrorResponse:
+      type: object
+      required: [success, error]
+      properties:
+        success: { type: boolean, enum: [false] }
+        error: { type: string }
+
+    HealthResponse:
+      type: object
+      required: [status, timestamp, version]
+      properties:
+        status: { type: string, enum: [ok] }
+        timestamp: { type: string, format: date-time }
+        version: { type: string, example: "2.1.1" }
+
+    PipelineStepStatus:
+      type: object
+      required: [id, name, label, status, progress, itemsProcessed, totalItems]
+      properties:
+        id:
+          type: integer
+          description: ID шага (1-7)
+          enum: [1, 2, 3, 4, 5, 6, 7]
+        name:
+          type: string
+          description: Имя шага
+          enum: [parsing, dependencies, enrichment, vectorization, indexing]
+        label:
+          type: string
+          description: Человекочитаемое название шага
+          example: "Polyglot Parsing (L0)"
+        status:
+          type: string
+          description: Статус шага
+          enum: [pending, running, completed, failed]
+        progress:
+          type: integer
+          description: Прогресс выполнения (0-100)
+          minimum: 0
+          maximum: 100
+        itemsProcessed:
+          type: integer
+          description: Количество обработанных элементов
+          minimum: 0
+        totalItems:
+          type: integer
+          description: Общее количество элементов
+          minimum: 0
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время начала выполнения
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время завершения выполнения
+        error:
+          type: string
+          nullable: true
+          description: Сообщение об ошибке (если статус failed)
+        report:
+          type: object
+          nullable: true
+          description: Детальный отчет о выполнении шага в произвольном формате JSON (структура зависит от конкретного шага, доступен после завершения)
+
+    PipelineStepsStatusResponse:
+      type: object
+      required: [success, steps]
+      properties:
+        success: { type: boolean, enum: [true] }
+        steps:
+          type: array
+          items: { $ref: '#/components/schemas/PipelineStepStatus' }
+
+    PipelineStepHistoryEntry:
+      type: object
+      required: [timestamp, status]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Время изменения состояния
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+          description: Статус шага в момент записи
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          nullable: true
+          description: Прогресс выполнения (0-100)
+        itemsProcessed:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Количество обработанных элементов
+        totalItems:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Общее количество элементов
+        error:
+          type: string
+          nullable: true
+          description: Сообщение об ошибке (если есть)
+        report:
+          type: object
+          nullable: true
+          description: Отчет о выполнении (если доступен)
+
+    PipelineStepHistoryResponse:
+      type: object
+      required: [success, stepId, history]
+      properties:
+        success: { type: boolean, enum: [true] }
+        stepId:
+          type: integer
+          description: ID шага
+        stepName:
+          type: string
+          description: Имя шага
+        history:
+          type: array
+          items: { $ref: '#/components/schemas/PipelineStepHistoryEntry' }
+          description: История выполнения шага (от старых к новым)
+
+    PipelineStepsHistoryResponse:
+      type: object
+      required: [success, steps]
+      properties:
+        success: { type: boolean, enum: [true] }
+        steps:
+          type: array
+          items:
+            type: object
+            required: [stepId, stepName, history]
+            properties:
+              stepId:
+                type: integer
+                description: ID шага
+              stepName:
+                type: string
+                description: Имя шага
+              history:
+                type: array
+                items: { $ref: '#/components/schemas/PipelineStepHistoryEntry' }
+                description: История выполнения шага (от старых к новым)
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    NotFound:
+      description: Не найдено
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    InternalError:
+      description: Внутренняя ошибка
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+paths:
+  # ────────────────────────────────────── SYSTEM
+  /api/health:
+    get:
+      tags: [System]
+      summary: Health Check
+      operationId: getHealth
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      responses:
+        '200':
+          description: API работает
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HealthResponse' }
+
+  /api/contract:
+    get:
+      tags: [System]
+      summary: Получить OpenAPI спецификацию
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [yaml, json]
+            default: yaml
+      responses:
+        '200':
+          description: Контракт
+          content:
+            application/x-yaml: { schema: { type: string } }
+            application/json: { schema: { type: object } }
+
+  /api/logs:
+    get:
+      tags: [System]
+      summary: Серверные логи
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: limit
+          in: query
+          schema: { type: integer, default: 100, maximum: 1000 }
+        - name: level
+          in: query
+          schema: { type: string, enum: [INFO, WARN, ERROR] }
+        - name: since
+          in: query
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: string }
+                    timestamp: { type: string, format: date-time }
+                    level: { type: string }
+                    message: { type: string }
+
+  # ────────────────────────────────────── KNOWLEDGE BASE — центральный объект настроек
+  /api/kb-config:
+    get:
+      tags: [Knowledge Base]
+      summary: Получить текущую конфигурацию базы знаний
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      responses:
+        '200':
+          description: Текущая конфигурация
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    required: [config]
+                    properties:
+                      config:
+                        $ref: '#/components/schemas/KnowledgeBaseConfig'
+
+    post:
+      tags: [Knowledge Base]
+      summary: Обновить конфигурацию базы знаний
+      description: |
+        Можно обновлять любые поля. Поле `fileSelection` имеет наивысший приоритет.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rootPath: { type: string }
+                includeMask: { type: string }
+                ignorePatterns: { type: string }
+                fileSelection: { type: array, items: { type: string } }
+                metadata: { type: object }
+      responses:
+        '200':
+          description: Конфигурация обновлена
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    required: [config]
+                    properties:
+                      config:
+                        $ref: '#/components/schemas/KnowledgeBaseConfig'
+
+  /api/vector-db:
+    delete:
+      tags: [Knowledge Base]
+      summary: Очистить векторную базу данных
+      description: |
+        Удаляет все векторы и индексы для текущего context-code.
+        Это действие нельзя отменить. Все данные векторной БД будут удалены.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      responses:
+        '200':
+          description: Векторная БД успешно очищена
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Vector database cleared successfully"
+        '500':
+          description: Ошибка при очистке
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  # ────────────────────────────────────── PROJECT — новый UX (дерево + чекбоксы)
+  /api/project/tree:
+    get:
+      tags: [Project]
+      summary: Получить дерево файлов проекта
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: rootPath
+          in: query
+          required: true
+          description: Абсолютный путь к проекту на бэкенде
+          schema: { type: string }
+          example: "/app/projects/my-app"
+        - name: depth
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 20, default: 12 }
+      responses:
+        '200':
+          description: Дерево файлов
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ProjectFile' }
+
+  /api/project/selection:
+    post:
+      tags: [Project]
+      summary: Сохранить точную выборку файлов (синхронизируется с KB config)
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FileSelectionRequest' }
+      responses:
+        '200':
+          description: Выборка сохранена → KB config обновлён
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      config:
+                        $ref: '#/components/schemas/KnowledgeBaseConfig'
+
+  # ────────────────────────────────────── CORE
+  /api/items:
+    get:
+      tags: [Core]
+      summary: Все AiItems
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AiItem' }
+
+  /api/items-list:
+    get:
+      tags: [Core]
+      summary: Список метаданных AiItems
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AiItemSummary' }
+
+  /api/items/{id}:
+    get:
+      tags: [Core]
+      summary: Получить AiItem по ID
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AiItem' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/items/{id}/logic-graph:
+    get:
+      tags: [Core]
+      summary: Получить сохраненный анализ логики для AiItem
+      description: |
+        Возвращает полный результат анализа логики для указанного AiItem:
+        - Текстовое описание логики функции (поле `logic`)
+        - Граф потока управления (поле `graph`) с узлами и связями
+        
+        Анализ создан через Logic Architect и содержит как текстовое описание, так и визуализацию графа.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID AiItem
+          schema: { type: string }
+          example: "utils.fetchData"
+      responses:
+        '200':
+          description: Анализ логики найден (содержит и описание, и граф)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LogicGraphResponse' }
+        '404':
+          description: Анализ логики не найден для данного AiItem
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example:
+                success: false
+                error: "Logic analysis not found for item: utils.fetchData"
+
+    post:
+      tags: [Core]
+      summary: Сохранить анализ логики для AiItem
+      description: |
+        Сохраняет полный результат анализа логики для указанного AiItem:
+        - Текстовое описание логики функции (поле `logic`)
+        - Граф потока управления (поле `graph`) с узлами и связями
+        
+        Если анализ уже существует для данного AiItem, он будет перезаписан.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID AiItem
+          schema: { type: string }
+          example: "utils.fetchData"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LogicAnalysisResponse' }
+            example:
+              logic: "Функция проверяет условие и возвращает результат в зависимости от значения"
+              graph:
+                nodes:
+                  - id: "start_1"
+                    type: "start"
+                    label: "Начало"
+                  - id: "decision_1"
+                    type: "decision"
+                    label: "Проверка условия"
+                    details: "Проверяет, превышает ли значение порог"
+                  - id: "process_1"
+                    type: "process"
+                    label: "Вычисление результата"
+                  - id: "end_1"
+                    type: "end"
+                    label: "Конец"
+                edges:
+                  - id: "e1"
+                    from: "start_1"
+                    to: "decision_1"
+                  - id: "e2"
+                    from: "decision_1"
+                    to: "process_1"
+                    label: "True"
+                  - id: "e3"
+                    from: "process_1"
+                    to: "end_1"
+      responses:
+        '200':
+          description: Анализ логики успешно сохранен (и описание, и граф)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LogicGraphResponse' }
+        '400':
+          description: Неверный формат данных анализа (должны быть и logic, и graph)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '404':
+          description: AiItem не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    put:
+      tags: [Core]
+      summary: Обновить анализ логики для AiItem
+      description: |
+        Обновляет существующий анализ логики для указанного AiItem.
+        Обновляет и текстовое описание логики, и граф потока управления.
+        Если анализ не существует для данного AiItem, возвращает ошибку 404.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID AiItem
+          schema: { type: string }
+          example: "utils.fetchData"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LogicAnalysisResponse' }
+      responses:
+        '200':
+          description: Анализ логики успешно обновлен (и описание, и граф)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LogicGraphResponse' }
+        '404':
+          description: Анализ логики не найден для данного AiItem
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    delete:
+      tags: [Core]
+      summary: Удалить анализ логики для AiItem
+      description: |
+        Удаляет сохраненный анализ логики (и текстовое описание, и граф) для указанного AiItem.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID AiItem
+          schema: { type: string }
+          example: "utils.fetchData"
+      responses:
+        '200':
+          description: Анализ логики успешно удален (и описание, и граф)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Logic analysis deleted successfully for item: utils.fetchData"
+        '404':
+          description: Анализ логики не найден для данного AiItem
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/stats:
+    get:
+      tags: [Core]
+      summary: Статистика дашборда
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DashboardStats' }
+
+  /api/graph:
+    get:
+      tags: [Core]
+      summary: Граф зависимостей
+      operationId: getGraph
+      description: Возвращает весь граф зависимостей между AiItems в виде узлов и связей
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      responses:
+        '200':
+          description: Граф зависимостей
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GraphData' }
+              example:
+                nodes:
+                  - id: "routes/api.registerFile"
+                    type: "function"
+                    language: "javascript"
+                    filePath: "C:\\ERV\\projects-ex\\aiitem-rag-architect\\docs\\api.js"
+                    l2_desc: "Регистрирует информацию о файле в базе данных"
+                  - id: "DbService.saveFileInfo"
+                    type: "method"
+                    language: "javascript"
+                    filePath: "C:\\ERV\\projects-ex\\aiitem-rag-architect\\docs\\DbService.js"
+                    l2_desc: "Сохраняет метаданные файла и его содержимое"
+                links:
+                  - source: "routes/api.registerFile"
+                    target: "DbService.saveFileInfo"
+                    label: "saveFileInfo"
+
+  # ────────────────────────────────────── RAG CHAT
+  /api/chat:
+    post:
+      tags: [RAG Chat]
+      summary: Задать вопрос по коду
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChatRequest' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChatResponse' }
+
+  # ────────────────────────────────────── PIPELINE
+  /api/pipeline/start:
+    post:
+      tags: [Pipeline]
+      summary: Запустить pipeline
+      description: |
+        Использует текущую конфигурацию из /api/kb-config.
+        Если fileSelection не пуст — используется только он.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                forceRescan:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Pipeline запущен
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      pipeline:
+                        type: object
+                        properties:
+                          id: { type: string }
+                          status: { type: string, enum: [running, completed, error, cancelled] }
+                          startTime: { type: string, format: date-time }
+
+        '428':
+          description: Нет выбранных файлов
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example:
+                success: false
+                error: "No files configured. Set up project via /api/kb-config or /api/project/selection"
+
+  /api/pipeline:
+    get:
+      tags: [Pipeline]
+      summary: Список всех pipeline
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      responses: { '200': { description: OK } }
+
+  /api/pipeline/{id}:
+    get:
+      tags: [Pipeline]
+      summary: Статус pipeline
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+    delete:
+      tags: [Pipeline]
+      summary: Отменить pipeline
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+
+  /api/pipeline/{id}/progress:
+    get:
+      tags: [Pipeline]
+      summary: Детальный прогресс
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+
+  /api/pipeline/steps/status:
+    get:
+      tags: [Pipeline]
+      summary: Статус всех шагов pipeline
+      description: |
+        Возвращает глобальное состояние всех шагов pipeline.
+        Используется для мониторинга прогресса независимо от конкретного экземпляра pipeline.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      responses:
+        '200':
+          description: Статус всех шагов
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PipelineStepsStatusResponse' }
+        '500':
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/pipeline/steps/history:
+    get:
+      tags: [Pipeline]
+      summary: История выполнения всех шагов pipeline
+      description: |
+        Возвращает историю выполнения всех шагов pipeline.
+        История содержит записи о каждом изменении статуса шагов с временными метками.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: limit
+          in: query
+          required: false
+          description: Максимальное количество записей истории на шаг (по умолчанию 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: stepId
+          in: query
+          required: false
+          description: Фильтр по ID шага (1-7). Если не указан, возвращается история всех шагов
+          schema:
+            type: integer
+            enum: [1, 2, 3, 4, 5, 6, 7]
+      responses:
+        '200':
+          description: История выполнения шагов
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PipelineStepsHistoryResponse' }
+        '500':
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/pipeline/step/{id}/history:
+    get:
+      tags: [Pipeline]
+      summary: История выполнения конкретного шага pipeline
+      description: |
+        Возвращает историю выполнения конкретного шага pipeline.
+        История содержит записи о каждом изменении статуса шага с временными метками.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID шага (1-7)
+          schema:
+            type: integer
+            enum: [1, 2, 3, 4, 5, 6, 7]
+        - name: limit
+          in: query
+          required: false
+          description: Максимальное количество записей истории (по умолчанию 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+      responses:
+        '200':
+          description: История выполнения шага
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PipelineStepHistoryResponse' }
+        '404':
+          description: Шаг не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500':
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  # ────────────────────────────────────── STREAMING
+  /api/logs/stream:
+    get:
+      tags: [Streaming]
+      summary: SSE поток логов
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      responses:
+        '200':
+          content:
+            text/event-stream: { schema: { type: string } }
+
+  /api/pipeline/{id}/stream:
+    get:
+      tags: [Streaming]
+      summary: SSE прогресс pipeline
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            text/event-stream: { schema: { type: string } }
+
+  # ────────────────────────────────────── DEPRECATED (обратная совместимость)
+  /api/files:
+    get:
+      deprecated: true
+      tags: [Knowledge Base]
+      summary: Устаревшее получение дерева
+      description: Используйте /api/project/tree
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      responses:
+        '410':
+          description: Gone — используйте новые эндпоинты

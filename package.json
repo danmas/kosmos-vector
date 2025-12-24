@@ -1,0 +1,47 @@
+{
+  "name": "aian-vector-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "version": "1.0.0",
+  "description": "LangChain RAG demo with PostgreSQL, free version",
+  "main": "server.js",
+  "scripts": {
+    "start": "bun --watch server.js",
+    "bootstrap": "bun install",
+    "start:v2": "bun server-v2/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test-chunk-names": "bun tests/test_all_chunk_names.js",
+    "test-chunk-names-internal": "bun tests/test_all_chunk_names.js --internal",
+    "test-chunk-names-api": "bun tests/test_all_chunk_names.js --api",
+    "test-index-access": "bun tests/test_index_access.js",
+    "test-query-access": "bun tests/test_query_access.js",
+    "test-sql-vectorization": "bun tests/test_sql_vectorization.js",
+    "test-sql-levels": "bun tests/test_sql_vectorization_levels.js",
+    "test:shopping-cart": "bun tests/test-epample-ShoppingCart.js",
+    "test:sql-order-system": "bun tests/test-sql-order-system.js"
+  },
+  "dependencies": {
+    "@aian-vector/core": "1.0.0",
+    "@modelcontextprotocol/sdk": "^1.24.3",
+    "chalk": "^5.4.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "js-yaml": "^4.1.0",
+    "minimatch": "^10.1.1",
+    "node-fetch": "^2.6.1",
+    "pg": "^8.11.3"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

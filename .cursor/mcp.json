@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+        "_AIAN_MODEL_REST": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "C:\\ERV\\projects-ex\\obsidian-project-vault\\aian-model\\"
+            ]
+        }
+    }
+}

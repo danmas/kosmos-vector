@@ -1,0 +1,261 @@
+[
+  {
+    "full_name": "carl_auct._get_auct_min_price",
+    "sname": "_get_auct_min_price",
+    "comment": "_start_price",
+    "signature": "carl_auct._get_auct_min_price(p_id_auction int)",
+    "body": "create or replace function carl_auct._get_auct_min_price(p_id_auction int)\r\n  returns int security definer as $$\r\n\tselect a.min_price from auction a\r\n    where a.id_auction = p_id_auction\r\n$$\r\nlanguage sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._get_auct_curent_price",
+    "sname": "_get_auct_curent_price",
+    "comment": null,
+    "signature": "carl_auct._get_auct_curent_price(p_id_auction int)",
+    "body": "create or replace function carl_auct._get_auct_curent_price(p_id_auction int)\r\n  returns int security definer as $$\r\n\tselect ab.bid_value from auction_bid ab\r\n    where ab.id_auction = p_id_auction\r\n      and ab.bid_status = 'LEAD'\r\n$$\r\nlanguage sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._get_auct_id_user",
+    "sname": "_get_auct_id_user",
+    "comment": "Возвращает id_user аукциона с p_id_auction",
+    "signature": "carl_auct._get_auct_id_user(p_id_auction int)",
+    "body": "create or replace function carl_auct._get_auct_id_user(p_id_auction int)\r\n\treturns int\r\nsecurity definer as $$\r\n\tselect up.id_user from auction a, user_profile up where\r\n    a.id_user_profile = up.id_user_profile\r\n    and up.is_deleted = 'N'\r\n    and a.id_auction = p_id_auction and a.is_deleted = 'N'\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._get_auct_type",
+    "sname": "_get_auct_type",
+    "comment": "Возвращает auction_type аукциона с p_id_auction\n select _get_auct_type(2000);",
+    "signature": "carl_auct._get_auct_type(p_id_auction int)",
+    "body": "create or replace function carl_auct._get_auct_type(p_id_auction int)\r\n\treturns varchar\r\nsecurity definer as $$\r\n\tselect a.auction_type::varchar from auction a where\r\n    a.id_auction = p_id_auction and a.is_deleted = 'N'\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._get_auct_dt_end",
+    "sname": "_get_auct_dt_end",
+    "comment": "Возвращает dt_end аукциона с p_id_auction\n select _get_auct_type(2000);",
+    "signature": "carl_auct._get_auct_dt_end(p_id_auction int)",
+    "body": "create or replace function carl_auct._get_auct_dt_end(p_id_auction int)\r\n\treturns auction.dt_end%type\r\nsecurity definer as $$\r\n\tselect a.dt_end from auction a where\r\n    a.id_auction = p_id_auction and a.is_deleted = 'N'\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._get_auct_id_object",
+    "sname": "_get_auct_id_object",
+    "comment": "Возвращает id_object аукциона с p_id_auction",
+    "signature": "carl_auct._get_auct_id_object(p_id_auction int)",
+    "body": "create or replace function carl_auct._get_auct_id_object(p_id_auction int)\r\n\treturns int\r\nsecurity definer as $$\r\n\tselect a.id_object from auction a where a.id_auction = p_id_auction and a.is_deleted = 'N'\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._getWorkflowStatus",
+    "sname": "_getWorkflowStatus",
+    "comment": "Возвращает состояние процесса аукциона с p_id_auction\n Исключения:\n Пример: select carl_auct._getWorkflowStatus(1);",
+    "signature": "carl_auct._getWorkflowStatus(p_id_auction int)",
+    "body": "create or replace function carl_auct._getWorkflowStatus(p_id_auction int)\r\n\treturns varchar\r\nsecurity definer as $$\r\n  select workflow_status from auction where id_auction = p_id_auction\r\n    and is_deleted = 'N'\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct.getAuctTradeMaster",
+    "sname": "getAuctTradeMaster",
+    "comment": "Возвращает организатора торгов для аукциона p_id_auction\n если не задан то вернет null\n Пример: select carl_auct.getAuctTradeMaster(1000);",
+    "signature": "carl_auct.getAuctTradeMaster(p_id_auction int)",
+    "body": "create or replace function carl_auct.getAuctTradeMaster(p_id_auction int)\r\n\treturns varchar\r\nsecurity definer as $$\r\n  select carl_prof.getProfParameter(carl_auct._get_auct_id_prof(p_id_auction),'{trade_master}',null)\r\n$$ language sql;\r\n\r\n\r\n-- drop function if existscarl_auct.getAuctCommission(p_id_profile_sel int, p_id_profile_buy int);"
+  },
+  {
+    "full_name": "carl_auct.getAuctCommission2",
+    "sname": "getAuctCommission2",
+    "comment": "Возвращает коммиссии продажи для аукциона p_id_auction",
+    "signature": "carl_auct.getAuctCommission2(p_id_auction int)",
+    "body": "create or replace function carl_auct.getAuctCommission2(p_id_auction int)\r\n\treturns table(for_company int, for_individual int)\r\nsecurity definer as $$\r\n  select for_company, for_individual from auct_commission where id_auction = p_id_auction\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._createNewAuctionJb",
+    "sname": "_createNewAuctionJb",
+    "comment": "Создание аукциона для .\n Возвращает: id_auction нового аукциона\n Исключения: NO_SUCH_AUCTION_TYPE\n Пример:",
+    "signature": "carl_auct._createNewAuctionJb(p_jb jsonb\r\n  , p_update_expert_cert boolean default true)",
+    "body": "create or replace function carl_auct._createNewAuctionJb(p_jb jsonb\r\n  , p_update_expert_cert boolean default true)\r\n\treturns int\r\nsecurity definer as $$\r\n\tselect carl_auct._createNewAuction(\r\n\t\tp_jb#>>'{auction,seller}', p_jb#>>'{auction,auction_type}'\r\n\t\t, (p_jb#>>'{auction,id_object}')::int, (p_jb#>>'{auction,id_user_profile}')::int\r\n\t\t, to_timestamp((p_jb#>>'{auction,dt_start}')::int)::timestamp without time zone\r\n\t\t, to_timestamp((p_jb#>>'{auction,dt_end}')::int)::timestamp without time zone\r\n\t\t, (p_jb#>>'{auction,step}')::int\r\n\t\t, (p_jb#>>'{auction,buy_now}')::int, (p_jb#>>'{auction,min_price}')::int\r\n\t\t, (p_jb#>>'{auction,start_price}')::int\r\n\t\t, p_jb#>>'{auction,source_url}'\r\n\t\t-- , (p_jb#>>'{auction,balance_reserv_sum}')::int\r\n\t\t, (p_jb#>>'{auction,reserv_comp}')::int\r\n\t\t, (p_jb#>>'{auction,reserv_indiv}')::int\r\n    , (p_jb#>>'{auction,approve_days}')::int\r\n    , (p_jb#>>'{auction,who_can_buy}')::int\r\n    , (p_jb#>>'{car,properties,expert_cert}')\r\n    , p_update_expert_cert\r\n    , (p_jb#>>'{auction,is_open_counter}')::boolean\r\n    , (p_jb#>>'{auction,reduce_start_price}')::boolean\r\n  )\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._getAuctBidCount",
+    "sname": "_getAuctBidCount",
+    "comment": "Возвращает кол-во ставок по аукциону\n Пример:",
+    "signature": "carl_auct._getAuctBidCount(p_id_auction int)",
+    "body": "create or replace function carl_auct._getAuctBidCount(p_id_auction int)\r\n\treturns bigint\r\nsecurity definer as $$\r\n  -- select count(*) from carl_auct._getAuctionHistorySel(p_id_auction) as j where j#>>'{ot}' in ('MAKE_BID','AUTO_BID','BUYNOW')\r\n  select count(*) from auction_log where id_auction = p_id_auction\r\n    and event_type in ('MAKE_BID','AUTO_BID','BUYNOW')\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._getAuctInfoByObjIdJb",
+    "sname": "_getAuctInfoByObjIdJb",
+    "comment": "Возвращает информацию по аукционам с объектом с p_id_object\n Возвращает:\n Исключения:\n Пример:",
+    "signature": "carl_auct._getAuctInfoByObjIdJb(p_id_object int)",
+    "body": "create or replace function carl_auct._getAuctInfoByObjIdJb(p_id_object int)\r\n\treturns setof jsonb\r\nsecurity definer as $$\r\n\tselect _getAuctDataByIdJb(id_auction, null, null, null) from auction where id_object = p_id_object\r\n$$ language sql;"
+  },
+  {
+    "full_name": "carl_auct._getAuctObject",
+    "sname": "_getAuctObject",
+    "comment": "Возвращает объект аукциона с p_id_auction\n Исключения:\n Пример: select _getAuctObject(100);",
+    "signature": "carl_auct._getAuctObject(p_id_auction int)",
+    "body": "create or replace function carl_auct._getAuctObject(p_id_auction int) --{\r\n\treturns jsonb\r\nsecurity definer as $$\r\n\tselect av.values from auction a, obj_attrib_values av where\r\n    av.id_object = a.id_object and a.id_auction = p_id_auction\r\n    and a.is_deleted = 'N'\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._is_prof_leader",
+    "sname": "_is_prof_leader",
+    "comment": "Является ли профиль p_id_profile лидером аукциона p_id_auction\nПример:\n  select carl_auct._is_prof_leader(127,11210);",
+    "signature": "carl_auct._is_prof_leader(p_id_profile int, p_id_auction int)",
+    "body": "create or replace function carl_auct._is_prof_leader(p_id_profile int, p_id_auction int)\r\nreturns boolean\r\nsecurity definer as $$\r\n  select count(*) > 0 from auction a, auction_bid ab\r\n  where ab.id_auction = a.id_auction\r\n    and ab.id_user_profile in\r\n        (select id_user_profile from user_profile where id_profile = p_id_profile)\r\n    and ab.bid_status = 'LEAD'\r\n    and a.id_auction = p_id_auction\r\n$$ language sql;\r\n\r\n\r\n-- drop function if existscarl_auct._is_buyer_wait_solution(p_id_user int;"
+  },
+  {
+    "full_name": "carl_auct._is_buyer_wait_solution",
+    "sname": "_is_buyer_wait_solution",
+    "comment": "Ожидает ли покупатель решения по аукциону (p_id_auction)\nПример:\n  select carl_auct._is_buyer_wait_solution(7,17,83);",
+    "signature": "carl_auct._is_buyer_wait_solution(p_id_user int\r\n  , p_id_profile int, p_id_auction int)",
+    "body": "create or replace function carl_auct._is_buyer_wait_solution(p_id_user int\r\n  , p_id_profile int, p_id_auction int)\r\nreturns boolean\r\nsecurity definer as $$\r\n    select carl_auct._is_prof_leader(p_id_profile, p_id_auction)\r\n    from carl_data.auction a\r\n    where a.status = 'FINISHED'\r\n      and a.id_auction = p_id_auction\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._getLastBidStatus",
+    "sname": "_getLastBidStatus",
+    "comment": "Возвращает статус ставки",
+    "signature": "carl_auct._getLastBidStatus(p_id_user int, p_id_profile int, p_id_auction int)",
+    "body": "create or replace function carl_auct._getLastBidStatus(p_id_user int, p_id_profile int, p_id_auction int) --{\r\n\treturns en_bid_status security definer as $$\r\n\tselect bid_status from auction_bid where\r\n\t\tid_user_profile = (select id_user_profile from user_profile\r\n\t\twhere is_deleted = 'N' and id_user = p_id_user and id_profile = p_id_profile\r\n\t\t\tand is_deleted = 'N') and id_auction = p_id_auction\r\n\t\torder by id_auction_bid desc limit 1\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._getLastBidByUP",
+    "sname": "_getLastBidByUP",
+    "comment": "Возвращает последнюю ставку юзерпрофиля p_id_user_profile в аукционе p_id_auction\n    p_id_user_profile может быть null тогда для всех\n СОРТИРОВКА ПО dt_set НЕ РАБОТАЕТ!",
+    "signature": "carl_auct._getLastBidByUP(p_id_user_profile int, p_id_auction int)",
+    "body": "create or replace function carl_auct._getLastBidByUP(p_id_user_profile int, p_id_auction int) --{\r\n\treturns auction_bid security definer as $$\r\n\tselect *  from auction_bid where is_deleted = 'N'\r\n\t\tand (p_id_user_profile is null or id_user_profile = p_id_user_profile)\r\n\t\tand id_auction = p_id_auction order by id_auction_bid desc limit 1\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._getMaxBidValueByAuctId",
+    "sname": "_getMaxBidValueByAuctId",
+    "comment": "Возвращает максимальную ставку в аукционе p_id_auction",
+    "signature": "carl_auct._getMaxBidValueByAuctId(p_id_auction int)",
+    "body": "create or replace function carl_auct._getMaxBidValueByAuctId(p_id_auction int) --{\r\n\treturns int security definer as $$\r\n\tselect max(bid_value) from auction_bid where is_deleted = 'N'\r\n\t\tand id_auction = p_id_auction\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct.getSellerProfId",
+    "sname": "getSellerProfId",
+    "comment": "Возвращает id_profile продавца аукциона p_id_auction\nselect carl_auct.getSellerProfId(6);",
+    "signature": "carl_auct.getSellerProfId(p_id_auction int)",
+    "body": "create or replace function carl_auct.getSellerProfId(p_id_auction int)\r\n  returns int security definer as $$\r\n\tselect up.id_profile from auction a, user_profile up\r\n    where up.id_user_profile = a.id_user_profile\r\n      and a.id_auction = p_id_auction\r\n$$\r\nlanguage sql;\r\n\r\n\r\n-- drop function if existscarl_auct._getAuctBidDataJb(int, int, int, varchar);"
+  },
+  {
+    "full_name": "carl_auct.getMyActivityListJ",
+    "sname": "getMyActivityListJ",
+    "comment": "Вывод лога аукциона в табличном виде\n Исключения:",
+    "signature": "carl_auct.getMyActivityListJ(p_id_user int, p_id_profile int, p_id_auction int)",
+    "body": "create or replace function carl_auct.getMyActivityListJ(p_id_user int, p_id_profile int, p_id_auction int)\r\n\treturns setof json security definer as $$\r\n\tselect row_to_json(r) from (select * from carl_auct._showAuctLog(p_id_user, p_id_profile, p_id_auction)) r\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct.getLeadBidJ",
+    "sname": "getLeadBidJ",
+    "comment": "Вспомогательная функция используется в тестах",
+    "signature": "carl_auct.getLeadBidJ(p_id_auction int)",
+    "body": "create or replace function carl_auct.getLeadBidJ(p_id_auction int)\r\n\treturns json\r\nas $$\r\n  select row_to_json(r) from (select * from auction_bid where id_auction = p_id_auction\r\n    and is_deleted = 'N' and bid_status = 'LEAD') r\r\n$$\r\nlanguage sql;"
+  },
+  {
+    "full_name": "carl_auct._getAuctionHistory",
+    "sname": "_getAuctionHistory",
+    "comment": "Возвращает операцию номер p_oper_num из истории Хода торгов\n аукциона p_id_auction для продавца или покупателя\n с p_id_user int, p_id_profile",
+    "signature": "carl_auct._getAuctionHistory(p_id_user int, p_id_profile int, p_id_auction int\r\n\t, p_oper_num int)",
+    "body": "create or replace function carl_auct._getAuctionHistory(p_id_user int, p_id_profile int, p_id_auction int\r\n\t, p_oper_num int)\r\n\treturns json security definer as $$\r\n\tselect * from carl_auct.getAuctionHistory(p_id_user, p_id_profile, p_id_auction) limit 1 offset p_oper_num\r\n$$ language sql;\r\n\r\n\r\n-- drop function if existscarl_auct._getAuctionHistorySel(p_id_auction int);"
+  },
+  {
+    "full_name": "carl_auct.getAuctionHistoryJb",
+    "sname": "getAuctionHistoryJb",
+    "comment": "Возвращает Ход торгов аукциона p_id_auction для продавца или покупателя\nс p_id_user p_id_profile",
+    "signature": "carl_auct.getAuctionHistoryJb(p_id_user int, p_id_profile int, p_id_auction int)",
+    "body": "create or replace function carl_auct.getAuctionHistoryJb(p_id_user int, p_id_profile int, p_id_auction int)\r\nreturns jsonb security definer as $$\r\n  select jsonb_agg(r) from (select s#>>'{ot}' as ot\r\n  , s#>'{buyr,iu}' as iu, s#>'{buyr,ip}' as ip, s#>'{bv}' as bv, s#>'{pp}' as pp\r\n      from carl_auct.getAuctionHistory(p_id_user, p_id_profile, p_id_auction) s) r\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct.getLastAuctStatusByObjId",
+    "sname": "getLastAuctStatusByObjId",
+    "comment": "Статус последнего аукциона для объекта с p_id_object\nselect getLastAuctStatusByObjId(1260);",
+    "signature": "carl_auct.getLastAuctStatusByObjId(p_id_object int)",
+    "body": "create or replace function carl_auct.getLastAuctStatusByObjId(p_id_object int)\r\n\treturns varchar security definer as $$\r\n  select a.status::varchar --, a.id_auction, s.cnt\r\n    from auction a,\r\n    (select\r\n      a.id_object,\r\n      count(*) as cnt\r\n    from auction a\r\n      where a.is_deleted = 'N'\r\n    group by a.id_object\r\n    order by cnt desc\r\n  ) s\r\n  where a.is_deleted = 'N'\r\n    and s.id_object = a.id_object\r\n    -- and a.id_workflow = 'STANDART_AUCTION' --''VW_WORKFLOW'\r\n    and a.id_object = p_id_object\r\n  order by a.id_auction desc\r\n  limit 1\r\n$$ language sql;\r\n\r\n\r\n------------------------------------------------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._lockBid",
+    "sname": "_lockBid",
+    "comment": "Блокировка ставки аукциона p_id_auction профилем p_id_profile на время выполнения ставки\nбудет работать на уровне изоляции COMMITED READ",
+    "signature": "carl_auct._lockBid(p_id_profile int, p_id_auction int)",
+    "body": "create or replace function carl_auct._lockBid(p_id_profile int, p_id_auction int)\r\n\treturns void security definer as $$\r\n  update auction set bid_locked_by=p_id_profile where id_auction = p_id_auction\r\n$$ language sql;\r\n\r\n\r\n-- drop function if existscarl_auct._unLockBid(p_id_profile int, p_id_auction int);"
+  },
+  {
+    "full_name": "carl_auct._unLockBid",
+    "sname": "_unLockBid",
+    "comment": "Блокировка ставки аукциона p_id_auction профилем p_id_profile на время выполнения ставки\nбудет работать на уровне изоляции COMMITED READ",
+    "signature": "carl_auct._unLockBid(p_id_profile int, p_id_auction int)",
+    "body": "create or replace function carl_auct._unLockBid(p_id_profile int, p_id_auction int)\r\n\treturns void security definer as $$\r\n  update auction set bid_locked_by=null where id_auction = p_id_auction\r\n$$ language sql;"
+  },
+  {
+    "full_name": "carl_auct.getWaitingUnreg",
+    "sname": "getWaitingUnreg",
+    "comment": "ADMIN\nАукционы и профили ожидающие разрезервирования\nselect * from profile p, (select f.id_profile as id_profile from getWaitingUnreg() f) s2 where p.id_profile = s2.id_profile;\nselect * from carl_auct.getWaitingUnreg();",
+    "signature": "carl_auct.getWaitingUnreg()",
+    "body": "create or replace function carl_auct.getWaitingUnreg()\r\n\treturns table(id_profile int, id_auction int) security definer as $$\r\nselect /*operation_type, */ id_profile, bo2.id_auction from balance_operation bo2,\r\n  ( select max(id_balance_operation) max_id_balance_operation, sl.id_auction\r\n    from balance_operation bo, ( select\r\n      _get_id_profile(ab.id_user_profile) as id_profile,\r\n      a.id_auction\r\n      from auction_bid ab, auction a\r\n      where ab.id_auction = a.id_auction\r\n        and bid_status = 'LEAD'\r\n        and ab.is_deleted = 'N' and a.is_deleted = 'N'\r\n        and a.status in ('SUCCESS','BUYNOW')\r\n        -- and a.id_auction = 1000\r\n    ) sl\r\n  where bo.id_auction = sl.id_auction and bo.id_profile = sl.id_profile\r\n     and bo.operation_type in ('BALANCE_RESERV','BALANCE_UNRESERV')\r\n  group by sl.id_auction\r\n  ) s2\r\n  where bo2.id_balance_operation = s2.max_id_balance_operation\r\n    and bo2.operation_type = 'BALANCE_RESERV'\r\n$$ language sql;"
+  },
+  {
+    "full_name": "carl_auct.getAuctSellCounts",
+    "sname": "getAuctSellCounts",
+    "comment": "AUCT.ACTIVE\nКоличество аукционов для активностей продавца с id_profile\nselect * from carl_auct.getAuctSellCounts(3,17);",
+    "signature": "carl_auct.getAuctSellCounts(p_id_user int, p_id_profile int)",
+    "body": "create or replace function carl_auct.getAuctSellCounts(p_id_user int, p_id_profile int)\r\n\treturns json security definer as $$\r\n  select row_to_json(r) from (\r\n     select * from carl_auct.getAuctSellCountsT(p_id_user, p_id_profile)\r\n    ) r\r\n$$ language sql;\r\n\r\n\r\n------------------------------------------------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct.getAuctEventDate",
+    "sname": "getAuctEventDate",
+    "comment": "Дата последнего перехода аукциона (p_id_auct) в статус (p_auct_status)\nПример:\n  select carl_auct.getAuctEventDate(83, 'SUCCESS');",
+    "signature": "carl_auct.getAuctEventDate(p_id_auct int, p_auct_status varchar)",
+    "body": "create or replace function carl_auct.getAuctEventDate(p_id_auct int, p_auct_status varchar)\r\n  returns timestamp with time zone\r\n  as $$\r\n    SELECT max(log.dt_set)\r\n    FROM carl_data.auction auct, carl_data.auction_log log\r\n    WHERE auct.id_auction = log.id_auction and\r\n      auct.is_deleted='N' and\r\n      log.is_deleted='N' and\r\n      auct.id_auction=p_id_auct and\r\n      auct.status=p_auct_status::en_auction_status\r\n  $$ language sql;\r\n\r\n\r\n------------------------------------------------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct.getAuctLeadCity",
+    "sname": "getAuctLeadCity",
+    "comment": "Город лидера аукциона p_id_auction\nесли города нет вернет null\nПример:\n  select carl_auct.getAuctLeadCity(316);",
+    "signature": "carl_auct.getAuctLeadCity(p_id_auction int)",
+    "body": "create or replace function carl_auct.getAuctLeadCity(p_id_auction int)\r\n  returns varchar security definer as $$\r\n  select ct.name\r\n    from auction_bid ab, user_profile up, profile p, city ct\r\n    where up.id_user_profile = ab.id_user_profile\r\n        and up.id_profile = p.id_profile\r\n        and ct.id_city = p.id_city\r\n        and ab.bid_status = 'LEAD'\r\n        and ab.id_auction = p_id_auction\r\n$$ language sql;\r\n\r\n\r\n------------------------------------------------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct.deleteAuct",
+    "sname": "deleteAuct",
+    "comment": "Удаление аукциона",
+    "signature": "carl_auct.deleteAuct(p_id_auction int)",
+    "body": "create or replace function carl_auct.deleteAuct(p_id_auction int)\r\n  returns void security definer as $$\r\n  update auction set is_deleted='Y' where id_auction = p_id_auction\r\n$$ language sql;\r\n\r\n\r\n------------------------------------------------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct.get_current_timestamp",
+    "sname": "get_current_timestamp",
+    "comment": "Установка тестового времени",
+    "signature": "carl_auct.get_current_timestamp()",
+    "body": "create or replace function carl_auct.get_current_timestamp()\r\n returns timestamp with time zone security definer as $$\r\n  select current_timestamp\r\n  -- select timestamptz '2018-11-02 22:00:00'\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._updateApproveDay",
+    "sname": "_updateApproveDay",
+    "comment": "AUCT.APPROVE\n Обновление даты принятия решения по аукциону p_id_auction\n   select carl_auct._updateApproveDay(null);",
+    "signature": "carl_auct._updateApproveDay(p_id_auction int)",
+    "body": "create or replace function carl_auct._updateApproveDay(p_id_auction int) --, p_approve_days int)\r\n returns void security definer as $$\r\n    update auction set -- approve_days=p_approve_days\r\n       dt_approve=(carl_comm.getNextBusinessDay((dt_end)::date, approve_days))::timestamp with time zone\r\n          where p_id_auction is null or id_auction = p_id_auction\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._getLandingLotsT",
+    "sname": "_getLandingLotsT",
+    "comment": "Базовая функция отбора лотов для страницы лендинга, возвращает данные в table\n Возвращает список лотов по алгоритму:\n 1 позицию (нижняя правая) просим зафиксировать под аварийные авто,\n 1 позицию (слева от аварийной) - под грузовые.\n Оставшиеся позиции показываем авто из Лизинг и Банки/Корпоративные парки/Представительства/Официальные дилеры.\n Если грузовых или аварийных нет - заполняем теми автомобилями из Лизинг и Банки/Корпоративные парки/Представительства/Официальные дилеры.\n select * from _getLandingLotsT(true);",
+    "signature": "carl_auct._getLandingLotsT(p_is_domain24 boolean)",
+    "body": "create or replace function carl_auct._getLandingLotsT(p_is_domain24 boolean)\r\n  returns TABLE(id_auction int, id_object int, mark varchar, model varchar, modification varchar, year varchar, mileage varchar, category_name varchar\r\n    , order_index int, has_report boolean, main_image varchar, start_price int)\r\nsecurity definer\r\nlanguage sql;"
+  },
+  {
+    "full_name": "carl_auct.getLandingLotsJ",
+    "sname": "getLandingLotsJ",
+    "comment": "Функция отбора лотов для страницы лендинга carlink или carlink24, возвращает данные в set of json\n select * from getLandingLotsJ(true);",
+    "signature": "carl_auct.getLandingLotsJ(p_is_domain24 boolean)",
+    "body": "create or replace function carl_auct.getLandingLotsJ(p_is_domain24 boolean)\r\n   returns SETOF json\r\n security definer\r\n language sql;"
+  },
+  {
+    "full_name": "carl_auct.getAuctionCommentJ",
+    "sname": "getAuctionCommentJ",
+    "comment": "Функция возвращает текст заметки к лоту в json\n select * from getAuctionCommentJ(9559, 1424);",
+    "signature": "carl_auct.getAuctionCommentJ(p_id_auction int, p_id_profile int)",
+    "body": "create or replace function carl_auct.getAuctionCommentJ(p_id_auction int, p_id_profile int)\r\n    returns json\r\nsecurity definer\r\nlanguage sql;"
+  },
+  {
+    "full_name": "carl_auct.getAuctDeposit",
+    "sname": "getAuctDeposit",
+    "comment": "Возвращает депозит(баланс резерв) по аукциону p_id_auction для покупателя p_id_profile_buy\nПример:\n  select carl_auct.getAuctDeposit(3169, 177);",
+    "signature": "carl_auct.getAuctDeposit(p_id_auction int, p_id_profile_buy int)",
+    "body": "create or replace function carl_auct.getAuctDeposit(p_id_auction int, p_id_profile_buy int)\r\n  returns int security definer as $$\r\n    select case when carl_prof.isVip(p_id_profile_buy) then 0\r\n           else case when carl_prof._is_company(p_id_profile_buy) then a.reserv_comp else a.reserv_indiv end\r\n      end\r\n      from auction a where id_auction = p_id_auction\r\n$$ language sql;\r\n\r\n\r\n\r\n\r\n\r\n------------------------------------------------------------------------------------------------------------------------;"
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "full_name": "carl_auct._getDtEndForSort",
+    "sname": "_getDtEndForSort",
+    "comment": "Для сортировки аукционов в живых торгах время окончанеия берется по дате старта торгов\nselect carl_auct._getDtEndForSort(6296);",
+    "signature": "carl_auct._getDtEndForSort(p_id_auction int)",
+    "body": "create or replace function carl_auct._getDtEndForSort(p_id_auction int)\r\n\treturns bigint /*ERV:bigint*/ security definer as $$\r\n  select extract( epoch from case when a.id_queue is not null then q.dt_start else a.dt_end end)::bigint /*ERV:bigint*/ from auction a\r\n    left join queue q on (a.id_queue = q.id_queue)\r\n  where id_auction = p_id_auction\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  },
+  {
+    "full_name": "carl_auct._getQueSortNumForSort",
+    "sname": "_getQueSortNumForSort",
+    "comment": "Для сортировки аукционов в живых торгах вычисляется порядок сортировки по\norder_num\nselect carl_auct._getQueSortNumForSort(6296);",
+    "signature": "carl_auct._getQueSortNumForSort(p_id_auction int)",
+    "body": "create or replace function carl_auct._getQueSortNumForSort(p_id_auction int)\r\n\treturns int security definer as $$\r\n  select /*10000*queue.id_queue + */qa.order_num from queue_auction qa\r\n    where qa.id_auction = p_id_auction\r\n$$ language sql;\r\n\r\n\r\n----------------------------------------------------------------------------------;"
+  }
+]

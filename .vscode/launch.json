@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "command": "bun src/test_pg_mcp.ts",
+      "name": "bun src/test_pg_mcp.ts",
+      "request": "launch",
+      "type": "node-terminal"
+    }
+  ],
+  "configurations_RESERV": [
+    {
+      "command": "npm start",
+      "name": "Run npm start",
+      "request": "launch",
+      "type": "node-terminal"
+    },
+
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Parse SQL: один файл (api_auct_sort.sql)",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/client/parse_and_upload_sql.js",
+      "args": ["api_auct_sort.sql"],
+      "cwd": "${workspaceFolder}/client",
+      "console": "integratedTerminal",
+      "outFiles": ["${workspaceFolder}/**/*.js"]
+    }
+  ]  
+}

@@ -1,0 +1,7 @@
+[install]
+# Автоматически определяет workspaces из package.json
+auto = true
+
+# Кэширование для ускорения установки
+cache = true
+

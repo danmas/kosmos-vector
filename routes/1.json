@@ -1,0 +1,2 @@
+C:\ERV\projects-ex\aiitem-rag-architect>curl -X GET "http://localhost:3200/api/items_list"
+[{"id":"carl_auct.acceptOffer","type":"function","language":"unknown","filePath":"C:\\ERV\\projects-ex\\aian-vector\\docs\\api_auct.sql"},{"id":"carl_auct._auctLock","type":"function","language":"unknown","filePath":"C:\\ERV\\projects-ex\\aian-vector\\docs\\api_auct.sql"}]
