@@ -9,8 +9,8 @@ const pipelineStateManager = require('./pipelineState');
 const pipelineHistoryManager = require('./pipelineHistory');
 const kbConfigService = require('../packages/core/kbConfigService');
 
-// Импортируем logSubscribers для SSE потока
-const { logSubscribers } = require('../server');
+// Импортируем serverLogs и logsSseConnections для SSE потока
+const { serverLogs, logsSseConnections } = require('../server');
 
 const router = express.Router();
 
@@ -19,7 +19,7 @@ module.exports = (dbService, logBuffer) => {
   // === Маршруты логов (БЕЗ валидации context-code, логи глобальные) ===
   router.get('/logs', (req, res) => {
     try {
-      if (!logBuffer || !Array.isArray(logBuffer)) {
+      if (!serverLogs || !Array.isArray(serverLogs)) {
         return res.status(500).json({
           success: false,
           error: 'Log buffer not available'
@@ -29,11 +29,13 @@ module.exports = (dbService, logBuffer) => {
       let { lines = 50 } = req.query;
       lines = Math.min(Math.max(parseInt(lines) || 50, 1), 500);
 
-      const logsToSend = logBuffer.slice(-lines);
+      // serverLogs хранится в обратном порядке (новые в начале),
+      // берём первые N и разворачиваем для хронологического порядка
+      const logsToSend = serverLogs.slice(0, lines).reverse();
 
       res.json({
         success: true,
-        total: logBuffer.length,
+        total: serverLogs.length,
         returned: logsToSend.length,
         logs: logsToSend
       });
@@ -46,29 +48,46 @@ module.exports = (dbService, logBuffer) => {
   // === SSE поток логов (БЕЗ валидации context-code) ===
   router.get('/logs/stream', (req, res) => {
     try {
-      // Устанавливаем заголовки для SSE
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      res.setHeader('X-Accel-Buffering', 'no'); // отключаем буферизацию в nginx
+      // SSE headers
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Cache-Control',
+        'X-Accel-Buffering': 'no' // отключаем буферизацию в nginx
+      });
 
-      // Добавляем клиента в подписчики
-      logSubscribers.add(res);
+      // Добавляем соединение в подписчики
+      logsSseConnections.add(res);
+      console.log('SSE client connected for logs');
 
-      // Отправляем начальное сообщение
-      res.write(`: connected to log stream\n\n`);
+      // Отправляем подтверждение подключения
+      res.write(`data: ${JSON.stringify({
+        type: 'connected',
+        timestamp: Date.now()
+      })}\n\n`);
+
+      // Отправляем последние 100 логов (в хронологическом порядке)
+      const recentLogs = serverLogs.slice(0, 100).reverse();
+      recentLogs.forEach(log => {
+        res.write(`data: ${JSON.stringify({
+          type: 'log',
+          log: log,
+          timestamp: Date.now()
+        })}\n\n`);
+      });
 
       // Обработка отключения клиента
       req.on('close', () => {
-        logSubscribers.delete(res);
-        res.end();
+        console.log('SSE client disconnected');
+        logsSseConnections.delete(res);
       });
 
       // Обработка ошибок
       req.on('error', (err) => {
         console.error('[API/LOGS/STREAM] Ошибка соединения:', err);
-        logSubscribers.delete(res);
-        res.end();
+        logsSseConnections.delete(res);
       });
 
     } catch (error) {

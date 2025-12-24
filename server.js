@@ -1,61 +1,79 @@
 require('dotenv').config();
 
+// === SSE LOGGING SYSTEM ===
 // Глобальный буфер логов (в памяти)
-// Структура: массив объектов { timestamp, level, message }
-const LOG_BUFFER = [];
-const MAX_LOG_LINES = 1000; // Чтобы не жрать бесконечно память
+// Структура: массив объектов { id, timestamp, level, message }
+// Новые логи добавляются в начало массива (unshift)
+const MAX_LOG_LINES = 1000;
+const serverLogs = [];
 
 // Подписчики на SSE поток логов
-const logSubscribers = new Set();
+const logsSseConnections = new Set();
 
 // Экспортируем для использования в маршрутах (до require routes/api)
-module.exports.LOG_BUFFER = LOG_BUFFER;
-module.exports.logSubscribers = logSubscribers;
+module.exports.serverLogs = serverLogs;
+module.exports.logsSseConnections = logsSseConnections;
 
 // Перехватываем console.log, console.error и т.д.
 const originalLog = console.log;
 const originalError = console.error;
 const originalWarn = console.warn;
 
-function addLog(level, ...args) {
+function addLog(level, message, ...args) {
   const timestamp = new Date().toISOString();
-  const message = args.map(arg => 
-    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+  const formattedArgs = args.map(arg => 
+    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
   ).join(' ');
   
-  // Сохраняем структурированный объект вместо строки
+  // Сохраняем структурированный объект с уникальным id
   const logEntry = {
+    id: Date.now().toString() + Math.random().toString().slice(2),
     timestamp: timestamp,
     level: level,
-    message: message
+    message: message + (formattedArgs ? ' ' + formattedArgs : '')
   };
   
-  LOG_BUFFER.push(logEntry);
+  // Добавляем в начало массива (новые сверху)
+  serverLogs.unshift(logEntry);
   
-  // Обрезаем буфер
-  if (LOG_BUFFER.length > MAX_LOG_LINES) {
-    LOG_BUFFER.shift();
+  // Обрезаем буфер с конца
+  if (serverLogs.length > MAX_LOG_LINES) {
+    serverLogs.pop();
   }
   
-  // Отправляем новое событие всем подписчикам SSE
-  logSubscribers.forEach(res => {
-    try {
-      res.write(`data: ${JSON.stringify(logEntry)}\n\n`);
-    } catch (err) {
-      // Клиент отключился, удаляем из подписчиков
-      logSubscribers.delete(res);
-    }
-  });
+  // Выводим в консоль как обычно (используем process.stdout чтобы избежать рекурсии)
+  process.stdout.write(`[${level}] ${logEntry.message}\n`);
   
-  // Оригинальный вывод в консоль
-  if (level === 'ERROR') originalError(...args);
-  else if (level === 'WARN') originalWarn(...args);
-  else originalLog(...args);
+  // Рассылаем через SSE всем подписчикам
+  if (logsSseConnections.size > 0) {
+    const data = `data: ${JSON.stringify({
+      type: 'log',
+      log: logEntry,
+      timestamp: Date.now()
+    })}\n\n`;
+    
+    logsSseConnections.forEach(res => {
+      try {
+        res.write(data);
+      } catch (error) {
+        // Клиент отключился, удаляем из подписчиков
+        logsSseConnections.delete(res);
+      }
+    });
+  }
 }
 
-console.log = (...args) => addLog('INFO', ...args);
-console.error = (...args) => addLog('ERROR', ...args);
-console.warn = (...args) => addLog('WARN', ...args);
+console.log = (...args) => {
+  addLog('INFO', args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+};
+
+console.error = (...args) => {
+  addLog('ERROR', args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+};
+
+console.warn = (...args) => {
+  addLog('WARN', args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+};
 
 // Добавляем стартовое сообщение
 console.log('Server started — log buffer initialized');
@@ -95,7 +113,7 @@ const embeddings = embeddingsFactory.createEmbeddings();
 // Инициализация векторного хранилища
 const vectorStore = new PostgresVectorStore(embeddings, dbService);
 
-const apiRouter = require('./routes/api')(dbService, LOG_BUFFER);;
+const apiRouter = require('./routes/api')(dbService, serverLogs);
 app.use('/api', apiRouter);
 
 // Информация о сервере
