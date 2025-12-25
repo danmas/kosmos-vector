@@ -21,6 +21,34 @@
 - Внешний AI-сервер: `REQ_SERVER_URL`, `DEFAULT_MODEL_NAME`, `MAX_RESULTS`
 - Конфиг для UI (шаблоны SQL L1/L2): `SQL_L*_...`
 
+## Knowledge Base Configuration
+
+Конфигурация Knowledge Base хранится в `./data/kb-configs/{context-code}.json` и управляется через `packages/core/kbConfigService.js`.
+
+**Структура конфигурации:**
+- `rootPath` — абсолютный путь к проекту
+- `includeMask` — glob-паттерн для фильтрации файлов (например, `**/*.sql`)
+- `ignorePatterns` — паттерны игнорирования (через запятую)
+- `fileSelection` — точный список выбранных файлов (массив относительных путей с `./`)
+- `metadata` — метаданные проекта (включая `custom_settings` в YAML формате)
+
+**Логика работы:**
+
+1. **Дерево файлов (`GET /api/project/tree`):**
+   - Использует `includeMask` для определения флага `selected` у файлов
+   - Файлы, соответствующие маске → `selected: true`
+   - Остальные → `selected: false`
+
+2. **Pipeline обработка (`step1Runner.js`):**
+   - Если `fileSelection.length > 0` → используется только список из `fileSelection` (приоритет)
+   - Если `fileSelection` пуст → сканирование по `includeMask` с учетом `ignorePatterns`
+
+**API endpoints:**
+- `GET /api/kb-config?context-code=...` — получить конфигурацию
+- `POST /api/kb-config?context-code=...` — обновить конфигурацию (частичный патч)
+- `GET /api/project/tree?context-code=...` — дерево файлов с учетом `includeMask`
+- `POST /api/project/selection?context-code=...` — сохранить выбор файлов в `fileSelection`
+
 ## Схема БД (создаётся в рантайме)
 
 Создаётся при `DbService.initializeSchema()`:

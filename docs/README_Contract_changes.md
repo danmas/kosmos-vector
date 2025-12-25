@@ -153,6 +153,22 @@ POST /api/pipeline/step/1/run?context-code=CARL
 - Приоритет `fileSelection` над glob-масками (по контракту)
 - Конфигурация используется в pipeline (в т.ч. шаг 1)
 
+**Связь между fileSelection и includeMask:**
+
+1. **Include Mask влияет на дерево файлов:**
+   - При запросе `GET /api/project/tree` используется `includeMask` для фильтрации
+   - Файлы, соответствующие маске, получают `selected: true` в ответе
+   - Остальные файлы получают `selected: false`
+
+2. **Приоритет fileSelection:**
+   - Если `fileSelection` не пустой, он имеет приоритет над `includeMask` при обработке в pipeline
+   - В этом случае используются только файлы из `fileSelection`
+   - Если `fileSelection` пуст, используется режим сканирования по `includeMask`
+
+3. **Режимы работы в pipeline:**
+   - **Режим 1 (точный выбор):** `fileSelection.length > 0` → обработка только файлов из списка
+   - **Режим 2 (glob-маски):** `fileSelection` пуст → сканирование по `includeMask` и `ignorePatterns`
+
 **Дефолтные значения:**
 ```json
 {

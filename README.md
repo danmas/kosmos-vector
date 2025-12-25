@@ -71,10 +71,11 @@ bun run start:v2
 
 ## Документация
 
-- REST API: см. `README_REST.md`
-- UI: см. `README_UI.md`
-- Тесты: см. `README_TESTS.md`
-- Технические детали/архитектура: см. `README_TECH.md`
+- REST API: см. `KB/README_REST.md`
+- UI: см. `KB/README_UI.md`
+- Тесты: см. `tests/README_TESTS.md`
+- Технические детали/архитектура: см. `KB/README_TECH.md`
+- Knowledge Base Configuration: см. раздел в `KB/README_UI.md` и `docs/README_Contract_changes.md` (раздел 6)
 
 ## Ключевые возможности
 

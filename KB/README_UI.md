@@ -93,10 +93,71 @@ UI вызывает POST `/vectorize/:filename` с телом `{ params, context
 3) Для SQL — L0/L1/L2: сначала `/vectorize-sql/:filename`, затем создавать уровни через AI и сохранять в БД.
 4) Создавать AI Item из чанка и работать далее через модал AI Item.
 
+## Knowledge Base Configuration
+
+Система использует конфигурацию Knowledge Base для управления выбором файлов проекта. Конфигурация хранится в `./data/kb-configs/{context-code}.json` и содержит:
+
+- `rootPath` — абсолютный путь к проекту на сервере
+- `includeMask` — glob-паттерн для фильтрации файлов (например, `**/*.sql`)
+- `ignorePatterns` — паттерны игнорирования (через запятую)
+- `fileSelection` — точный список выбранных файлов (массив относительных путей)
+- `metadata` — произвольные метаданные проекта
+
+### Связь между "Деревом выбора" и "Include Mask"
+
+**Важно:** Параметры `fileSelection` и `includeMask` тесно связаны:
+
+1. **Include Mask определяет отображение в дереве:**
+   - При запросе `GET /api/project/tree` используется `includeMask` для фильтрации файлов
+   - Файлы, соответствующие маске, получают флаг `selected: true` в дереве
+   - Остальные файлы получают `selected: false`
+
+2. **Приоритет fileSelection:**
+   - Если `fileSelection` не пустой массив, он имеет **приоритет** над `includeMask` при обработке файлов в pipeline
+   - В этом случае используются только файлы из `fileSelection`, независимо от `includeMask`
+   - Если `fileSelection` пуст, используется режим сканирования по `includeMask`
+
+3. **Режимы работы:**
+   - **Режим 1 (точный выбор):** `fileSelection.length > 0` → используются только файлы из списка
+   - **Режим 2 (glob-маски):** `fileSelection` пуст → сканирование по `includeMask` и `ignorePatterns`
+
+### API для работы с конфигурацией
+
+- `GET /api/kb-config?context-code=CARL` — получить текущую конфигурацию
+- `POST /api/kb-config?context-code=CARL` — обновить конфигурацию (частичный патч)
+- `GET /api/project/tree?context-code=CARL` — получить дерево файлов с учетом `includeMask`
+- `POST /api/project/selection?context-code=CARL` — сохранить точный выбор файлов в `fileSelection`
+
+### Пример конфигурации
+
+```json
+{
+  "rootPath": "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\",
+  "includeMask": "**/*.sql",
+  "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
+  "fileSelection": [
+    "./api_auct.sql",
+    "./api_auct_sort.sql",
+    "./api_auth.sql"
+  ],
+  "lastUpdated": "2025-12-25T06:11:59.182Z",
+  "metadata": {
+    "projectName": "CARL Project",
+    "description": "RAG knowledge base"
+  }
+}
+```
+
+В этом примере:
+- `includeMask: "**/*.sql"` показывает все SQL файлы в дереве
+- `fileSelection` содержит точный список файлов для обработки (имеет приоритет)
+
 ## Советы
 
 - Для больших JS/MD файлов корректно подбирайте `chunkSize/chunkOverlap`.
 - Для MD с кодом лучше `codeBlocks: separate` при аналитике.
 - Для SQL используйте корректный `defaultSchema`.
+- Используйте `fileSelection` для точного контроля над обрабатываемыми файлами
+- Используйте `includeMask` для автоматического выбора файлов по паттерну
 
 
