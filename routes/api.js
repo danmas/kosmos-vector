@@ -9,8 +9,8 @@ const pipelineStateManager = require('./pipelineState');
 const pipelineHistoryManager = require('./pipelineHistory');
 const kbConfigService = require('../packages/core/kbConfigService');
 
-// Импортируем serverLogs и logsSseConnections для SSE потока
-const { serverLogs, logsSseConnections } = require('../server');
+// Импортируем serverLogs, logsSseConnections и функции для работы с сессиями
+const { serverLogs, logsSseConnections, getLogsBySession, saveSessionLogs } = require('../server');
 
 const router = express.Router();
 
@@ -541,34 +541,51 @@ module.exports = (dbService, logBuffer) => {
         });
       }
 
-      // Устанавливаем статус "running"
+      // Генерируем уникальный sessionId
+      const sessionId = `${contextCode}-1-${Date.now()}`;
+
+      // Устанавливаем статус "running" с sessionId
       pipelineStateManager.updateStep(1, {
         status: 'running',
         progress: 0,
         itemsProcessed: 0,
         totalItems: 0,
         startedAt: new Date().toISOString(),
-        error: null
+        error: null,
+        sessionId: sessionId
       });
 
       // Сохраняем в историю
       pipelineHistoryManager.addHistoryEntry(contextCode, 1, pipelineStateManager.getStep(1));
 
-      console.log(`[Pipeline] Запущен шаг 1 для контекста ${contextCode}`);
+      console.log(`[Pipeline] Запущен шаг 1 для контекста ${contextCode}, sessionId: ${sessionId}`);
 
       // Запускаем шаг 1 асинхронно (не блокируем ответ)
       const { runStep1 } = require('./pipeline/step1Runner');
 
-      runStep1(contextCode, dbService, pipelineStateManager, pipelineHistoryManager)
+      runStep1(contextCode, sessionId, dbService, pipelineStateManager, pipelineHistoryManager)
+        .then(() => {
+          // Шаг завершён успешно - сохраняем сессию
+          const stepData = pipelineStateManager.getStep(1);
+          if (stepData.status === 'completed' || stepData.status === 'failed') {
+            saveSessionLogs(sessionId, contextCode, 1, stepData).catch(err => {
+              console.error(`[Pipeline] Ошибка сохранения сессии ${sessionId}:`, err);
+            });
+          }
+        })
         .catch(error => {
           console.error(`[Pipeline] Ошибка выполнения шага 1:`, error);
-          pipelineStateManager.updateStep(1, {
+          const stepData = pipelineStateManager.updateStep(1, {
             status: 'failed',
             error: error.message,
             completedAt: new Date().toISOString()
           });
           // Сохраняем в историю
-          pipelineHistoryManager.addHistoryEntry(contextCode, 1, pipelineStateManager.getStep(1));
+          pipelineHistoryManager.addHistoryEntry(contextCode, 1, stepData);
+          // Сохраняем сессию даже при ошибке
+          saveSessionLogs(sessionId, contextCode, 1, stepData).catch(err => {
+            console.error(`[Pipeline] Ошибка сохранения сессии ${sessionId}:`, err);
+          });
         });
 
       // Возвращаем ответ сразу (fire-and-forget)
@@ -580,13 +597,20 @@ module.exports = (dbService, logBuffer) => {
 
     } catch (error) {
       console.error('[API/PIPELINE/STEP/1/RUN] Ошибка:', error);
-      pipelineStateManager.updateStep(1, {
+      const stepData = pipelineStateManager.updateStep(1, {
         status: 'failed',
         error: error.message,
         completedAt: new Date().toISOString()
       });
       // Сохраняем в историю
-      pipelineHistoryManager.addHistoryEntry(contextCode, 1, pipelineStateManager.getStep(1));
+      pipelineHistoryManager.addHistoryEntry(contextCode, 1, stepData);
+      // Пытаемся сохранить сессию, если sessionId был установлен
+      const currentStep = pipelineStateManager.getStep(1);
+      if (currentStep.sessionId) {
+        saveSessionLogs(currentStep.sessionId, contextCode, 1, stepData).catch(err => {
+          console.error(`[Pipeline] Ошибка сохранения сессии:`, err);
+        });
+      }
       res.status(500).json({
         success: false,
         error: error.message
@@ -608,34 +632,51 @@ module.exports = (dbService, logBuffer) => {
         });
       }
 
-      // Устанавливаем статус "running"
+      // Генерируем уникальный sessionId
+      const sessionId = `${contextCode}-2-${Date.now()}`;
+
+      // Устанавливаем статус "running" с sessionId
       pipelineStateManager.updateStep(2, {
         status: 'running',
         progress: 0,
         itemsProcessed: 0,
         totalItems: 0,
         startedAt: new Date().toISOString(),
-        error: null
+        error: null,
+        sessionId: sessionId
       });
 
       // Сохраняем в историю
       pipelineHistoryManager.addHistoryEntry(contextCode, 2, pipelineStateManager.getStep(2));
 
-      console.log(`[Pipeline] Запущен шаг 2 для контекста ${contextCode}`);
+      console.log(`[Pipeline] Запущен шаг 2 для контекста ${contextCode}, sessionId: ${sessionId}`);
 
       // Запускаем шаг 2 асинхронно (не блокируем ответ)
       const { runStep2 } = require('./pipeline/step2Runner');
 
-      runStep2(contextCode, dbService, pipelineStateManager, pipelineHistoryManager)
+      runStep2(contextCode, sessionId, dbService, pipelineStateManager, pipelineHistoryManager)
+        .then(() => {
+          // Шаг завершён успешно - сохраняем сессию
+          const stepData = pipelineStateManager.getStep(2);
+          if (stepData.status === 'completed' || stepData.status === 'failed') {
+            saveSessionLogs(sessionId, contextCode, 2, stepData).catch(err => {
+              console.error(`[Pipeline] Ошибка сохранения сессии ${sessionId}:`, err);
+            });
+          }
+        })
         .catch(error => {
           console.error(`[Pipeline] Ошибка выполнения шага 2:`, error);
-          pipelineStateManager.updateStep(2, {
+          const stepData = pipelineStateManager.updateStep(2, {
             status: 'failed',
             error: error.message,
             completedAt: new Date().toISOString()
           });
           // Сохраняем в историю
-          pipelineHistoryManager.addHistoryEntry(contextCode, 2, pipelineStateManager.getStep(2));
+          pipelineHistoryManager.addHistoryEntry(contextCode, 2, stepData);
+          // Сохраняем сессию даже при ошибке
+          saveSessionLogs(sessionId, contextCode, 2, stepData).catch(err => {
+            console.error(`[Pipeline] Ошибка сохранения сессии ${sessionId}:`, err);
+          });
         });
 
       // Возвращаем ответ сразу (fire-and-forget)
@@ -647,13 +688,20 @@ module.exports = (dbService, logBuffer) => {
 
     } catch (error) {
       console.error('[API/PIPELINE/STEP/2/RUN] Ошибка:', error);
-      pipelineStateManager.updateStep(2, {
+      const stepData = pipelineStateManager.updateStep(2, {
         status: 'failed',
         error: error.message,
         completedAt: new Date().toISOString()
       });
       // Сохраняем в историю
-      pipelineHistoryManager.addHistoryEntry(contextCode, 2, pipelineStateManager.getStep(2));
+      pipelineHistoryManager.addHistoryEntry(contextCode, 2, stepData);
+      // Пытаемся сохранить сессию, если sessionId был установлен
+      const currentStep = pipelineStateManager.getStep(2);
+      if (currentStep.sessionId) {
+        saveSessionLogs(currentStep.sessionId, contextCode, 2, stepData).catch(err => {
+          console.error(`[Pipeline] Ошибка сохранения сессии:`, err);
+        });
+      }
       res.status(500).json({
         success: false,
         error: error.message
@@ -694,6 +742,10 @@ module.exports = (dbService, logBuffer) => {
       // Сбрасываем состояние шагов
       pipelineStateManager.reset();
 
+      // Генерируем sessionId для шага 1
+      const sessionId1 = `${contextCode}-1-${Date.now()}`;
+      const sessionId2 = `${contextCode}-2-${Date.now() + 1}`; // Немного позже для уникальности
+
       // Запускаем шаг 1 асинхронно
       const { runStep1 } = require('./pipeline/step1Runner');
       
@@ -703,14 +755,23 @@ module.exports = (dbService, logBuffer) => {
         itemsProcessed: 0,
         totalItems: 0,
         startedAt: startTime,
-        error: null
+        error: null,
+        sessionId: sessionId1
       });
 
       pipelineHistoryManager.addHistoryEntry(contextCode, 1, pipelineStateManager.getStep(1));
 
       // Запускаем шаг 1, после его завершения запустим шаг 2
-      runStep1(contextCode, dbService, pipelineStateManager, pipelineHistoryManager)
+      runStep1(contextCode, sessionId1, dbService, pipelineStateManager, pipelineHistoryManager)
         .then(() => {
+          // Сохраняем сессию шага 1
+          const step1Data = pipelineStateManager.getStep(1);
+          if (step1Data.status === 'completed' || step1Data.status === 'failed') {
+            saveSessionLogs(sessionId1, contextCode, 1, step1Data).catch(err => {
+              console.error(`[Pipeline] Ошибка сохранения сессии ${sessionId1}:`, err);
+            });
+          }
+
           // После завершения шага 1 запускаем шаг 2
           const { runStep2 } = require('./pipeline/step2Runner');
           
@@ -720,24 +781,40 @@ module.exports = (dbService, logBuffer) => {
             itemsProcessed: 0,
             totalItems: 0,
             startedAt: new Date().toISOString(),
-            error: null
+            error: null,
+            sessionId: sessionId2
           });
 
           pipelineHistoryManager.addHistoryEntry(contextCode, 2, pipelineStateManager.getStep(2));
 
-          return runStep2(contextCode, dbService, pipelineStateManager, pipelineHistoryManager);
+          return runStep2(contextCode, sessionId2, dbService, pipelineStateManager, pipelineHistoryManager)
+            .then(() => {
+              // Сохраняем сессию шага 2
+              const step2Data = pipelineStateManager.getStep(2);
+              if (step2Data.status === 'completed' || step2Data.status === 'failed') {
+                saveSessionLogs(sessionId2, contextCode, 2, step2Data).catch(err => {
+                  console.error(`[Pipeline] Ошибка сохранения сессии ${sessionId2}:`, err);
+                });
+              }
+            });
         })
         .catch(error => {
           console.error(`[Pipeline] Ошибка выполнения pipeline:`, error);
           // Обновляем статус шага, который упал
           const failedStep = pipelineStateManager.steps.find(s => s.status === 'running');
           if (failedStep) {
-            pipelineStateManager.updateStep(failedStep.id, {
+            const stepData = pipelineStateManager.updateStep(failedStep.id, {
               status: 'failed',
               error: error.message,
               completedAt: new Date().toISOString()
             });
-            pipelineHistoryManager.addHistoryEntry(contextCode, failedStep.id, pipelineStateManager.getStep(failedStep.id));
+            pipelineHistoryManager.addHistoryEntry(contextCode, failedStep.id, stepData);
+            // Сохраняем сессию упавшего шага
+            if (failedStep.sessionId) {
+              saveSessionLogs(failedStep.sessionId, contextCode, failedStep.id, stepData).catch(err => {
+                console.error(`[Pipeline] Ошибка сохранения сессии:`, err);
+              });
+            }
           }
         });
 
@@ -1157,6 +1234,109 @@ module.exports = (dbService, logBuffer) => {
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to save file selection'
+      });
+    }
+  });
+
+  // === Логи сессий выполнения шагов ===
+  // GET /api/logs/sessions/{sessionId} - получить логи конкретной сессии
+  router.get('/logs/sessions/:sessionId', (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const SESSIONS_DIR = require('../server').SESSIONS_DIR;
+      const sessionFilePath = path.join(SESSIONS_DIR, `${sessionId}.json`);
+
+      if (!fs.existsSync(sessionFilePath)) {
+        return res.status(404).json({
+          success: false,
+          error: `Session ${sessionId} not found`
+        });
+      }
+
+      const sessionData = JSON.parse(fs.readFileSync(sessionFilePath, 'utf-8'));
+
+      res.json({
+        success: true,
+        session: sessionData
+      });
+    } catch (error) {
+      console.error('[API/LOGS/SESSIONS/:SESSIONID] Ошибка:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  // GET /api/logs/sessions - список всех сессий с фильтрацией
+  router.get('/logs/sessions', (req, res) => {
+    try {
+      const { contextCode, stepId, limit = 50 } = req.query;
+      const SESSIONS_DIR = require('../server').SESSIONS_DIR;
+
+      if (!fs.existsSync(SESSIONS_DIR)) {
+        return res.json({
+          success: true,
+          sessions: []
+        });
+      }
+
+      // Читаем все файлы сессий
+      const sessionFiles = fs.readdirSync(SESSIONS_DIR)
+        .filter(file => file.endsWith('.json'))
+        .map(file => {
+          try {
+            const filePath = path.join(SESSIONS_DIR, file);
+            const sessionData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            return sessionData;
+          } catch (err) {
+            console.error(`[API/LOGS/SESSIONS] Ошибка чтения файла ${file}:`, err);
+            return null;
+          }
+        })
+        .filter(session => session !== null);
+
+      // Фильтрация
+      let filteredSessions = sessionFiles;
+      if (contextCode) {
+        filteredSessions = filteredSessions.filter(s => s.contextCode === contextCode);
+      }
+      if (stepId) {
+        const stepIdNum = parseInt(stepId);
+        filteredSessions = filteredSessions.filter(s => s.stepId === stepIdNum);
+      }
+
+      // Сортировка по времени завершения (новые сверху)
+      filteredSessions.sort((a, b) => {
+        const timeA = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+        const timeB = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+        return timeB - timeA;
+      });
+
+      // Ограничение количества
+      const limitNum = Math.min(Math.max(parseInt(limit) || 50, 1), 1000);
+      const sessionsToReturn = filteredSessions.slice(0, limitNum).map(session => ({
+        sessionId: session.sessionId,
+        contextCode: session.contextCode,
+        stepId: session.stepId,
+        stepName: session.stepName,
+        startedAt: session.startedAt,
+        completedAt: session.completedAt,
+        status: session.status,
+        logCount: session.logs ? session.logs.length : 0
+      }));
+
+      res.json({
+        success: true,
+        total: filteredSessions.length,
+        returned: sessionsToReturn.length,
+        sessions: sessionsToReturn
+      });
+    } catch (error) {
+      console.error('[API/LOGS/SESSIONS] Ошибка:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
       });
     }
   });

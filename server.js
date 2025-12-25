@@ -1,8 +1,10 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 
-// === SSE LOGGING SYSTEM ===
+// === SSE LOGGING SYSTEM WITH SESSION SUPPORT ===
 // Глобальный буфер логов (в памяти)
-// Структура: массив объектов { id, timestamp, level, message }
+// Структура: массив объектов { id, timestamp, level, message, sessionId? }
 // Новые логи добавляются в начало массива (unshift)
 const MAX_LOG_LINES = 1000;
 const serverLogs = [];
@@ -10,40 +12,34 @@ const serverLogs = [];
 // Подписчики на SSE поток логов
 const logsSseConnections = new Set();
 
+// Директория для сохранения сессий логов
+const SESSIONS_DIR = path.join(process.cwd(), 'data', 'logs', 'sessions');
+
+// Создаём директорию для сессий при старте
+if (!fs.existsSync(SESSIONS_DIR)) {
+  fs.mkdirSync(SESSIONS_DIR, { recursive: true });
+  console.log(`[Logs] Создана директория для сессий: ${SESSIONS_DIR}`);
+}
+
 // Экспортируем для использования в маршрутах (до require routes/api)
-module.exports.serverLogs = serverLogs;
-module.exports.logsSseConnections = logsSseConnections;
+/**
+ * Добавить лог из внешнего источника (например, SSE от сервера данных)
+ * @param {object} logEntry - Объект лога с полями {id, timestamp, level, message, sessionId}
+ */
+function addLogFromExternal(logEntry) {
+  if (!logEntry || !logEntry.id) {
+    // Если нет id, генерируем
+    logEntry.id = Date.now().toString() + Math.random().toString().slice(2);
+  }
 
-// Перехватываем console.log, console.error и т.д.
-const originalLog = console.log;
-const originalError = console.error;
-const originalWarn = console.warn;
-
-function addLog(level, message, ...args) {
-  const timestamp = new Date().toISOString();
-  const formattedArgs = args.map(arg => 
-    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-  ).join(' ');
-  
-  // Сохраняем структурированный объект с уникальным id
-  const logEntry = {
-    id: Date.now().toString() + Math.random().toString().slice(2),
-    timestamp: timestamp,
-    level: level,
-    message: message + (formattedArgs ? ' ' + formattedArgs : '')
-  };
-  
   // Добавляем в начало массива (новые сверху)
   serverLogs.unshift(logEntry);
-  
+
   // Обрезаем буфер с конца
   if (serverLogs.length > MAX_LOG_LINES) {
     serverLogs.pop();
   }
-  
-  // Выводим в консоль как обычно (используем process.stdout чтобы избежать рекурсии)
-  process.stdout.write(`[${level}] ${logEntry.message}\n`);
-  
+
   // Рассылаем через SSE всем подписчикам
   if (logsSseConnections.size > 0) {
     const data = `data: ${JSON.stringify({
@@ -51,7 +47,7 @@ function addLog(level, message, ...args) {
       log: logEntry,
       timestamp: Date.now()
     })}\n\n`;
-    
+
     logsSseConnections.forEach(res => {
       try {
         res.write(data);
@@ -63,16 +59,158 @@ function addLog(level, message, ...args) {
   }
 }
 
+module.exports.serverLogs = serverLogs;
+module.exports.logsSseConnections = logsSseConnections;
+module.exports.getLogsBySession = getLogsBySession;
+module.exports.saveSessionLogs = saveSessionLogs;
+module.exports.addLogFromExternal = addLogFromExternal;
+module.exports.SESSIONS_DIR = SESSIONS_DIR;
+
+// Перехватываем console.log, console.error и т.д.
+const originalLog = console.log;
+const originalError = console.error;
+const originalWarn = console.warn;
+
+function addLog(level, message, sessionId = null, ...args) {
+  const timestamp = new Date().toISOString();
+  const formattedArgs = args.map(arg =>
+    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+  ).join(' ');
+
+  // Сохраняем структурированный объект с уникальным id и опциональным sessionId
+  const logEntry = {
+    id: Date.now().toString() + Math.random().toString().slice(2),
+    timestamp: timestamp,
+    level: level,
+    message: message + (formattedArgs ? ' ' + formattedArgs : ''),
+    sessionId: sessionId || null
+  };
+
+  // Добавляем в начало массива (новые сверху)
+  serverLogs.unshift(logEntry);
+
+  // Обрезаем буфер с конца
+  if (serverLogs.length > MAX_LOG_LINES) {
+    serverLogs.pop();
+  }
+
+  // Выводим в консоль как обычно (используем process.stdout чтобы избежать рекурсии)
+  process.stdout.write(`[${level}] ${logEntry.message}\n`);
+
+  // Рассылаем через SSE всем подписчикам
+  if (logsSseConnections.size > 0) {
+    const data = `data: ${JSON.stringify({
+      type: 'log',
+      log: logEntry,
+      timestamp: Date.now()
+    })}\n\n`;
+
+    logsSseConnections.forEach(res => {
+      try {
+        res.write(data);
+      } catch (error) {
+        // Клиент отключился, удаляем из подписчиков
+        logsSseConnections.delete(res);
+      }
+    });
+  }
+}
+
+/**
+ * Получить все логи для конкретной сессии
+ * @param {string} sessionId - ID сессии
+ * @returns {Array} Массив логов сессии
+ */
+function getLogsBySession(sessionId) {
+  if (!sessionId) return [];
+  return serverLogs.filter(log => log.sessionId === sessionId);
+}
+
+/**
+ * Сохранить логи сессии на диск
+ * @param {string} sessionId - ID сессии
+ * @param {string} contextCode - Код контекста
+ * @param {number} stepId - ID шага
+ * @param {object} stepData - Данные шага из pipelineStateManager
+ * @returns {Promise<object>} Информация о сохранённой сессии
+ */
+async function saveSessionLogs(sessionId, contextCode, stepId, stepData) {
+  if (!sessionId) {
+    throw new Error('sessionId is required');
+  }
+
+  try {
+    // Получаем все логи сессии
+    const sessionLogs = getLogsBySession(sessionId);
+
+    // Сортируем логи по времени (старые → новые)
+    const sortedLogs = [...sessionLogs].sort((a, b) =>
+      new Date(a.timestamp) - new Date(b.timestamp)
+    );
+
+    // Подсчитываем статистику
+    const summary = {
+      totalLogs: sortedLogs.length,
+      infoCount: sortedLogs.filter(log => log.level === 'INFO').length,
+      warnCount: sortedLogs.filter(log => log.level === 'WARN').length,
+      errorCount: sortedLogs.filter(log => log.level === 'ERROR').length
+    };
+
+    // Получаем имя шага
+    const stepName = stepData.name || `step_${stepId}`;
+
+    // Формируем объект сессии
+    const sessionData = {
+      sessionId: sessionId,
+      contextCode: contextCode,
+      stepId: stepId,
+      stepName: stepName,
+      startedAt: stepData.startedAt || null,
+      completedAt: stepData.completedAt || null,
+      status: stepData.status || 'unknown',
+      logs: sortedLogs,
+      summary: summary,
+      stepReport: stepData.report || null
+    };
+
+    // Сохраняем в файл
+    const sessionFilePath = path.join(SESSIONS_DIR, `${sessionId}.json`);
+    fs.writeFileSync(sessionFilePath, JSON.stringify(sessionData, null, 2), 'utf-8');
+
+    console.log(`[Logs] Сессия ${sessionId} сохранена: ${sortedLogs.length} логов`);
+
+    return sessionData;
+  } catch (error) {
+    console.error(`[Logs] Ошибка сохранения сессии ${sessionId}:`, error.message);
+    throw error;
+  }
+}
+
+// Глобальный контекст для передачи sessionId через все вызовы console.log
+// Используется AsyncLocalStorage для изоляции контекста между запросами
+const { AsyncLocalStorage } = require('async_hooks');
+const logContext = new AsyncLocalStorage();
+
+// Экспортируем logContext для использования в других модулях
+module.exports.logContext = logContext;
+
+// Обёртки для console.log/error/warn с поддержкой sessionId из контекста
 console.log = (...args) => {
-  addLog('INFO', args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+  const sessionId = logContext.getStore()?.sessionId || null;
+  const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+  addLog('INFO', message, sessionId);
 };
 
 console.error = (...args) => {
-  addLog('ERROR', args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+  const sessionId = logContext.getStore()?.sessionId || null;
+  const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+  addLog('ERROR', message, sessionId);
 };
 
 console.warn = (...args) => {
-  addLog('WARN', args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+  const sessionId = logContext.getStore()?.sessionId || null;
+  const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+  addLog('WARN', message, sessionId);
 };
 
 // Добавляем стартовое сообщение
@@ -81,7 +219,6 @@ console.log('Server started — log buffer initialized');
 const express = require('express');
 const { Client } = require('pg');
 const { DbService, EmbeddingsFactory, PostgresVectorStore } = require('@aian-vector/core');
-const path = require('path');
 const aiRoutes = require('./routes/ai');
 const filesRoutes = require('./routes/files');
 
@@ -187,12 +324,12 @@ app.get('/api/available-models', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Error fetching available models:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: error.message,
       models: [
         { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo (fallback)', default: true },
         { id: 'gpt-4', name: 'GPT-4 (fallback)' }
-      ] 
+      ]
     });
   }
 });

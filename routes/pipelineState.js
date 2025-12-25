@@ -16,7 +16,8 @@ class PipelineStateManager {
         startedAt: null,
         completedAt: null,
         error: null,
-        report: null
+        report: null,
+        sessionId: null
       },
       {
         id: 2,
@@ -29,7 +30,8 @@ class PipelineStateManager {
         startedAt: null,
         completedAt: null,
         error: null,
-        report: null
+        report: null,
+        sessionId: null
       },
       {
         id: 3,
@@ -127,6 +129,7 @@ class PipelineStateManager {
       step.completedAt = null;
       step.error = null;
       step.report = null;
+      step.sessionId = null;
     });
   }
 

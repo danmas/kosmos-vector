@@ -8,13 +8,14 @@ const { createStepLogger } = require('./stepLogger');
  * Запуск шага 2 pipeline: Анализ и исправление зависимостей
  *
  * @param {string} contextCode
+ * @param {string} sessionId - Уникальный ID сессии для привязки логов
  * @param {DbService} dbService
  * @param {PipelineStateManager} pipelineState
  * @param {PipelineHistoryManager} pipelineHistory
  */
-async function runStep2(contextCode, dbService, pipelineState, pipelineHistory = null) {
-    // Создаём логгер для сбора логов
-    const logger = createStepLogger('[Step2]');
+async function runStep2(contextCode, sessionId, dbService, pipelineState, pipelineHistory = null) {
+    // Создаём логгер для сбора логов с sessionId
+    const logger = createStepLogger('[Step2]', sessionId);
     
     logger.log(`Запуск анализа и исправления зависимостей для контекста "${contextCode}"`);
 

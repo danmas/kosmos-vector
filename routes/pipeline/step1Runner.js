@@ -117,13 +117,14 @@ function parseFunctionsLoadingConfig(customSettingsYaml) {
  * Теперь полностью использует KnowledgeBaseConfig (rootPath, masks, fileSelection)
  *
  * @param {string} contextCode
+ * @param {string} sessionId - Уникальный ID сессии для привязки логов
  * @param {DbService} dbService
  * @param {PipelineStateManager} pipelineState
  * @param {PipelineHistoryManager} pipelineHistory
  */
-async function runStep1(contextCode, dbService, pipelineState, pipelineHistory = null) {
-  // Создаём логгер для сбора логов
-  const logger = createStepLogger('[Step1]');
+async function runStep1(contextCode, sessionId, dbService, pipelineState, pipelineHistory = null) {
+  // Создаём логгер для сбора логов с sessionId
+  const logger = createStepLogger('[Step1]', sessionId);
   
   // 1. Получаем актуальную конфигурацию проекта
   let kbConfig;
