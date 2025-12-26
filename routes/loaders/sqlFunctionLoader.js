@@ -295,19 +295,26 @@ async function parsePlpgsqlFunctionL1(code) {
  * Надёжный парсинг всех PL/pgSQL функций из SQL-контента
  * Поддержка любых dollar-quoting тегов: $$, $F$, $body$ и т.д.
  * Поддержка LANGUAGE любого_языка
+ * 
+ * Комментарий = всё что перед CREATE до пустой строки (включая DROP FUNCTION, --, и т.д.)
+ * Body включает LANGUAGE <lang>; в конце
  */
 function parseFunctionsFromContent(sqlContent, filePath) {
     const lines = sqlContent.split('\n');
     const functions = [];
     let currentFunction = null;
     let bodyLines = [];
-    let commentLines = [];
-    let dollarTag = null;  // запоминаем тег типа 'F' или 'body' или null для $$
+    let currentFunctionComment = null; // комментарий текущей функции
+    let pendingCommentLines = [];      // накапливаем комментарии для следующей функции
+    let dollarTag = null;              // запоминаем тег типа 'F' или 'body' или null для $$
+    let waitingForLanguage = false;    // ждём строку LANGUAGE после закрывающего $$
 
-    const resetCurrent = () => {
+    const saveFunction = () => {
         if (currentFunction && bodyLines.length > 0) {
             let body = bodyLines.join('\n').trim();
-            if (!body.endsWith(';') && !body.endsWith(dollarTag ? `$${dollarTag}$` : '$$')) {
+
+            // Добавляем ; если его нет в конце
+            if (!body.endsWith(';')) {
                 body += ';';
             }
 
@@ -318,16 +325,10 @@ function parseFunctionsFromContent(sqlContent, filePath) {
             const signatureMatch = body.match(/CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+((?:[\w]+\.)?[\w]+\s*\([^\)]*\))/i);
             const signature = signatureMatch ? signatureMatch[1].trim() : full_name;
 
-            const comment = commentLines
-                .map(l => l.replace(/^--\s?/, '').trimEnd())
-                .filter(l => l.length > 0)
-                .join('\n')
-                .trim() || null;
-
             functions.push({
                 full_name,
                 sname,
-                comment,
+                comment: currentFunctionComment,
                 signature,
                 body
             });
@@ -335,28 +336,38 @@ function parseFunctionsFromContent(sqlContent, filePath) {
 
         currentFunction = null;
         bodyLines = [];
-        commentLines = [];
+        currentFunctionComment = null;
         dollarTag = null;
+        waitingForLanguage = false;
     };
 
     for (let line of lines) {
         const trimmed = line.trim();
         const originalLine = line; // сохраняем оригинал с отступами
 
+        // Пустая строка
         if (trimmed === '') {
-            if (currentFunction) bodyLines.push(originalLine);
-            continue;
-        }
-
-        // Комментарии -- перед функцией
-        if (trimmed.startsWith('--') && !currentFunction) {
-            commentLines.push(originalLine);
+            if (currentFunction) {
+                bodyLines.push(originalLine);
+            } else {
+                // Пустая строка вне функции — сбрасываем накопленные комментарии
+                pendingCommentLines = [];
+            }
             continue;
         }
 
         // Начало функции
         if (trimmed.match(/^CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION/i)) {
-            resetCurrent(); // сохраняем предыдущую
+            saveFunction(); // сохраняем предыдущую функцию
+            
+            // Формируем комментарий из накопленных строк
+            currentFunctionComment = pendingCommentLines
+                .map(l => l.replace(/^--\s?/, '').trimEnd())
+                .filter(l => l.length > 0)
+                .join('\n')
+                .trim() || null;
+            
+            pendingCommentLines = []; // сбрасываем для следующей функции
             currentFunction = 'header';
             bodyLines.push(originalLine);
             continue;
@@ -367,8 +378,8 @@ function parseFunctionsFromContent(sqlContent, filePath) {
             bodyLines.push(originalLine);
 
             // Ищем AS $тег$ или AS $$
-            if (currentFunction === 'header' && trimmed.match(/^AS\s*\$/i)) {
-                const asMatch = trimmed.match(/^AS\s*(\$[^\$]*\$|\$\$)/i);
+            if (currentFunction === 'header' && trimmed.match(/AS\s*\$/i)) {
+                const asMatch = trimmed.match(/AS\s*(\$[^\$]*\$|\$\$)/i);
                 if (asMatch) {
                     if (asMatch[1] === '$$') {
                         dollarTag = null;
@@ -377,27 +388,52 @@ function parseFunctionsFromContent(sqlContent, filePath) {
                     }
                     currentFunction = 'body';
                 }
-            }
-
-            // Проверяем конец функции
-            const isLanguageLine = trimmed.match(/^LANGUAGE\s+\w+/i);
-            const isClosingDollar = dollarTag !== null 
-                ? trimmed === `$${dollarTag}$`
-                : trimmed === '$$';
-
-            if (isLanguageLine || isClosingDollar) {
-                // Если это LANGUAGE — может быть с ; в конце или без
-                // Если закрывающий $тег$ — завершаем
-                resetCurrent();
-                currentFunction = null;
-                dollarTag = null;
                 continue;
             }
+
+            // Проверяем конец функции: закрывающий $$ с LANGUAGE на той же строке
+            const closingTag = dollarTag !== null ? `$${dollarTag}$` : '$$';
+            const closingWithLanguageRegex = new RegExp(
+                closingTag.replace(/\$/g, '\\$') + '\\s*LANGUAGE\\s+\\w+\\s*;?', 'i'
+            );
+            
+            if (trimmed.match(closingWithLanguageRegex)) {
+                // Всё на одной строке: $$ LANGUAGE plpgsql;
+                saveFunction();
+                continue;
+            }
+
+            // Проверяем только закрывающий $$
+            if (trimmed === closingTag || trimmed.startsWith(closingTag + ' ') || trimmed.startsWith(closingTag + '\t')) {
+                // Закрывающий $$ — теперь ждём LANGUAGE на следующей строке
+                waitingForLanguage = true;
+                continue;
+            }
+
+            // Ждём LANGUAGE после закрывающего $$
+            if (waitingForLanguage && trimmed.match(/^LANGUAGE\s+\w+\s*;?/i)) {
+                // Нашли LANGUAGE — завершаем функцию
+                saveFunction();
+                continue;
+            }
+
+            // Если ждали LANGUAGE, но получили что-то другое — всё равно завершаем
+            if (waitingForLanguage && !trimmed.match(/^LANGUAGE/i)) {
+                saveFunction();
+                // Эта строка может быть началом комментария для следующей функции
+                pendingCommentLines.push(originalLine);
+                continue;
+            }
+
+            continue;
         }
+
+        // Вне функции — собираем всё как комментарий до пустой строки
+        pendingCommentLines.push(originalLine);
     }
 
     // Последняя функция
-    resetCurrent();
+    saveFunction();
 
     return functions;
 }

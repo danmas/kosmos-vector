@@ -3,145 +3,34 @@
 * parse_and_upload_sql.js
 
 cd ./client
-# Загрузка SQL-функций в AIAN Vector
-node parse_and_upload_sql.js api_auct_sort.sql -c CARL
-# Загрузка всех SQL-функций в каталоге
+# Автономный режим (прямо с БД, без сервера)
+node parse_and_upload_sql.js api_auct_sort.sql -c CARL --standalone
+# Режим через API (требует запущенный сервер)
+node parse_and_upload_sql.js api_auct_sort.sql -c CARL --api
+# Загрузка всех SQL-функций в каталоге (автономный режим по умолчанию)
 node parse_and_upload_sql.js . -c CARL
 */
 
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config();
+
+// Импорт функций из sqlFunctionLoader
+const {
+    parsePlpgsqlFunctionL1,
+    parseFunctionsFromContent,
+    loadSqlFunctionsFromFile
+} = require('../routes/loaders/sqlFunctionLoader');
+
+// Импорт для автономного режима
+const { Client } = require('pg');
+const DbService = require('../packages/core/DbService');
+
+// Импорт fetch для API режима
+const fetch = require('node-fetch');
 
 // === Конфигурация API ===
 const BASE_URL = 'http://localhost:3200';
-
-
-/*
-    Извлечение связей L1 из кода функции
-*/
-async function parsePlpgsqlFunctionL1(code) {
-    // console.log(code);
-
-    // 1. Удаление комментариев
-    let cleaned = code
-        .replace(/\/\*[\s\S]*?\*\//g, '')   // /* ... */
-        .replace(/--.*$/gm, '');            // -- ...
-
-    // Сохраняем оригинал для точного извлечения имени функции
-    const originalForName = cleaned;
-
-    // 2. Нормализация только для поиска тела (много пробелов → один)
-    cleaned = cleaned.replace(/\s+/g, ' ');
-
-    // 3. Извлечение имени функции (регистронезависимо)
-    const createRegex = /CREATE\s+OR\s+REPLACE\s+FUNCTION\s+([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+|[a-zA-Z0-9_]+)\s*\(/i;
-    const match = originalForName.match(createRegex);
-    if (!match) {
-        throw new Error("Не удалось найти CREATE OR REPLACE FUNCTION");
-    }
-    const functionName = match[1].trim();
-
-    // 4. Поиск начала тела функции: AS $$ или as $$ или As $$ и т.д., а также AS '
-    const asRegex = /\bAS\s*('|\$\$)/i;
-    const asMatch = cleaned.match(asRegex);
-    if (!asMatch) {
-        throw new Error("Не найден блок AS $$ или AS '");
-    }
-
-    const delimiter = asMatch[1]; // ' или $$
-    const asIndex = cleaned.indexOf(asMatch[0]);
-
-    let bodyStart = asIndex + asMatch[0].length;
-    let body = '';
-
-    if (delimiter === "'") {
-        // Для AS '...' – ищем закрывающую одинарную кавычку с точкой с запятой
-        const endQuoteIndex = cleaned.indexOf("';", bodyStart);
-        if (endQuoteIndex === -1) {
-            throw new Error("Не найден конец блока AS ' ... ';");
-        }
-        body = cleaned.substring(bodyStart, endQuoteIndex);
-    } else {
-        // Для AS $$ ... $$
-        // Ищем последнее вхождение $$ (но не внутри строк, упрощённо)
-        const dollarParts = cleaned.substring(bodyStart).split('$$');
-        if (dollarParts.length < 2) {
-            throw new Error("Не найден закрывающий $$");
-        }
-        // Берём всё до последнего $$ (тело функции)
-        body = dollarParts.slice(0, -1).join('$$').trim();
-    }
-
-    // 5. Удаляем динамический SQL (EXECUTE ...)
-    body = body.replace(/EXECUTE\s+[^;]*;/gi, ' ');
-
-    // Множества для результатов
-    const calledFunctions = new Set();
-    const selectFrom = new Set();
-    const updateTables = new Set();
-    const insertTables = new Set();
-
-    // Чёрный список (в нижнем регистре)
-    const blacklist = new Set([
-        'select', 'from', 'join', 'left', 'right', 'inner', 'outer', 'on', 'where', 'and', 'or',
-        'update', 'insert', 'into', 'delete', 'set', 'values', 'returning', 'as', 'is', 'null',
-        'case', 'when', 'then', 'else', 'end', 'coalesce', 'nullif', 'greatest', 'least',
-        'extract', 'date_part', 'now', 'current_timestamp', 'current_date',
-        'perform', 'raise', 'return', 'declare', 'begin', 'if', 'elsif',
-        'loop', 'while', 'for', 'in', 'by', 'reverse', 'continue', 'exit', 'language'
-        , 'json_build_object', 'count', 'jsonb_agg', 'jsonb_set', 'string_to_array', 'to_jsonb'
-        , 'jsonb_build_object', 'position', 'random', 'replace', 'trunc', 'format', 'max'
-        , 'row_to_json', 'json_agg', 'json_build_array', 'json_object_agg', 'json_object_keys'
-        , 'json_object_values', 'jsonb_build_object', 'jsonb_agg', 'jsonb_set', 'string_to_array'
-        , 'to_jsonb', 'position', 'random', 'replace', 'trunc', 'format', 'max', 'row_to_json'
-        , 'json_agg', 'json_build_array', 'json_object_agg', 'json_object_keys', 'json_object_values'
-    ]);
-
-    // 6. Вызовы функций: schema.func( или func(
-    const funcCallRegex = /\b([a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)?)\s*\(/gi;
-    let funcMatch;
-    while ((funcMatch = funcCallRegex.exec(body)) !== null) {
-        const fullName = funcMatch[1];
-        const nameLower = fullName.toLowerCase();
-        const simpleName = nameLower.includes('.') ? nameLower.split('.').pop() : nameLower;
-
-        if (!blacklist.has(simpleName)) {
-            calledFunctions.add(fullName);
-        }
-    }
-
-    // 7. Таблицы в FROM / JOIN
-    const fromJoinRegex = /\b(FROM|JOIN)\s+([a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)?)\b/gi;
-    let fromMatch;
-    while ((fromMatch = fromJoinRegex.exec(body)) !== null) {
-        const table = fromMatch[2];
-        if (!blacklist.has(table.toLowerCase())) {
-            selectFrom.add(table);
-        }
-    }
-
-    // 8. UPDATE table
-    const updateRegex = /\bUPDATE\s+([a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)?)\b/gi;
-    let updateMatch;
-    while ((updateMatch = updateRegex.exec(body)) !== null) {
-        updateTables.add(updateMatch[1]);
-    }
-
-    // 9. INSERT INTO table
-    const insertRegex = /\bINSERT\s+INTO\s+([a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)?)\b/gi;
-    let insertMatch;
-    while ((insertMatch = insertRegex.exec(body)) !== null) {
-        insertTables.add(insertMatch[1]);
-    }
-
-    // 10. Результат
-    return {
-        called_functions: Array.from(calledFunctions).sort(),
-        select_from: Array.from(selectFrom).sort(),
-        update_tables: Array.from(updateTables).sort(),
-        insert_tables: Array.from(insertTables).sort()
-    };
-}
 
 
 async function apiPost(endpoint, body) {
@@ -166,70 +55,76 @@ async function apiPost(endpoint, body) {
     }
 }
 
-// === Парсинг одной функции из блока ===
-function parseFunctionsFromContent(sqlContent, filePath) {
-    const functionRegex = new RegExp(
-        '(={10,}|-{10,})\\s*\\n' +
-        '((?:--[^\\n]*\\n)*?)' +
-        '(={10,}|-{10,})\\s*\\n' +
-        '(create\\s+or\\s+replace\\s+function\\s+' +
-        '(?:[\\w]+\\.)?[\\w]+\\s*\\([^\\)]*\\)' +
-        '[\\s\\S]*?' +
-        'language\\s+\\w+\\s*;?' +
-        '\\s*(?:--.*)?\\s*$)',
-        'gim'
-    );
+// === Инициализация DbService для автономного режима ===
+async function initDbService() {
+    const pgClient = new Client({
+        host: process.env.PGHOST || 'localhost',
+        port: process.env.PGPORT || 5432,
+        database: process.env.PGDATABASE || 'postgres',
+        user: process.env.PGUSER || 'postgres',
+        password: process.env.PGPASSWORD || 'postgres'
+    });
 
-    const functions = [];
-    let match;
-    let index = 0;
+    await pgClient.connect();
+    console.log('[Standalone] Подключение к PostgreSQL установлено');
 
-    while ((match = functionRegex.exec(sqlContent)) !== null) {
-        index++;
-        const rawCommentBlock = match[2];
-        const functionDefinition = match[4].trim();
+    const dbService = new DbService(pgClient);
+    await dbService.initializeSchema();
+    console.log('[Standalone] Схема БД инициализирована');
 
-        // Комментарий
-        const commentLines = rawCommentBlock
-            .split('\n')
-            .map(line => line.replace(/^--\s?/, '').trimEnd());
-        const comment = commentLines.join('\n').trim();
-
-        // Тело
-        let body = functionDefinition;
-        if (!body.endsWith(';')) body += ';';
-
-        // Полное имя
-        const fullNameMatch = body.match(/create\s+or\s+replace\s+function\s+((?:[\w]+\.)?[\w]+)\s*\(/i);
-        const full_name = fullNameMatch ? fullNameMatch[1].trim() : `unknown_function_${path.basename(filePath)}_${index}`;
-
-        // Короткое имя
-        const sname = full_name.split('.').pop();
-
-        // Сигнатура
-        const signatureMatch = body.match(/create\s+or\s+replace\s+function\s+((?:[\w]+\.)?[\w]+\s*\([^\)]*\))/i);
-        const signature = signatureMatch ? signatureMatch[1].trim() : full_name;
-
-        functions.push({
-            full_name: full_name,
-            sname: sname,
-            comment: comment || null,
-            signature: signature,
-            body: body
-        });
-    }
-
-    return functions;
+    return { dbService, pgClient };
 }
 
-// === Обработка одного SQL-файла ===
-async function processSqlFile(filePath) {
+// === Обработка одного SQL-файла (автономный режим) ===
+async function processSqlFileStandalone(filePath, contextCode, dbService) {
     const filename = path.basename(filePath);
-    console.log(`\nОбработка файла: ${filename}`);
+    console.log(`\n[Standalone] Обработка файла: ${filename}`);
+
+    try {
+        const report = await loadSqlFunctionsFromFile(filePath, contextCode, dbService);
+        
+        console.log(`\n[Standalone] Отчет по файлу ${filename}:`);
+        console.log(`  - Файл ID: ${report.fileId}`);
+        console.log(`  - Новый файл: ${report.isNew}`);
+        console.log(`  - Найдено функций: ${report.functionsFound}`);
+        console.log(`  - Обработано функций: ${report.functionsProcessed}`);
+        
+        if (report.errors.length > 0) {
+            console.error(`  - Ошибки (${report.errors.length}):`);
+            report.errors.forEach(err => console.error(`    * ${err}`));
+        }
+        
+        if (report.functions.length > 0) {
+            console.log(`  - Детали по функциям:`);
+            report.functions.forEach(func => {
+                console.log(`    * ${func.full_name}:`);
+                console.log(`      - AI Item ID: ${func.aiItemId}`);
+                console.log(`      - Chunk L0 ID: ${func.chunkL0Id}`);
+                console.log(`      - Chunk L1 ID: ${func.chunkL1Id}`);
+                console.log(`      - L1 распарсен: ${func.l1Parsed}`);
+                if (func.l1CalledFunctions.length > 0) {
+                    console.log(`      - Вызываемые функции: ${func.l1CalledFunctions.join(', ')}`);
+                }
+                if (func.errors.length > 0) {
+                    console.error(`      - Ошибки: ${func.errors.join('; ')}`);
+                }
+            });
+        }
+        
+        console.log(`\n[Standalone] Файл ${filename} успешно обработан.\n`);
+        return report;
+    } catch (err) {
+        console.error(`[Standalone] Ошибка при обработке файла ${filename}:`, err.message);
+        throw err;
+    }
+}
+
+// === Обработка одного SQL-файла (режим через API) ===
+async function processSqlFileApi(filePath, contextCode) {
+    const filename = path.basename(filePath);
+    console.log(`\n[API] Обработка файла: ${filename}`);
 
     let sqlContent;
-    let _res;
-
     try {
         sqlContent = fs.readFileSync(filePath, 'utf8');
     } catch (err) {
@@ -249,7 +144,7 @@ async function processSqlFile(filePath) {
     // Регистрация файла
     const registerRes = await apiPost('/register-file', {
         filename: filename,
-        contextCode: 'CARL'
+        contextCode: contextCode
     });
 
     if (!registerRes || !registerRes.fileId) {
@@ -267,7 +162,7 @@ async function processSqlFile(filePath) {
         // Создание AI Item
         const aiItemRes = await apiPost('/create-or-update-ai-item', {
             full_name: func.full_name,
-            contextCode: 'CARL',
+            contextCode: contextCode,
             type: 'function',
             sName: func.sname,
             fileId: fileId
@@ -305,13 +200,14 @@ async function processSqlFile(filePath) {
 
             let l1Result;
             try {
-                l1Result = await parsePlpgsqlFunctionL1(func.body);  // ← передаём func.body (строку)
-                console.log(`     Успешно построен L1  ${(l1Result).called_functions}`);
-                // Теперь сохраняем именно результат парсинга как чанк уровня 1
+                l1Result = await parsePlpgsqlFunctionL1(func.body);
+                console.log(`     Успешно построен L1: ${(l1Result).called_functions.join(', ')}`);
+                
+                // Сохранение чанка уровня 1 (связи)
                 const l1ChunkRes = await apiPost('/save-chunk', {
                     fileId: fileId,
-                    content: l1Result,  // ← вот сюда передаём JSON-объект от парсинга
-                    chunkIndex: 0,      // лучше нумеровать последовательно: 0 — исходник, 1 — связи
+                    content: l1Result,
+                    chunkIndex: 0,
                     level: '1-связи',
                     type: 'json',
                     full_name: func.full_name,
@@ -327,14 +223,6 @@ async function processSqlFile(filePath) {
 
             } catch (err) {
                 console.error(`     Ошибка парсинга L1 для ${func.full_name}:`, err.message);
-                l1Result = {
-                    function_name: func.full_name,
-                    error: err.message,
-                    called_functions: [],
-                    select_from: [],
-                    update_tables: [],
-                    insert_tables: []
-                };
             }
         }
     }
@@ -342,44 +230,112 @@ async function processSqlFile(filePath) {
     console.log(`   Файл ${filename} успешно обработан.\n`);
 }
 
+// === Парсинг аргументов командной строки ===
+function parseArgs() {
+    const args = {
+        targetPath: null,
+        contextCode: 'CARL',
+        mode: 'standalone' // по умолчанию автономный режим
+    };
+
+    for (let i = 2; i < process.argv.length; i++) {
+        const arg = process.argv[i];
+        
+        if (arg === '-c' || arg === '--context') {
+            args.contextCode = process.argv[++i] || 'CARL';
+        } else if (arg === '--standalone') {
+            args.mode = 'standalone';
+        } else if (arg === '--api') {
+            args.mode = 'api';
+        } else if (!args.targetPath) {
+            args.targetPath = arg;
+        }
+    }
+
+    return args;
+}
+
 // === Основная логика ===
 (async () => {
-    if (process.argv.length < 3) {
+    const args = parseArgs();
+
+    if (!args.targetPath) {
         console.error('Ошибка: не указан путь к файлу или каталогу.');
-        console.error('Использование: node parse_and_upload_sql.js <путь_к_каталогу_или_файлу>');
+        console.error('Использование: node parse_and_upload_sql.js <путь_к_каталогу_или_файлу> [опции]');
+        console.error('Опции:');
+        console.error('  -c, --context <код>    Код контекста (по умолчанию: CARL)');
+        console.error('  --standalone          Автономный режим (прямо с БД, по умолчанию)');
+        console.error('  --api                 Режим через API (требует запущенный сервер)');
         console.error('Примеры:');
-        console.error('   node parse_and_upload_sql.js .');
-        console.error('   node parse_and_upload_sql.js ./sql_files');
-        console.error('   node parse_and_upload_sql.js api_auct_sort.sql');
+        console.error('  node parse_and_upload_sql.js api_auct_sort.sql -c CARL --standalone');
+        console.error('  node parse_and_upload_sql.js api_auct_sort.sql -c CARL --api');
+        console.error('  node parse_and_upload_sql.js . -c CARL');
         process.exit(1);
     }
 
-    const targetPath = process.argv[2];
+    const targetPath = args.targetPath;
     const fullPath = path.resolve(targetPath);
+    const contextCode = args.contextCode;
+    const mode = args.mode;
 
-    const stat = fs.statSync(fullPath);
+    console.log(`Режим работы: ${mode === 'standalone' ? 'Автономный (прямо с БД)' : 'Через API'}`);
+    console.log(`Код контекста: ${contextCode}`);
 
-    if (stat.isDirectory()) {
-        console.log(`Обработка всех *.sql файлов в каталоге: ${fullPath}`);
+    let dbService = null;
+    let pgClient = null;
 
-        const files = fs.readdirSync(fullPath)
-            .filter(f => f.toLowerCase().endsWith('.sql'))
-            .map(f => path.join(fullPath, f));
-
-        if (files.length === 0) {
-            console.log('В каталоге нет .sql файлов.');
-            process.exit(0);
+    // Инициализация для автономного режима
+    if (mode === 'standalone') {
+        try {
+            const db = await initDbService();
+            dbService = db.dbService;
+            pgClient = db.pgClient;
+        } catch (err) {
+            console.error('[Standalone] Ошибка инициализации БД:', err.message);
+            process.exit(1);
         }
-
-        for (const file of files) {
-            await processSqlFile(file);
-        }
-    } else if (stat.isFile() && fullPath.toLowerCase().endsWith('.sql')) {
-        await processSqlFile(fullPath);
-    } else {
-        console.error('Указанный путь не является каталогом или .sql-файлом.');
-        process.exit(1);
     }
 
-    console.log('Вся обработка завершена!');
+    try {
+        const stat = fs.statSync(fullPath);
+        let files = [];
+
+        if (stat.isDirectory()) {
+            console.log(`Обработка всех *.sql файлов в каталоге: ${fullPath}`);
+
+            files = fs.readdirSync(fullPath)
+                .filter(f => f.toLowerCase().endsWith('.sql'))
+                .map(f => path.join(fullPath, f));
+
+            if (files.length === 0) {
+                console.log('В каталоге нет .sql файлов.');
+                process.exit(0);
+            }
+        } else if (stat.isFile() && fullPath.toLowerCase().endsWith('.sql')) {
+            files = [fullPath];
+        } else {
+            console.error('Указанный путь не является каталогом или .sql-файлом.');
+            process.exit(1);
+        }
+
+        // Обработка файлов
+        for (const file of files) {
+            if (mode === 'standalone') {
+                await processSqlFileStandalone(file, contextCode, dbService);
+            } else {
+                await processSqlFileApi(file, contextCode);
+            }
+        }
+
+        console.log('Вся обработка завершена!');
+    } catch (err) {
+        console.error('Критическая ошибка:', err.message);
+        process.exit(1);
+    } finally {
+        // Закрытие соединения с БД в автономном режиме
+        if (pgClient) {
+            await pgClient.end();
+            console.log('[Standalone] Соединение с БД закрыто');
+        }
+    }
 })();
