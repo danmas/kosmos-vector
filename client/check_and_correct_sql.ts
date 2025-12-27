@@ -1,5 +1,5 @@
 // check_and_correct_sql.ts
-// Скрипт для проверки целостности full_name в ai_item и file_vectors
+// Скрипт для проверки целостности full_name в ai_item и chunk_vector
 // Только анализ (dry-run), без изменений в БД
 // Запуск: bun run check_and_correct_sql.ts --context CARL
 
@@ -94,7 +94,7 @@ async function checkContextIntegrity() {
     console.log('2. Чанки уровня 0 с full_name без схемы:');
     const chunksL0NoSchema = await client.query(`
       SELECT fv.id AS chunk_id, fv.full_name, f.filename
-      FROM public.file_vectors fv
+      FROM public.chunk_vector fv
       JOIN public.files f ON fv.file_id = f.id
       WHERE f.context_code = $1
         AND fv.level LIKE '0%'
@@ -118,7 +118,7 @@ async function checkContextIntegrity() {
     console.log('3. Анализ зависимостей уровня 1 (L1):');
     const l1Chunks = await client.query(`
       SELECT fv.id AS chunk_id, fv.chunk_content, fv.full_name AS parent_func, f.filename
-      FROM public.file_vectors fv
+      FROM public.chunk_vector fv
       JOIN public.files f ON fv.file_id = f.id
       WHERE f.context_code = $1 AND fv.level LIKE '1-%'
     `, [contextCode]);
@@ -239,7 +239,7 @@ async function checkContextIntegrity() {
       for (const match of probableMatches) {
         // Получаем текущий chunk_content
         const chunkRes = await client.query(
-          `SELECT chunk_content FROM public.file_vectors WHERE id = $1`,
+          `SELECT chunk_content FROM public.chunk_vector WHERE id = $1`,
           [match.chunk_id]
         );
         const content = chunkRes.rows[0].chunk_content;
@@ -252,7 +252,7 @@ async function checkContextIntegrity() {
 
         // Обновляем запись
         await client.query(
-          `UPDATE public.file_vectors SET chunk_content = $1 WHERE id = $2`,
+          `UPDATE public.chunk_vector SET chunk_content = $1 WHERE id = $2`,
           [content, match.chunk_id]
         );
 

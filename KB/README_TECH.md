@@ -73,11 +73,11 @@
   - `created_at timestamptz default now()`
   - `updated_at timestamptz default now()`
 
-- `public.file_vectors`:
+- `public.chunk_vector`:
   - `id serial pk`
   - `file_id int references files(id) on delete cascade`
   - `ai_item_id int references ai_item(id) on delete set null`
-  - `parent_chunk_id int references file_vectors(id) on delete cascade`
+  - `parent_chunk_id int references chunk_vector(id) on delete cascade`
   - `chunk_content text not null`
   - `embedding vector`
   - `chunk_index int`
@@ -86,7 +86,7 @@
   - `s_name text`, `h_name text`, `full_name text`
   - `created_at timestamptz default now()`
 
-Индексы: `idx_file_vectors_file_id`, `idx_file_vectors_parent_chunk_id`, `idx_file_vectors_ai_item_id`, индексы на `ai_item`.
+Индексы: `idx_chunk_vector_file_id`, `idx_chunk_vector_parent_chunk_id`, `idx_chunk_vector_ai_item_id`, индексы на `ai_item`.
 
 Примечание: Расширение `vector` должно быть установлено: `CREATE EXTENSION IF NOT EXISTS vector;`.
 
@@ -145,7 +145,7 @@
 
 ## Производительность
 
-- Индексация столбцов `file_vectors` обязательна (см. инициализацию)
+- Индексация столбцов `chunk_vector` обязательна (см. инициализацию)
 - Ограничение k в ретривере (`k = MAX_RESULTS`)
 - Для крупных файлов повышайте `chunkSize`, используйте специализированные сплиттеры
 

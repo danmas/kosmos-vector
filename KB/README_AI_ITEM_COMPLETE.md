@@ -104,12 +104,12 @@ CREATE TABLE public.ai_item (
   updated_at timestamptz DEFAULT now()
 );
 
--- Таблица file_vectors - чанки с векторизацией
-CREATE TABLE public.file_vectors (
+-- Таблица chunk_vector - чанки с векторизацией
+CREATE TABLE public.chunk_vector (
   id serial PRIMARY KEY,
   file_id int REFERENCES files(id) ON DELETE CASCADE,
   ai_item_id int REFERENCES ai_item(id) ON DELETE SET NULL,  -- Связь с AI Item
-  parent_chunk_id int REFERENCES file_vectors(id) ON DELETE CASCADE,
+  parent_chunk_id int REFERENCES chunk_vector(id) ON DELETE CASCADE,
   chunk_content text NOT NULL,
   embedding vector,                      -- Вектор размерности 1536
   chunk_index int,
@@ -561,7 +561,7 @@ SELECT * FROM ai_item WHERE depends_on = 'calculateTotal'
                          │ Для каждого AI Item:
                          ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  База данных: file_vectors                                       │
+│  База данных: chunk_vector                                       │
 │                                                                   │
 │  AI Item 1: ShoppingCart.calculateTotal                         │
 │  ├─ L0 (0-исходник) ✅ АВТОМАТИЧЕСКИ                            │

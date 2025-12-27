@@ -559,7 +559,7 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
 
                 // Привязываем чанк к AI Item
                 await dbService.pgClient.query(
-                    'UPDATE public.file_vectors SET ai_item_id = $1 WHERE id = $2',
+                    'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                     [functionReport.aiItemId, chunkIdL0]
                 );
 
@@ -591,7 +591,7 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
 
                     // Привязываем чанк L1 к AI Item
                     await dbService.pgClient.query(
-                        'UPDATE public.file_vectors SET ai_item_id = $1 WHERE id = $2',
+                        'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                         [functionReport.aiItemId, chunkIdL1]
                     );
 

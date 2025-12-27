@@ -40,7 +40,7 @@
 | created_at      | TIMESTAMP WITH TIME ZONE | Время создания (по умолчанию CURRENT_TIMESTAMP)                        |
 | updated_at      | TIMESTAMP WITH TIME ZONE | Время последнего обновления (по умолчанию CURRENT_TIMESTAMP)          |
 
-### Таблица `file_vectors`
+### Таблица `chunk_vector`
 
 Хранит чанки текста с векторными эмбеддингами. Поддерживает иерархию чанков (родительские и дочерние).
 
@@ -61,9 +61,9 @@
 | created_at        | TIMESTAMP WITH TIME ZONE | Время создания (по умолчанию CURRENT_TIMESTAMP)                      |
 
 #### Индексы
-- `idx_file_vectors_file_id`
-- `idx_file_vectors_parent_chunk_id`
-- `idx_file_vectors_ai_item_id`
+- `idx_chunk_vector_file_id`
+- `idx_chunk_vector_parent_chunk_id`
+- `idx_chunk_vector_ai_item_id`
 - `idx_ai_item_full_name`
 - `idx_ai_item_context_code`
 
@@ -128,8 +128,8 @@
 Полная логическая очистка всех таблиц базы данных.
 
 - Удаляет все записи из таблицы `ai_item`.
-- Удаляет все записи из таблицы `files` (при этом все связанные векторы в `file_vectors` удаляются автоматически благодаря каскадному удалению `ON DELETE CASCADE`).
-- Сбрасывает последовательности автоинкремента (`id_seq`) для таблиц `files`, `ai_item` и `file_vectors` — после очистки новые записи начнутся с ID = 1.
+- Удаляет все записи из таблицы `files` (при этом все связанные векторы в `chunk_vector` удаляются автоматически благодаря каскадному удалению `ON DELETE CASCADE`).
+- Сбрасывает последовательности автоинкремента (`id_seq`) для таблиц `files`, `ai_item` и `chunk_vector` — после очистки новые записи начнутся с ID = 1.
 - Безопасный и рекомендуемый способ очистки для большинства сценариев (тестирование, сброс состояния).
 
 #### `truncateAllTables()`
@@ -137,7 +137,7 @@
 
 - Выполняет одну команду:
   ```sql
-  TRUNCATE TABLE public.file_vectors, public.ai_item, public.files
+  TRUNCATE TABLE public.chunk_vector, public.ai_item, public.files
   RESTART IDENTITY CASCADE;
   ```
 - Быстрее `clearAllTables()`, особенно при большом объёме данных.

@@ -270,7 +270,7 @@ async function loadTableSchema(fullTableName, contextCode, dbService, pipelineSt
 
       // Привязываем чанк к AI Item
       await dbService.pgClient.query(
-        'UPDATE public.file_vectors SET ai_item_id = $1 WHERE id = $2',
+        'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
         [report.aiItemId, chunkId]
       );
 

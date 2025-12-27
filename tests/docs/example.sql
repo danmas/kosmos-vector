@@ -1,28 +1,28 @@
-create table public.file_vectors
+create table public.chunk_vector
 (
     id               uuid                     default gen_random_uuid() not null
         primary key,
     file_url         text                                               not null
-        constraint file_vectors_file_url_pk
+        constraint chunk_vector_file_url_pk
             unique,
     embedding        vector(1536),
     created_at       timestamp                default now(),
     dt_file_modified timestamp with time zone default now()             not null
 );
 
-comment on column public.file_vectors.dt_file_modified is 'Когда изменился файл в файловой системе';
+comment on column public.chunk_vector.dt_file_modified is 'Когда изменился файл в файловой системе';
 
-alter table public.file_vectors
+alter table public.chunk_vector
     owner to postgres;
 
-create index file_vectors_embedding_idx
-    on public.file_vectors using ivfflat (embedding);
+create index chunk_vector_embedding_idx
+    on public.chunk_vector using ivfflat (embedding);
 
-grant delete, insert, references, select, trigger, truncate, update on public.file_vectors to anon;
+grant delete, insert, references, select, trigger, truncate, update on public.chunk_vector to anon;
 
-grant delete, insert, references, select, trigger, truncate, update on public.file_vectors to authenticated;
+grant delete, insert, references, select, trigger, truncate, update on public.chunk_vector to authenticated;
 
-grant delete, insert, references, select, trigger, truncate, update on public.file_vectors to service_role;
+grant delete, insert, references, select, trigger, truncate, update on public.chunk_vector to service_role;
 
 
 -- Пример SQL-запросов для работы с базой данных

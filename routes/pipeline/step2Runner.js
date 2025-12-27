@@ -66,7 +66,7 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
         // 2. Проверка чанков L0 без схемы
         const chunksL0NoSchema = await client.query(`
       SELECT fv.id
-      FROM public.file_vectors fv
+      FROM public.chunk_vector fv
       JOIN public.files f ON fv.file_id = f.id
       WHERE f.context_code = $1
         AND fv.level LIKE '0%'
@@ -83,7 +83,7 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
         // Получаем все чанки уровня 1
         const l1Chunks = await client.query(`
       SELECT fv.id AS chunk_id, fv.chunk_content, fv.full_name AS parent_func, f.filename
-      FROM public.file_vectors fv
+      FROM public.chunk_vector fv
       JOIN public.files f ON fv.file_id = f.id
       WHERE f.context_code = $1 AND fv.level LIKE '1-%'
     `, [contextCode]);
@@ -173,7 +173,7 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
             // Если были изменения, сохраняем в БД
             if (chunkModified) {
                 await client.query(
-                    `UPDATE public.file_vectors SET chunk_content = $1 WHERE id = $2`,
+                    `UPDATE public.chunk_vector SET chunk_content = $1 WHERE id = $2`,
                     [content, chunk.chunk_id]
                 );
             }

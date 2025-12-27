@@ -54,13 +54,112 @@ class DbService {
       `);
       console.log("Индексы для ai_item созданы или уже существуют");
 
-      // Создание таблицы file_vectors
+      // Переименование таблицы file_vectors в chunk_vector, если она существует
+      try {
+        const oldTableExists = await this.pgClient.query(`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = 'file_vectors'
+          )
+        `);
+        
+        const newTableExists = await this.pgClient.query(`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = 'chunk_vector'
+          )
+        `);
+        
+        if (oldTableExists.rows[0].exists && !newTableExists.rows[0].exists) {
+          console.log("Найдена таблица file_vectors, переименовываем в chunk_vector...");
+          
+          // Переименовываем индексы
+          await this.pgClient.query(`
+            DO $$
+            BEGIN
+              IF EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_file_vectors_file_id') THEN
+                ALTER INDEX idx_file_vectors_file_id RENAME TO idx_chunk_vector_file_id;
+              END IF;
+              IF EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_file_vectors_parent_chunk_id') THEN
+                ALTER INDEX idx_file_vectors_parent_chunk_id RENAME TO idx_chunk_vector_parent_chunk_id;
+              END IF;
+              IF EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_file_vectors_ai_item_id') THEN
+                ALTER INDEX idx_file_vectors_ai_item_id RENAME TO idx_chunk_vector_ai_item_id;
+              END IF;
+            END $$;
+          `);
+          
+          // Переименовываем последовательность
+          await this.pgClient.query(`
+            DO $$
+            BEGIN
+              IF EXISTS (SELECT 1 FROM pg_sequences WHERE schemaname = 'public' AND sequencename = 'file_vectors_id_seq') THEN
+                ALTER SEQUENCE public.file_vectors_id_seq RENAME TO chunk_vector_id_seq;
+              END IF;
+            END $$;
+          `);
+          
+          // Переименовываем таблицу
+          await this.pgClient.query(`
+            ALTER TABLE public.file_vectors RENAME TO chunk_vector;
+          `);
+          
+          console.log("Таблица file_vectors успешно переименована в chunk_vector");
+        } else if (oldTableExists.rows[0].exists && newTableExists.rows[0].exists) {
+          console.warn("Обнаружены обе таблицы (file_vectors и chunk_vector). Рекомендуется вручную удалить старую таблицу file_vectors.");
+        }
+        
+        // Проверяем и обновляем представления (views), которые могут ссылаться на file_vectors
+        try {
+          const views = await this.pgClient.query(`
+            SELECT viewname, definition 
+            FROM pg_views 
+            WHERE schemaname = 'public' 
+            AND definition LIKE '%file_vectors%'
+          `);
+          
+          if (views.rows.length > 0) {
+            console.warn(`Найдено ${views.rows.length} представлений, которые могут ссылаться на file_vectors. Требуется ручное обновление.`);
+            views.rows.forEach(view => {
+              console.warn(`  - ${view.viewname}`);
+            });
+          }
+        } catch (viewError) {
+          // Игнорируем ошибки при проверке представлений
+        }
+        
+        // Проверяем и обновляем функции, которые могут ссылаться на file_vectors
+        try {
+          const functions = await this.pgClient.query(`
+            SELECT routine_name, routine_definition 
+            FROM information_schema.routines 
+            WHERE routine_schema = 'public' 
+            AND routine_definition LIKE '%file_vectors%'
+          `);
+          
+          if (functions.rows.length > 0) {
+            console.warn(`Найдено ${functions.rows.length} функций, которые могут ссылаться на file_vectors. Требуется ручное обновление.`);
+            functions.rows.forEach(func => {
+              console.warn(`  - ${func.routine_name}`);
+            });
+          }
+        } catch (funcError) {
+          // Игнорируем ошибки при проверке функций
+        }
+        
+      } catch (renameError) {
+        console.warn("Ошибка при переименовании таблицы file_vectors (возможно, уже переименована):", renameError.message);
+      }
+
+      // Создание таблицы chunk_vector
       await this.pgClient.query(`
-        CREATE TABLE IF NOT EXISTS public.file_vectors (
+        CREATE TABLE IF NOT EXISTS public.chunk_vector (
           id SERIAL PRIMARY KEY,
           file_id INTEGER REFERENCES public.files(id) ON DELETE CASCADE,
           ai_item_id INTEGER REFERENCES public.ai_item(id) ON DELETE SET NULL,
-          parent_chunk_id INTEGER REFERENCES public.file_vectors(id) ON DELETE CASCADE,
+          parent_chunk_id INTEGER REFERENCES public.chunk_vector(id) ON DELETE CASCADE,
           chunk_content JSONB NOT NULL,
           embedding VECTOR,
           chunk_index INTEGER,
@@ -72,22 +171,22 @@ class DbService {
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )
       `);
-      console.log("Таблица file_vectors создана или уже существует");
+      console.log("Таблица chunk_vector создана или уже существует");
 
       // Добавляем поля content и updated_at, если их нет
       await this.pgClient.query(`
-        ALTER TABLE public.file_vectors
+        ALTER TABLE public.chunk_vector
           ADD COLUMN IF NOT EXISTS content JSONB,
           ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE
       `);
 
       // Создание индексов для ускорения поиска
       await this.pgClient.query(`
-        CREATE INDEX IF NOT EXISTS idx_file_vectors_file_id ON public.file_vectors(file_id);
-        CREATE INDEX IF NOT EXISTS idx_file_vectors_parent_chunk_id ON public.file_vectors(parent_chunk_id);
-        CREATE INDEX IF NOT EXISTS idx_file_vectors_ai_item_id ON public.file_vectors(ai_item_id);
+        CREATE INDEX IF NOT EXISTS idx_chunk_vector_file_id ON public.chunk_vector(file_id);
+        CREATE INDEX IF NOT EXISTS idx_chunk_vector_parent_chunk_id ON public.chunk_vector(parent_chunk_id);
+        CREATE INDEX IF NOT EXISTS idx_chunk_vector_ai_item_id ON public.chunk_vector(ai_item_id);
       `);
-      console.log("Индексы для file_vectors созданы или уже существуют");
+      console.log("Индексы для chunk_vector созданы или уже существуют");
 
       console.log("Инициализация схемы базы данных завершена");
       return true;
@@ -244,7 +343,7 @@ class DbService {
       let vectorResult;
       if (full_name) {
         vectorResult = await this.pgClient.query(
-          `SELECT id, ai_item_id FROM public.file_vectors
+          `SELECT id, ai_item_id FROM public.chunk_vector
            WHERE file_id = $1 AND full_name = $2 AND level = $3`,
           [fileId, full_name, level]
         );
@@ -252,7 +351,7 @@ class DbService {
         // Fallback: если full_name нет, проверяем по chunk_content
         // Используем приведение к тексту для сравнения JSONB
         vectorResult = await this.pgClient.query(
-          `SELECT id, ai_item_id FROM public.file_vectors
+          `SELECT id, ai_item_id FROM public.chunk_vector
            WHERE file_id = $1 AND chunk_content::text = $2::text AND (full_name IS NULL OR full_name = '') AND level = $3`,
           [fileId, JSON.stringify(chunkContent), level]
         );
@@ -264,7 +363,7 @@ class DbService {
         // INSERT
         // chunkContent передается как JSON объект, PostgreSQL автоматически конвертирует в JSONB
         const insertQuery = `
-          INSERT INTO public.file_vectors 
+          INSERT INTO public.chunk_vector 
             (file_id, chunk_content, embedding, chunk_index, type, level, s_name, full_name, h_name, parent_chunk_id)
           VALUES 
             ($1, (($2)::json->'text')::jsonb, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -281,7 +380,7 @@ class DbService {
         // UPDATE
         chunkId = vectorResult.rows[0].id;
         const updateQuery = `
-          UPDATE public.file_vectors
+          UPDATE public.chunk_vector
           SET chunk_content = (($1)::json->'text')::jsonb,
               embedding = $2,
               type = $3,
@@ -314,7 +413,7 @@ class DbService {
 
         // Ищем другие чанки с тем же full_name в этом файле
         const existingChunkQuery = await this.pgClient.query(
-          `SELECT id, ai_item_id FROM public.file_vectors 
+          `SELECT id, ai_item_id FROM public.chunk_vector 
            WHERE file_id = $1 AND full_name = $2 AND level = '0-исходник' AND id != $3`,
           [fileId, full_name, chunkId]
         );
@@ -351,7 +450,7 @@ class DbService {
 
         // Привязываем текущий чанк к ai_item
         await this.pgClient.query(
-          'UPDATE public.file_vectors SET ai_item_id = $1 WHERE id = $2',
+          'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
           [itemId, chunkId]
         );
 
@@ -359,7 +458,7 @@ class DbService {
         if (existingChunkQuery.rows.length > 0) {
           for (const row of existingChunkQuery.rows) {
             await this.pgClient.query(
-              'UPDATE public.file_vectors SET ai_item_id = $1 WHERE id = $2',
+              'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
               [itemId, row.id]
             );
           }
@@ -392,7 +491,7 @@ class DbService {
       // Получение информации о файле из базы данных
       let query = `SELECT f.id, f.context_code, f.modified_at, COUNT(fv.id) as chunks_count
          FROM public.files f
-         LEFT JOIN public.file_vectors fv ON f.id = fv.file_id
+         LEFT JOIN public.chunk_vector fv ON f.id = fv.file_id
          WHERE f.filename = $1`;
       const params = [baseFileName];
       
@@ -479,7 +578,7 @@ class DbService {
                f.context_code,
                fv.type,
                fv.level
-        FROM public.file_vectors fv
+        FROM public.chunk_vector fv
         JOIN public.files f ON fv.file_id = f.id
         WHERE 1=1
       `;
@@ -541,7 +640,7 @@ class DbService {
     try {
       let query = `
         SELECT f.id, f.filename, f.file_url, f.context_code, f.modified_at, f.created_at,
-               (SELECT COUNT(*) FROM public.file_vectors WHERE file_id = f.id) as chunks_count
+               (SELECT COUNT(*) FROM public.chunk_vector WHERE file_id = f.id) as chunks_count
         FROM public.files f
       `;
       const params = [];
@@ -668,7 +767,7 @@ class DbService {
         `SELECT id, 
                 COALESCE(chunk_content->>'text', chunk_content::text) as chunk_content, 
                 chunk_index as index, type, level, s_name, h_name, full_name, ai_item_id
-         FROM public.file_vectors
+         FROM public.chunk_vector
          WHERE file_id = $1
          ORDER BY chunk_index`,
         [fileId]
@@ -704,7 +803,7 @@ class DbService {
       // Получаем ID ai_item, связанных с чанками уровня 0 этого файла
       const aiItemsQuery = await this.pgClient.query(`
         SELECT DISTINCT ai_item_id 
-        FROM public.file_vectors 
+        FROM public.chunk_vector 
         WHERE file_id = $1 AND level = '0-исходник' AND ai_item_id IS NOT NULL
       `, [fileId]);
       
@@ -712,7 +811,7 @@ class DbService {
       
       // Удаление всех векторов, связанных с файлом
       const result = await this.pgClient.query(
-        "DELETE FROM public.file_vectors WHERE file_id = $1 RETURNING id",
+        "DELETE FROM public.chunk_vector WHERE file_id = $1 RETURNING id",
         [fileId]
       );
 
@@ -722,7 +821,7 @@ class DbService {
         for (const itemId of aiItemIds) {
           const referencesQuery = await this.pgClient.query(`
             SELECT COUNT(*) as ref_count
-            FROM public.file_vectors
+            FROM public.chunk_vector
             WHERE ai_item_id = $1 AND level = '0-исходник'
           `, [itemId]);
           
@@ -762,7 +861,7 @@ class DbService {
       // Получаем ID ai_item, связанные с чанками файла
       const aiItemsQuery = await this.pgClient.query(`
         SELECT DISTINCT ai_item_id 
-        FROM public.file_vectors 
+        FROM public.chunk_vector 
         WHERE file_id = $1 AND ai_item_id IS NOT NULL
       `, [fileId]);
       
@@ -797,16 +896,16 @@ class DbService {
     try {
       console.log(`[DB] Запрос чанка по ID: ${chunkId}`);
       
-      // Проверяем структуру таблицы file_vectors, чтобы понять тип поля id
+      // Проверяем структуру таблицы chunk_vector, чтобы понять тип поля id
       const tableInfoQuery = await this.pgClient.query(`
         SELECT column_name, data_type 
         FROM information_schema.columns 
-        WHERE table_name = 'file_vectors' AND column_name = 'id'
+        WHERE table_name = 'chunk_vector' AND column_name = 'id'
       `);
       
       // Проверяем тип поля id
       const idColumnType = tableInfoQuery.rows.length > 0 ? tableInfoQuery.rows[0].data_type : 'unknown';
-      console.log(`[DB] Тип поля id в таблице file_vectors: ${idColumnType}`);
+      console.log(`[DB] Тип поля id в таблице chunk_vector: ${idColumnType}`);
       
       // Формируем запрос в зависимости от типа поля
       let query;
@@ -828,7 +927,7 @@ class DbService {
                    fv.chunk_index, fv.type, fv.level, 
                    fv.s_name, fv.full_name, fv.h_name, fv.created_at, fv.ai_item_id,
                    f.filename, f.context_code
-            FROM public.file_vectors fv
+            FROM public.chunk_vector fv
             JOIN public.files f ON fv.file_id = f.id
             WHERE fv.chunk_index = $1
             LIMIT 1
@@ -842,7 +941,7 @@ class DbService {
                    fv.chunk_index, fv.type, fv.level, 
                    fv.s_name, fv.full_name, fv.h_name, fv.created_at, fv.ai_item_id,
                    f.filename, f.context_code
-            FROM public.file_vectors fv
+            FROM public.chunk_vector fv
             JOIN public.files f ON fv.file_id = f.id
             WHERE fv.id = $1
           `;
@@ -856,7 +955,7 @@ class DbService {
                  fv.chunk_index, fv.type, fv.level, 
                  fv.s_name, fv.full_name, fv.h_name, fv.created_at, fv.ai_item_id,
                  f.filename, f.context_code
-          FROM public.file_vectors fv
+          FROM public.chunk_vector fv
           JOIN public.files f ON fv.file_id = f.id
           WHERE fv.id = $1
         `;
@@ -910,7 +1009,7 @@ class DbService {
       }
       
       const query = `
-        UPDATE public.file_vectors
+        UPDATE public.chunk_vector
         SET ${updateParts.join(', ')}
         WHERE id = $1
         RETURNING id, chunk_index, type, level
@@ -954,7 +1053,7 @@ class DbService {
   async deleteChildChunks(parentChunkId, level) {
     try {
       await this.pgClient.query(
-        `DELETE FROM public.file_vectors 
+        `DELETE FROM public.chunk_vector 
          WHERE parent_chunk_id = $1 AND level = $2`,
         [parentChunkId, level]
       );
@@ -990,7 +1089,7 @@ class DbService {
       // Получаем максимальный индекс для файла и уровня
       const indexResult = await this.pgClient.query(
         `SELECT MAX(chunk_index) as max_index 
-         FROM public.file_vectors 
+         FROM public.chunk_vector 
          WHERE file_id = $1 AND level = $2`,
         [fileId, level]
       );
@@ -1003,7 +1102,7 @@ class DbService {
       // Создаем новый чанк
       // content передается как JSON объект, конвертируем в JSONB
       const result = await this.pgClient.query(
-        `INSERT INTO public.file_vectors (
+        `INSERT INTO public.chunk_vector (
           file_id, chunk_content, embedding, chunk_index, type, level, parent_chunk_id, s_name, full_name, h_name
         ) VALUES ($1, $2::jsonb, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id, chunk_index as index, type, level`,
@@ -1016,7 +1115,7 @@ class DbService {
       if (aiItemId) {
         console.log(`Связываем чанк ${chunkId} с AI Item ${aiItemId}`);
         await this.pgClient.query(
-          'UPDATE public.file_vectors SET ai_item_id = $1 WHERE id = $2',
+          'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
           [aiItemId, chunkId]
         );
       }
@@ -1032,7 +1131,7 @@ class DbService {
         
         // Проверяем, есть ли уже чанки с таким же full_name в этом файле
         const existingChunkQuery = await this.pgClient.query(
-          'SELECT id, ai_item_id FROM public.file_vectors WHERE file_id = $1 AND full_name = $2 AND level = $3',
+          'SELECT id, ai_item_id FROM public.chunk_vector WHERE file_id = $1 AND full_name = $2 AND level = $3',
           [fileId, full_name, level]
         );
         
@@ -1042,7 +1141,7 @@ class DbService {
           
           // Связываем текущий чанк с существующим AI Item
           await this.pgClient.query(
-            'UPDATE public.file_vectors SET ai_item_id = $1 WHERE id = $2',
+            'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
             [existingItemId, chunkId]
           );
           return chunkId;
@@ -1074,7 +1173,7 @@ class DbService {
         
         // Связываем чанк с ai_item
         await this.pgClient.query(
-          'UPDATE public.file_vectors SET ai_item_id = $1 WHERE id = $2',
+          'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
           [itemId, chunkId]
         );
         
@@ -1083,7 +1182,7 @@ class DbService {
           for (const row of existingChunkQuery.rows) {
             if (row.id !== chunkId) { // Пропускаем текущий чанк
               await this.pgClient.query(
-                'UPDATE public.file_vectors SET ai_item_id = $1 WHERE id = $2',
+                'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                 [itemId, row.id]
               );
             }
@@ -1112,7 +1211,7 @@ class DbService {
       
       // Обновляем имена чанка
       await this.pgClient.query(
-        `UPDATE public.file_vectors
+        `UPDATE public.chunk_vector
          SET s_name = $1, full_name = $2, h_name = $3
          WHERE id = $4`,
         [s_name, full_name, h_name, chunkId]
@@ -1197,7 +1296,7 @@ class DbService {
                fv.type, fv.level, 
                fv.s_name, fv.full_name, fv.h_name, fv.created_at,
                f.filename, f.context_code
-        FROM public.file_vectors fv
+        FROM public.chunk_vector fv
         JOIN public.files f ON fv.file_id = f.id
         WHERE fv.ai_item_id = $1
       `;
@@ -1267,7 +1366,7 @@ class DbService {
           WHERE context_code = $1
             AND id NOT IN (
               SELECT DISTINCT fv.ai_item_id 
-              FROM public.file_vectors fv
+              FROM public.chunk_vector fv
               JOIN public.files f ON fv.file_id = f.id
               WHERE fv.ai_item_id IS NOT NULL 
                 AND fv.level = '0-исходник'
@@ -1282,7 +1381,7 @@ class DbService {
           DELETE FROM public.ai_item
           WHERE id NOT IN (
             SELECT DISTINCT ai_item_id 
-            FROM public.file_vectors 
+            FROM public.chunk_vector 
             WHERE ai_item_id IS NOT NULL AND level = '0-исходник'
           )
           RETURNING id, full_name, context_code
@@ -1369,7 +1468,7 @@ class DbService {
       // Связываем чанк с AI Item
       if (chunkId) {
         await this.pgClient.query(
-          'UPDATE public.file_vectors SET ai_item_id = $1 WHERE id = $2',
+          'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
           [itemId, chunkId]
         );
       }
@@ -1459,7 +1558,7 @@ class DbService {
     try {
       const result = await this.pgClient.query(`
         SELECT f.id, f.filename, f.file_url, f.context_code, f.modified_at, f.created_at, f.content,
-               (SELECT COUNT(*) FROM public.file_vectors WHERE file_id = f.id) as chunks_count
+               (SELECT COUNT(*) FROM public.chunk_vector WHERE file_id = f.id) as chunks_count
         FROM public.files f
         WHERE f.filename = $1
       `, [filename]);
@@ -1509,7 +1608,7 @@ class DbService {
 
   /**
    * Полная очистка всех таблиц базы данных
-   * Удаляет все записи из file_vectors, ai_item и files
+   * Удаляет все записи из chunk_vector, ai_item и files
    * @returns {Promise<boolean>} Результат операции
    */
   async clearAllTables() {
@@ -1517,7 +1616,7 @@ class DbService {
       console.log("Начало полной очистки всех таблиц базы данных...");
 
       // Вариант 1: Простое удаление с использованием каскадных связей
-      // Поскольку в file_vectors есть ON DELETE CASCADE для files,
+      // Поскольку в chunk_vector есть ON DELETE CASCADE для files,
       // достаточно удалить все файлы — векторы удалятся автоматически.
       // ai_item не имеют каскадного удаления, поэтому удаляем отдельно.
 
@@ -1533,7 +1632,7 @@ class DbService {
       await this.pgClient.query(`
         ALTER SEQUENCE public.files_id_seq RESTART WITH 1;
         ALTER SEQUENCE public.ai_item_id_seq RESTART WITH 1;
-        ALTER SEQUENCE public.file_vectors_id_seq RESTART WITH 1;
+        ALTER SEQUENCE public.chunk_vector_id_seq RESTART WITH 1;
       `);
       console.log("Последовательности ID сброшены");
 
@@ -1555,7 +1654,7 @@ class DbService {
       console.log("Жёсткая очистка всех таблиц (TRUNCATE)...");
 
       await this.pgClient.query(`
-        TRUNCATE TABLE public.file_vectors, public.ai_item, public.files
+        TRUNCATE TABLE public.chunk_vector, public.ai_item, public.files
         RESTART IDENTITY
         CASCADE;
       `);
@@ -1627,7 +1726,7 @@ class DbService {
       // Извлекаем поле text из JSONB, если оно есть, иначе весь JSONB как текст
       const chunksResult = await this.pgClient.query(`
         SELECT COALESCE(chunk_content->>'text', chunk_content::text) as chunk_content, level, type
-        FROM public.file_vectors
+        FROM public.chunk_vector
         WHERE ai_item_id = $1
         ORDER BY chunk_index
       `, [row.ai_id]);
@@ -1700,7 +1799,7 @@ class DbService {
           ) AS chunks
         FROM public.ai_item ai
         JOIN public.files f ON ai.file_id = f.id
-        LEFT JOIN public.file_vectors fv ON fv.ai_item_id = ai.id
+        LEFT JOIN public.chunk_vector fv ON fv.ai_item_id = ai.id
       `;
       const params = [];
 
@@ -1781,11 +1880,11 @@ class DbService {
       // 2. Количество чанков уровня 1 (зависимости)
       const depsQuery = contextCode
         ? `SELECT COUNT(*) AS count 
-           FROM public.file_vectors fv
+           FROM public.chunk_vector fv
            JOIN public.files f ON fv.file_id = f.id
            WHERE fv.level LIKE '1-%' AND f.context_code = $1`
         : `SELECT COUNT(*) AS count 
-           FROM public.file_vectors 
+           FROM public.chunk_vector 
            WHERE level LIKE '1-%'`;
       const depsRes = await this.pgClient.query(depsQuery, params);
       const totalDeps = parseInt(depsRes.rows[0].count);
@@ -1847,11 +1946,11 @@ class DbService {
       // 5. Размер векторного индекса (чанков с embedding)
       const vectorSizeQuery = contextCode
         ? `SELECT COUNT(*) AS count 
-           FROM public.file_vectors fv
+           FROM public.chunk_vector fv
            JOIN public.files f ON fv.file_id = f.id
            WHERE fv.embedding IS NOT NULL AND f.context_code = $1`
         : `SELECT COUNT(*) AS count 
-           FROM public.file_vectors 
+           FROM public.chunk_vector 
            WHERE embedding IS NOT NULL`;
       const vectorSizeRes = await this.pgClient.query(vectorSizeQuery, params);
       const vectorIndexSize = `${vectorSizeRes.rows[0].count} vectors`;
@@ -1859,11 +1958,11 @@ class DbService {
       // 6. Дата последней модификации (по чанкам)
       const lastScanQuery = contextCode
         ? `SELECT MAX(fv.created_at) AS last 
-           FROM public.file_vectors fv
+           FROM public.chunk_vector fv
            JOIN public.files f ON fv.file_id = f.id
            WHERE f.context_code = $1`
         : `SELECT MAX(created_at) AS last 
-           FROM public.file_vectors`;
+           FROM public.chunk_vector`;
       const lastScanRes = await this.pgClient.query(lastScanQuery, params);
       const lastScan = lastScanRes.rows[0].last || new Date().toISOString();
 
@@ -1903,7 +2002,7 @@ class DbService {
           fv.content,
           fv.created_at,
           fv.updated_at
-        FROM public.file_vectors fv
+        FROM public.chunk_vector fv
         JOIN public.ai_item ai ON fv.ai_item_id = ai.id
         WHERE ai.full_name = $1 AND fv.level = '2-logic'
       `;
@@ -1994,7 +2093,7 @@ class DbService {
 
       // Проверяем, существует ли уже чанк с level='2-logic'
       const existingQuery = `
-        SELECT id, created_at FROM public.file_vectors
+        SELECT id, created_at FROM public.chunk_vector
         WHERE ai_item_id = $1 AND level = '2-logic'
         LIMIT 1
       `;
@@ -2012,7 +2111,7 @@ class DbService {
         updatedAt = new Date().toISOString();
 
         await this.pgClient.query(
-          `UPDATE public.file_vectors
+          `UPDATE public.chunk_vector
            SET chunk_content = $1::jsonb,
                content = $2::jsonb,
                updated_at = CURRENT_TIMESTAMP
@@ -2025,7 +2124,7 @@ class DbService {
         updatedAt = null;
 
         await this.pgClient.query(
-          `INSERT INTO public.file_vectors
+          `INSERT INTO public.chunk_vector
            (file_id, ai_item_id, chunk_content, content, level, full_name, type)
            VALUES ($1, $2, $3::jsonb, $4::jsonb, '2-logic', $5, 'logic-graph')`,
           [fileId, aiItemId, JSON.stringify(chunkContent), JSON.stringify(content), fullName]
@@ -2048,7 +2147,7 @@ class DbService {
   async deleteLogicGraph(fullName, contextCode = null) {
     try {
       let query = `
-        DELETE FROM public.file_vectors
+        DELETE FROM public.chunk_vector
         WHERE ai_item_id IN (
           SELECT ai.id FROM public.ai_item ai
           WHERE ai.full_name = $1
@@ -2058,7 +2157,7 @@ class DbService {
 
       if (contextCode) {
         query = `
-          DELETE FROM public.file_vectors
+          DELETE FROM public.chunk_vector
           WHERE ai_item_id IN (
             SELECT ai.id FROM public.ai_item ai
             WHERE ai.full_name = $1 AND ai.context_code = $2

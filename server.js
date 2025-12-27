@@ -218,7 +218,7 @@ console.log('Server started — log buffer initialized');
 
 const express = require('express');
 const { Client } = require('pg');
-const { DbService, EmbeddingsFactory, PostgresVectorStore } = require('@aian-vector/core');
+const { DbService, EmbeddingsFactory, PostgresVectorStore } = require('./packages/core');
 const aiRoutes = require('./routes/ai');
 const filesRoutes = require('./routes/files');
 
