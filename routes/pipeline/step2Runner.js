@@ -35,13 +35,22 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
             l1ChunksAnalyzed: 0,
             missingDeps: 0,
             ambiguousDeps: 0,
-            fixedDeps: 0
+            fixedDeps: 0,
+            // Новая таблица link
+            linksAnalyzed: 0,
+            linksFixed: 0,
+            linksMissing: 0,
+            linksAmbiguous: 0
         },
         details: {
             fixes: [],
             ambiguous: [],
             missing: [],
-            errors: []
+            errors: [],
+            // Для таблицы link
+            linkFixes: [],
+            linkMissing: [],
+            linkAmbiguous: []
         }
     };
 
@@ -187,6 +196,112 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
             }
         }
 
+        // ========================================
+        // 4. Анализ и исправление таблицы link
+        // ========================================
+        logger.log(`Анализ таблицы link...`);
+
+        // Получаем все связи без схемы в target
+        const linksNoSchema = await client.query(`
+            SELECT id, source, target, link_type_id
+            FROM public.link
+            WHERE context_code = $1
+              AND target NOT LIKE '%.%'
+        `, [contextCode]);
+
+        report.summary.linksAnalyzed = linksNoSchema.rows.length;
+
+        if (linksNoSchema.rows.length > 0) {
+            logger.log(`Найдено ${linksNoSchema.rows.length} связей с target без схемы`);
+
+            for (const link of linksNoSchema.rows) {
+                const shortName = link.target.trim();
+                if (!shortName) continue;
+
+                // Ищем кандидатов в ai_item
+                const candidates = await client.query(`
+                    SELECT full_name
+                    FROM public.ai_item
+                    WHERE context_code = $1
+                      AND full_name ~ ('^[^.]+\\.' || $2 || '$')
+                `, [contextCode, shortName]);
+
+                if (candidates.rows.length === 0) {
+                    report.summary.linksMissing++;
+                    report.details.linkMissing.push({
+                        target: shortName,
+                        source: link.source,
+                        linkId: link.id
+                    });
+                } else if (candidates.rows.length === 1) {
+                    // Исправляем target
+                    const fullName = candidates.rows[0].full_name;
+
+                    // Проверяем, не станет ли запись дубликатом после обновления
+                    const existingLink = await client.query(`
+                        SELECT id FROM public.link
+                        WHERE context_code = $1
+                          AND source = $2
+                          AND target = $3
+                          AND link_type_id = $4
+                          AND id != $5
+                    `, [contextCode, link.source, fullName, link.link_type_id, link.id]);
+
+                    if (existingLink.rows.length > 0) {
+                        // Дубликат уже существует — удаляем текущую запись
+                        await client.query(`DELETE FROM public.link WHERE id = $1`, [link.id]);
+                        report.summary.linksFixed++;
+                        report.details.linkFixes.push({
+                            from: shortName,
+                            to: fullName,
+                            source: link.source,
+                            action: 'deleted_duplicate'
+                        });
+                    } else {
+                        // Обновляем target
+                        await client.query(
+                            `UPDATE public.link SET target = $1 WHERE id = $2`,
+                            [fullName, link.id]
+                        );
+                        report.summary.linksFixed++;
+                        report.details.linkFixes.push({
+                            from: shortName,
+                            to: fullName,
+                            source: link.source,
+                            action: 'updated'
+                        });
+                    }
+                } else {
+                    // Неоднозначность
+                    report.summary.linksAmbiguous++;
+                    report.details.linkAmbiguous.push({
+                        target: shortName,
+                        source: link.source,
+                        candidates: candidates.rows.map(r => r.full_name)
+                    });
+                }
+            }
+
+            logger.log(`Исправлено связей в link: ${report.summary.linksFixed}`);
+        }
+
+        // 5. Удаление дубликатов в link (на случай если появились после исправления)
+        const deletedDuplicates = await client.query(`
+            DELETE FROM public.link a
+            USING public.link b
+            WHERE a.id > b.id
+              AND a.context_code = b.context_code
+              AND a.source = b.source
+              AND a.target = b.target
+              AND a.link_type_id = b.link_type_id
+              AND a.context_code = $1
+            RETURNING a.id
+        `, [contextCode]);
+
+        if (deletedDuplicates.rowCount > 0) {
+            logger.log(`Удалено ${deletedDuplicates.rowCount} дубликатов в link`);
+        }
+
     } catch (err) {
         logger.error(`Критическая ошибка: ${err.message}`);
         report.details.errors.push(err.message);
@@ -208,9 +323,8 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
     }
 
     logger.log(`Шаг 2 завершён.`);
-    logger.log(`Исправлено зависимостей: ${report.summary.fixedDeps}`);
-    logger.log(`Неоднозначных: ${report.summary.ambiguousDeps}`);
-    logger.log(`Отсутствующих: ${report.summary.missingDeps}`);
+    logger.log(`[L1 чанки] Исправлено: ${report.summary.fixedDeps}, неоднозначных: ${report.summary.ambiguousDeps}, отсутствующих: ${report.summary.missingDeps}`);
+    logger.log(`[Таблица link] Исправлено: ${report.summary.linksFixed}, неоднозначных: ${report.summary.linksAmbiguous}, отсутствующих: ${report.summary.linksMissing}`);
     
     // Добавляем логи в report
     report.logs = logger.getLogs();

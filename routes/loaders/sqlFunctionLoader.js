@@ -81,6 +81,24 @@ async function parsePlpgsqlFunctionL1(code) {
         , 'json_object_values', 'jsonb_build_object', 'jsonb_agg', 'jsonb_set', 'string_to_array'
         , 'to_jsonb', 'position', 'random', 'replace', 'trunc', 'format', 'max', 'row_to_json'
         , 'json_agg', 'json_build_array', 'json_object_agg', 'json_object_keys', 'json_object_values'
+        , 'upper', 'lower', 'trim', 'ltrim', 'rtrim', 'substring', 'length', 'concat', 'replace', 'split_part'
+        , 'to_char', 'to_date', 'to_number', 'to_timestamp', 'to_timestamp_tz', 'regexp_split_to_table'
+        , 'region', 'to_timestamp'
+        , 'ARRAY_LENGTH', 'ARRAY_AGG', 'ARRAY_TO_STRING', 'ARRAY_POSITION', 'ARRAY_UPPER', 'ARRAY_LOWER'
+        , 'ARRAY_TRIM', 'ARRAY_SUBSTRING', 'ARRAY_CONCAT', 'ARRAY_REPLACE', 'ARRAY_SPLIT_PART', 'ARRAY_TO_CHAR', 'ARRAY_TO_DATE'
+        , 'ARRAY_TO_NUMBER', 'ARRAY_TO_TIMESTAMP', 'ARRAY_TO_TIMESTAMP_TZ', 'ARRAY_TO_TIMESTAMP_ntz', 'ARRAY_LENGTH', 'ARRAY_AGG'
+        , 'ARRAY_TO_STRING', 'ARRAY_POSITION', 'ARRAY_UPPER', 'ARRAY_LOWER'
+        , 'nextval', 'currval', 'lastval', 'setval', 'pg_advisory_xact_lock', 'pg_advisory_xact_lock_shared', 'pg_advisory_lock'
+        , 'pg_advisory_lock_shared', 'pg_advisory_unlock', 'pg_advisory_unlock_shared', 'pg_advisory_lock_clear', 'pg_advisory_lock_clear_shared'
+        , 'floor', 'substr', 'substring', 'length', 'concat', 'replace', 'split_part', 'to_char', 'to_date', 'to_number'
+        , 'to_timestamp', 'to_timestamp_tz', 'to_timestamp_ntz', 'to_timestamp_tz', 'to_timestamp_ntz', 'regexp_split_to_table'
+        , 'jsonb_array_length', 'jsonb_path_query', 'jsonb_path_query_first', 'jsonb_path_query_array', 'jsonb_path_query_first_array'
+        , 'sum', 'avg', 'min', 'max', 'count', 'bool_and', 'bool_or', 'bool_xor', 'bool_not', 'bool_any', 'bool_all'
+        , 'bool_exists', 'bool_in', 'bool_not_in', 'bool_like', 'bool_not_like', 'bool_ilike', 'bool_not_ilike'
+        , 'bool_similar', 'bool_not_similar', 'bool_similar_to', 'bool_not_similar_to', 'bool_regex', 'bool_not_regex'
+        , 'bool_iregex', 'bool_not_iregex'
+        , 'pg_sequences', 'pg_sequence_last_value', 'pg_sequence_next_value', 'pg_sequence_set_last_value'
+        , 'pg_sequence_set_next_value'
     ]);
 
     // 6. Вызовы функций: schema.func( или func(
@@ -500,6 +518,27 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
         return report;
     }
 
+    // === Кэшируем id типов связей один раз на весь файл ===
+    const linkTypeMap = {
+        called_functions: 'calls',
+        select_from: 'reads_from',
+        update_tables: 'updates',
+        insert_tables: 'inserts_into'
+    };
+    const linkTypeIds = {};
+    for (const code of Object.values(linkTypeMap)) {
+        try {
+            const res = await dbService.pgClient.query(
+                'SELECT id FROM public.link_type WHERE code = $1',
+                [code]
+            );
+            linkTypeIds[code] = res.rows[0]?.id || null;
+        } catch (err) {
+            console.warn(`[SQL-Loader] Не удалось получить link_type для '${code}': ${err.message}`);
+            linkTypeIds[code] = null;
+        }
+    }
+
     // Загрузка каждой функции
     for (const func of functions) {
         console.log(`[SQL-Loader] → Функция: ${func.full_name} (${func.sname})`);
@@ -606,6 +645,43 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
                         [functionReport.aiItemId, chunkIdL1]
                     );
 
+                    // === Дублирование связей в таблицу link ===
+                    if (l1Result && functionReport.aiItemId) {
+                        let linksCount = 0;
+
+                        for (const [key, code] of Object.entries(linkTypeMap)) {
+                            const typeId = linkTypeIds[code];
+                            if (!typeId) {
+                                // Предупреждение уже было при кэшировании
+                                continue;
+                            }
+
+                            const targets = (l1Result[key] || [])
+                                .filter(t => typeof t === 'string' && t.trim().length > 0);
+
+                            for (const target of targets) {
+                                try {
+                                    await dbService.pgClient.query(
+                                        `INSERT INTO public.link 
+                                         (context_code, source, target, link_type_id, file_id)
+                                         VALUES ($1, $2, $3, $4, $5)
+                                         ON CONFLICT (context_code, source, target, link_type_id) DO NOTHING`,
+                                        [contextCode, func.full_name, target, typeId, report.fileId || null]
+                                    );
+                                    linksCount++;
+                                } catch (err) {
+                                    console.error(`[SQL-Loader] Ошибка link ${func.full_name} -> ${target} (${code}):`, err.message);
+                                    functionReport.errors.push(`Link error: ${code} -> ${target}`);
+                                }
+                            }
+                        }
+
+                        if (linksCount > 0) {
+                            console.log(`[SQL-Loader] Сохранено ${linksCount} связей для ${func.full_name}`);
+                        }
+                    }
+                    // === КОНЕЦ дублирования связей ===
+                                        
                     console.log(`[SQL-Loader] Чанк 1 (связи) сохранён: chunkId = ${chunkIdL1}`);
                 } catch (err) {
                     const errorMsg = `Ошибка парсинга L1 для ${func.full_name}: ${err.message}`;
@@ -640,3 +716,4 @@ module.exports = {
     parseFunctionsFromContent,
     loadSqlFunctionsFromFile
 };
+
