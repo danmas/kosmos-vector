@@ -6,6 +6,7 @@ const fs = require('fs');
 const yaml = require('js-yaml');
 const { Minimatch } = require('minimatch');
 const kbConfigService = require('../../packages/core/kbConfigService');
+const { createMatchers, normalizeRelativePath, isIgnored: checkIgnored, isIncluded: checkIncluded } = require('../../packages/core/fileMatchUtils');
 const { loadSqlFunctionsFromFile } = require('../loaders/sqlFunctionLoader');
 const { getFilteredTableNames, loadTableSchema } = require('../loaders/tableSchemaLoader');
 const { createStepLogger } = require('./stepLogger');
@@ -155,15 +156,11 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
   const customSettings = kbConfig.metadata?.custom_settings || null;
   const functionsLoadingConfig = parseFunctionsLoadingConfig(customSettings);
 
-  // Подготовка ignore-матчеров
-  const ignoreMatchers = ignorePatterns
-    .split(',')
-    .map(p => p.trim())
-    .filter(p => p)
-    .map(p => new Minimatch(p, { dot: true }));
+  // Подготовка матчеров (используем общие функции для синхронизации с /api/project/tree)
+  const { includeMatcher, ignoreMatchers } = createMatchers(includeMask, ignorePatterns);
 
   function isIgnored(relativePath) {
-    return ignoreMatchers.some(m => m.match(relativePath));
+    return checkIgnored(relativePath, ignoreMatchers);
   }
 
   let sqlFilePaths = [];
@@ -201,8 +198,6 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     else {
       logger.log(`Режим: сканирование по glob-маскам`);
 
-      const includeMatcher = new Minimatch(includeMask, { dot: true });
-
       function scanDirectory(currentDir, baseRelPath = '.') {
         if (!fs.existsSync(currentDir)) return;
 
@@ -210,7 +205,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
         for (const entry of entries) {
           const absPath = path.join(currentDir, entry);
           const relPath = path.join(baseRelPath, entry).replace(/\\/g, '/');
-          const fullRelPath = relPath.startsWith('./') ? relPath : `./${relPath}`;
+          const fullRelPath = normalizeRelativePath(relPath);
 
           try {
             const stats = fs.statSync(absPath);
@@ -223,7 +218,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
               if (isIgnored(fullRelPath)) {
                 continue;
               }
-              if (includeMatcher.match(fullRelPath)) {
+              if (checkIncluded(fullRelPath, includeMatcher)) {
                 sqlFilePaths.push(absPath);
               }
             }

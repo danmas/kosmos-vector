@@ -1144,20 +1144,16 @@ module.exports = (dbService, logBuffer) => {
         });
       }
 
-      // Подготовка фильтров
-      const includeMatcher = new Minimatch(config.includeMask || '**/*', { dot: true });
-      const ignoreMatchers = (config.ignorePatterns || '')
-        .split(',')
-        .map(p => p.trim())
-        .filter(p => p)
-        .map(p => new Minimatch(p, { dot: true }));
+      // Подготовка фильтров (используем общие функции для синхронизации с step1Runner)
+      const { createMatchers, isIgnored: checkIgnored, isIncluded: checkIncluded } = require('../packages/core/fileMatchUtils');
+      const { includeMatcher, ignoreMatchers } = createMatchers(config.includeMask, config.ignorePatterns);
 
       function isIgnored(relativePath) {
-        return ignoreMatchers.some(matcher => matcher.match(relativePath));
+        return checkIgnored(relativePath, ignoreMatchers);
       }
 
       function isIncluded(relativePath) {
-        return includeMatcher.match(relativePath);
+        return checkIncluded(relativePath, includeMatcher);
       }
 
       // Маппинг расширений → язык

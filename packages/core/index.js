@@ -1,3 +1,5 @@
+const fileMatchUtils = require('./fileMatchUtils');
+
 module.exports = {
   DbService: require('./DbService'),
   VectorOperations: require('./vectorOperations'),
@@ -6,4 +8,5 @@ module.exports = {
   EmbeddingsFactory: require('./EmbeddingsFactory'),
   SimpleChatModel: require('./SimpleChatModel'),
   SimpleEmbeddings: require('./SimpleEmbeddings'),
+  ...fileMatchUtils,
 };
