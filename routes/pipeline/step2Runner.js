@@ -216,6 +216,7 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
 
             for (const link of linksNoSchema.rows) {
                 const shortName = link.target.trim();
+                logger.log(`--- ищем для: ${shortName} `);
                 if (!shortName) continue;
 
                 // Ищем кандидатов в ai_item
@@ -259,6 +260,7 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
                         });
                     } else {
                         // Обновляем target
+                        logger.log(`--- обновляем target для: ${shortName} к ${fullName}`);
                         await client.query(
                             `UPDATE public.link SET target = $1 WHERE id = $2`,
                             [fullName, link.id]
@@ -273,6 +275,7 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
                     }
                 } else {
                     // Неоднозначность
+                    logger.log(`--- обнаружена неоднозначность для: ${shortName}`);
                     report.summary.linksAmbiguous++;
                     report.details.linkAmbiguous.push({
                         target: shortName,
@@ -281,7 +284,6 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
                     });
                 }
             }
-
             logger.log(`Исправлено связей в link: ${report.summary.linksFixed}`);
         }
 
