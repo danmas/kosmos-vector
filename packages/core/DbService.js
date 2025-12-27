@@ -188,6 +188,27 @@ class DbService {
       `);
       console.log("Индексы для chunk_vector созданы или уже существуют");
 
+      // Создание таблицы ai_comment
+      await this.pgClient.query(`
+        CREATE TABLE IF NOT EXISTS public.ai_comment (
+          id SERIAL PRIMARY KEY,
+          context_code TEXT NOT NULL,
+          full_name TEXT NOT NULL,
+          comment TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(context_code, full_name)
+        )
+      `);
+      console.log("Таблица ai_comment создана или уже существует");
+
+      // Создание индекса для ai_comment
+      await this.pgClient.query(`
+        CREATE INDEX IF NOT EXISTS idx_ai_comment_context_full_name 
+        ON public.ai_comment(context_code, full_name)
+      `);
+      console.log("Индексы для ai_comment созданы или уже существуют");
+
       console.log("Инициализация схемы базы данных завершена");
       return true;
     } catch (error) {
@@ -409,6 +430,36 @@ class DbService {
             [fileId]
           );
           finalContextCode = fileInfoResult.rows[0]?.context_code || 'DEFAULT';
+        }
+
+        // Извлечение comment из chunk_content при INSERT или UPDATE L0
+        // Сохраняем комментарий, если его еще нет в ai_comment
+        if (level === '0-исходник' && full_name && chunkContent && typeof chunkContent === 'object') {
+          const comment = chunkContent.comment;
+          if (comment && typeof comment === 'string' && comment.trim()) {
+            try {
+              const trimmedComment = comment.trim();
+              const isInsert = vectorResult.rows.length === 0;
+              console.log(`[DB] 🔍 Обнаружен comment для ${isInsert ? 'INSERT' : 'UPDATE'} L0: "${full_name}" (context: "${finalContextCode}")`);
+              
+              // Проверяем, существует ли уже комментарий
+              const existingComment = await this.getAiComment(finalContextCode, full_name);
+              
+              if (!existingComment) {
+                // Комментария нет - создаем
+                await this.createAiCommentIfNotExists(finalContextCode, full_name, trimmedComment);
+                console.log(`[DB] ✅ ai_comment создан для ai_item: "${full_name}" (context: "${finalContextCode}")`);
+                console.log(`[DB]    Комментарий: ${trimmedComment.substring(0, 100)}${trimmedComment.length > 100 ? '...' : ''}`);
+              } else {
+                console.log(`[DB] ℹ️  ai_comment уже существует для "${full_name}" - не перезаписываем (накопление комментариев)`);
+              }
+            } catch (commentError) {
+              console.warn(`[DB] ⚠️  Ошибка при сохранении ai_comment для "${full_name}":`, commentError.message);
+              // Не прерываем выполнение, если ошибка сохранения комментария
+            }
+          } else {
+            console.log(`[DB] ℹ️  Комментарий отсутствует или пуст для ai_item: "${full_name}" (chunkContent.comment=${comment ? typeof comment : 'undefined'})`);
+          }
         }
 
         // Ищем другие чанки с тем же full_name в этом файле
@@ -2170,6 +2221,160 @@ class DbService {
       return result.rowCount > 0;
     } catch (error) {
       console.error(`[DB] Ошибка deleteLogicGraph("${fullName}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Получение комментария для ai_item
+   * @param {string} contextCode - Контекстный код
+   * @param {string} fullName - full_name AiItem
+   * @returns {Promise<Object|null>} { comment, createdAt, updatedAt } или null
+   */
+  async getAiComment(contextCode, fullName) {
+    try {
+      const result = await this.pgClient.query(`
+        SELECT comment, created_at, updated_at
+        FROM public.ai_comment
+        WHERE context_code = $1 AND full_name = $2
+      `, [contextCode, fullName]);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      const row = result.rows[0];
+      return {
+        comment: row.comment,
+        createdAt: row.created_at ? new Date(row.created_at).toISOString() : null,
+        updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : null
+      };
+    } catch (error) {
+      console.error(`[DB] Ошибка getAiComment("${contextCode}", "${fullName}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Создание комментария для ai_item (если не существует)
+   * @param {string} contextCode - Контекстный код
+   * @param {string} fullName - full_name AiItem
+   * @param {string} comment - Текст комментария
+   * @returns {Promise<void>}
+   */
+  async createAiCommentIfNotExists(contextCode, fullName, comment) {
+    try {
+      const result = await this.pgClient.query(`
+        INSERT INTO public.ai_comment (context_code, full_name, comment)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (context_code, full_name) DO NOTHING
+        RETURNING id
+      `, [contextCode, fullName, comment]);
+      
+      if (result.rows.length > 0) {
+        console.log(`[DB] 📝 ai_comment создан: id=${result.rows[0].id}, context="${contextCode}", full_name="${fullName}"`);
+      } else {
+        console.log(`[DB] ℹ️  ai_comment уже существует, пропуск: context="${contextCode}", full_name="${fullName}"`);
+      }
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка createAiCommentIfNotExists("${contextCode}", "${fullName}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Создание или обновление комментария для ai_item (UPSERT)
+   * @param {string} contextCode - Контекстный код
+   * @param {string} fullName - full_name AiItem
+   * @param {string} comment - Текст комментария
+   * @returns {Promise<Object>} { comment, createdAt, updatedAt }
+   */
+  async createAiComment(contextCode, fullName, comment) {
+    try {
+      const result = await this.pgClient.query(`
+        INSERT INTO public.ai_comment (context_code, full_name, comment)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (context_code, full_name) 
+        DO UPDATE SET 
+          comment = EXCLUDED.comment,
+          updated_at = CURRENT_TIMESTAMP
+        RETURNING id, comment, created_at, updated_at
+      `, [contextCode, fullName, comment]);
+
+      const row = result.rows[0];
+      const isNew = !row.updated_at || row.created_at === row.updated_at;
+      const action = isNew ? 'создан' : 'обновлен';
+      console.log(`[DB] 📝 ai_comment ${action}: id=${row.id}, context="${contextCode}", full_name="${fullName}"`);
+      
+      return {
+        comment: row.comment,
+        createdAt: row.created_at ? new Date(row.created_at).toISOString() : null,
+        updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : null
+      };
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка createAiComment("${contextCode}", "${fullName}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Обновление комментария для ai_item
+   * @param {string} contextCode - Контекстный код
+   * @param {string} fullName - full_name AiItem
+   * @param {string} comment - Текст комментария
+   * @returns {Promise<Object|null>} { comment, createdAt, updatedAt } или null если не найдено
+   */
+  async updateAiComment(contextCode, fullName, comment) {
+    try {
+      const result = await this.pgClient.query(`
+        UPDATE public.ai_comment
+        SET comment = $3, updated_at = CURRENT_TIMESTAMP
+        WHERE context_code = $1 AND full_name = $2
+        RETURNING id, comment, created_at, updated_at
+      `, [contextCode, fullName, comment]);
+
+      if (result.rows.length === 0) {
+        console.log(`[DB] ⚠️  ai_comment не найден для обновления: context="${contextCode}", full_name="${fullName}"`);
+        return null;
+      }
+
+      const row = result.rows[0];
+      console.log(`[DB] 📝 ai_comment обновлен: id=${row.id}, context="${contextCode}", full_name="${fullName}"`);
+      
+      return {
+        comment: row.comment,
+        createdAt: row.created_at ? new Date(row.created_at).toISOString() : null,
+        updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : null
+      };
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка updateAiComment("${contextCode}", "${fullName}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Удаление комментария для ai_item
+   * @param {string} contextCode - Контекстный код
+   * @param {string} fullName - full_name AiItem
+   * @returns {Promise<boolean>} true если удалено, false если не найдено
+   */
+  async deleteAiComment(contextCode, fullName) {
+    try {
+      const result = await this.pgClient.query(`
+        DELETE FROM public.ai_comment
+        WHERE context_code = $1 AND full_name = $2
+        RETURNING id
+      `, [contextCode, fullName]);
+
+      if (result.rows.length > 0) {
+        console.log(`[DB] 🗑️  ai_comment удален: id=${result.rows[0].id}, context="${contextCode}", full_name="${fullName}"`);
+        return true;
+      } else {
+        console.log(`[DB] ⚠️  ai_comment не найден для удаления: context="${contextCode}", full_name="${fullName}"`);
+        return false;
+      }
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка deleteAiComment("${contextCode}", "${fullName}"):`, error);
       throw error;
     }
   }

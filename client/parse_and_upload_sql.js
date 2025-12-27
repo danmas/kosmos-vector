@@ -176,23 +176,31 @@ async function processSqlFileApi(filePath, contextCode) {
         const aiItemId = aiItemRes.aiItem.id;
 
         // Сохранение чанка уровня 0
-        const chunkContent = {
+        // Формируем chunkContent с comment на верхнем уровне для автоматического сохранения в ai_comment
+        const chunkContentL0 = {
             full_name: func.full_name,
             s_name: func.sname,
-            comment: func.comment,
             signature: func.signature,
             body: func.body
         };
 
+        const chunkContent = {
+            text: chunkContentL0
+        };
+        if (func.comment && typeof func.comment === 'string' && func.comment.trim()) {
+            chunkContent.comment = func.comment.trim();
+        }
+
         let chunkRes = await apiPost('/save-chunk', {
             fileId: fileId,
-            content: chunkContent,
+            content: chunkContent,  // передаём объект с text и comment на верхнем уровне
             chunkIndex: 0,
             level: '0-исходник',
             type: 'function',
             full_name: func.full_name,
             s_name: func.sname,
-            aiItemId: aiItemId
+            aiItemId: aiItemId,
+            contextCode: contextCode  // важно передать contextCode для сохранения комментария
         });
 
         if (chunkRes && chunkRes.chunkId) {

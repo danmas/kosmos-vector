@@ -1,5 +1,5 @@
 const express = require('express');
-const { VectorOperations } = require('@aian-vector/core');
+const VectorOperations = require('../packages/core/vectorOperations');
 const path = require('path');
 
 const router = express.Router();

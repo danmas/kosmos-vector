@@ -99,6 +99,103 @@
 
 ## 5. AI Items
 
+**GET** `/api/items` — все AI Items (агрегированные)
+
+**GET** `/api/items-list` — список метаданных AI Items
+
+**GET** `/api/items/{id}` — получить AI Item по full_name
+
+### 5.1. Комментарии для AI Items
+
+**GET** `/api/items/{id}/comment`  
+Получить комментарий для AI Item
+
+Параметры:
+- `context-code` (query, обязательный) — контекстный код
+- `id` (path) — full_name AI Item (URL-encoded)
+
+Ответ (200):
+```json
+{
+  "success": true,
+  "itemId": "utils.fetchData",
+  "comment": "Этот метод обрабатывает HTTP запросы",
+  "createdAt": "2025-12-26T10:00:00.000Z",
+  "updatedAt": "2025-12-26T11:00:00.000Z"
+}
+```
+
+Ответ (404):
+```json
+{
+  "success": false,
+  "error": "Comment not found for item: utils.fetchData"
+}
+```
+
+**POST** `/api/items/{id}/comment`  
+Создать или обновить комментарий для AI Item (UPSERT)
+
+Параметры:
+- `context-code` (query, обязательный) — контекстный код
+- `id` (path) — full_name AI Item (URL-encoded)
+
+Тело запроса:
+```json
+{
+  "comment": "Этот метод обрабатывает HTTP запросы и возвращает JSON ответ"
+}
+```
+
+Ответ (200):
+```json
+{
+  "success": true,
+  "itemId": "utils.fetchData",
+  "comment": "Этот метод обрабатывает HTTP запросы и возвращает JSON ответ",
+  "createdAt": "2025-12-26T10:00:00.000Z",
+  "updatedAt": "2025-12-26T11:00:00.000Z"
+}
+```
+
+**PUT** `/api/items/{id}/comment`  
+Обновить существующий комментарий для AI Item
+
+Параметры:
+- `context-code` (query, обязательный) — контекстный код
+- `id` (path) — full_name AI Item (URL-encoded)
+
+Тело запроса:
+```json
+{
+  "comment": "Обновленный комментарий"
+}
+```
+
+Ответ (200) — аналогичен POST  
+Ответ (404) — если комментарий не найден
+
+**DELETE** `/api/items/{id}/comment`  
+Удалить комментарий для AI Item
+
+Параметры:
+- `context-code` (query, обязательный) — контекстный код
+- `id` (path) — full_name AI Item (URL-encoded)
+
+Ответ (200):
+```json
+{
+  "success": true,
+  "message": "Comment deleted successfully for item: utils.fetchData"
+}
+```
+
+Ответ (404) — если комментарий не найден
+
+**Примечание:** Комментарии автоматически создаются при сохранении L0 чанков, если в `chunk_content.comment` присутствует значение. При перезаписи L0 существующие комментарии не перезаписываются (накапливаются).
+
+## 6. AI Items (продолжение)
+
 **GET** `/ai-items?contextCode=AI`  
 **GET** `/ai-item/:id`  
 **GET** `/ai-item-chunks/:id?level=1-связи`  

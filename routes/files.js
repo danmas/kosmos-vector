@@ -1,7 +1,7 @@
 const express = require('express');
 const fs = require('fs').promises;
 const path = require('path');
-const { TextSplitters } = require('@aian-vector/core');
+const TextSplitters = require('../packages/core/textSplitters');
 
 // Создаем router, который можно будет экспортировать
 const router = express.Router();
@@ -92,15 +92,36 @@ module.exports = (dbService, embeddings) => {
       const { contextCode = null } = req.body;
 
       // embedding = null — векторизация не нужна
-      // Обертываем content в JSON объект для JSONB
+      // Формируем chunkContent: если content - объект с comment, сохраняем его структуру
+      // Иначе оборачиваем в { text: content }
+      let chunkContent;
+      if (content && typeof content === 'object' && !Array.isArray(content)) {
+        // Если content уже объект, проверяем наличие comment на верхнем уровне
+        if (content.comment !== undefined) {
+          // content уже содержит comment на верхнем уровне - используем как есть
+          chunkContent = content;
+          console.log(`[SAVE-CHUNK] 📝 Обнаружен comment для full_name="${full_name}": ${content.comment.substring(0, 100)}${content.comment.length > 100 ? '...' : ''}`);
+        } else {
+          // content - объект без comment, оборачиваем в text
+          chunkContent = { text: content };
+        }
+      } else {
+        // content - строка или другой тип, оборачиваем в text
+        chunkContent = { text: content };
+      }
+
       const chunkId = await dbService.saveChunkVector(
         fileId,
-        { text: content },
+        chunkContent,
         null,               // без эмбеддинга
         metadata,
         parentChunkId,
         contextCode
       );
+      
+      if (level === '0-исходник' && full_name && chunkContent.comment) {
+        console.log(`[SAVE-CHUNK] ✅ Комментарий будет сохранен в ai_comment для: "${full_name}" (context: "${contextCode}")`);
+      }
 
       // Если это уровень 0 и есть full_name — ai_item создастся автоматически в saveChunkVector
       // Если клиент хочет привязать к существующему ai_item — передаёт aiItemId

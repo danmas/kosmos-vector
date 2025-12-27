@@ -191,7 +191,119 @@ module.exports = (dbService, logBuffer) => {
     }
   });
 
-  // === 3.1. GET /api/items/:id/logic-graph - Получить анализ логики для AiItem ===
+  // === 3.1. GET /api/items/:id/comment - Получить комментарий для AiItem ===
+  router.get('/items/:id/comment', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const decodedId = decodeURIComponent(id);
+      const contextCode = req.contextCode;
+
+      const comment = await dbService.getAiComment(contextCode, decodedId);
+      if (!comment) {
+        return res.status(404).json({ 
+          success: false, 
+          error: `Comment not found for item: ${decodedId}` 
+        });
+      }
+
+      res.json({
+        success: true,
+        itemId: decodedId,
+        ...comment
+      });
+    } catch (error) {
+      console.error('[API/COMMENT] Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === 3.2. POST /api/items/:id/comment - Создать комментарий для AiItem ===
+  router.post('/items/:id/comment', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const decodedId = decodeURIComponent(id);
+      const contextCode = req.contextCode;
+      const { comment } = req.body;
+
+      if (!comment || typeof comment !== 'string') {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Comment is required and must be a string' 
+        });
+      }
+
+      const result = await dbService.createAiComment(contextCode, decodedId, comment);
+      res.json({
+        success: true,
+        itemId: decodedId,
+        ...result
+      });
+    } catch (error) {
+      console.error('[API/COMMENT] Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === 3.3. PUT /api/items/:id/comment - Обновить комментарий для AiItem ===
+  router.put('/items/:id/comment', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const decodedId = decodeURIComponent(id);
+      const contextCode = req.contextCode;
+      const { comment } = req.body;
+
+      if (!comment || typeof comment !== 'string') {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Comment is required and must be a string' 
+        });
+      }
+
+      const result = await dbService.updateAiComment(contextCode, decodedId, comment);
+      if (!result) {
+        return res.status(404).json({ 
+          success: false, 
+          error: `Comment not found for item: ${decodedId}` 
+        });
+      }
+
+      res.json({
+        success: true,
+        itemId: decodedId,
+        ...result
+      });
+    } catch (error) {
+      console.error('[API/COMMENT] Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === 3.4. DELETE /api/items/:id/comment - Удалить комментарий для AiItem ===
+  router.delete('/items/:id/comment', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const decodedId = decodeURIComponent(id);
+      const contextCode = req.contextCode;
+
+      const deleted = await dbService.deleteAiComment(contextCode, decodedId);
+      if (!deleted) {
+        return res.status(404).json({ 
+          success: false, 
+          error: `Comment not found for item: ${decodedId}` 
+        });
+      }
+
+      res.json({
+        success: true,
+        message: `Comment deleted successfully for item: ${decodedId}`
+      });
+    } catch (error) {
+      console.error('[API/COMMENT] Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === 3.5. GET /api/items/:id/logic-graph - Получить анализ логики для AiItem ===
   router.get('/items/:id/logic-graph', async (req, res) => {
     try {
       const { id } = req.params;

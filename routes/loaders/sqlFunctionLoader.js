@@ -367,6 +367,10 @@ function parseFunctionsFromContent(sqlContent, filePath) {
                 .join('\n')
                 .trim() || null;
             
+            if (currentFunctionComment) {
+                console.log(`[SQL-Parser] 📝 Извлечен комментарий (${currentFunctionComment.length} символов) для следующей функции`);
+            }
+            
             pendingCommentLines = []; // сбрасываем для следующей функции
             currentFunction = 'header';
             bodyLines.push(originalLine);
@@ -535,15 +539,22 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
             const chunkContentL0 = {
                 full_name: func.full_name,
                 s_name: func.sname,
-                comment: func.comment,
                 signature: func.signature,
                 body: func.body
             };
 
+            // Формируем chunkContent с comment на верхнем уровне для автоматического сохранения в ai_comment
+            const chunkContent = {
+                text: chunkContentL0
+            };
+            if (func.comment && typeof func.comment === 'string' && func.comment.trim()) {
+                chunkContent.comment = func.comment.trim();
+            }
+
             try {
                 const chunkIdL0 = await dbService.saveChunkVector(
                     report.fileId,
-                    { text: chunkContentL0 },  // передаём объект, а не строку
+                    chunkContent,  // передаём объект с text и comment на верхнем уровне
                     null, // без embedding
                     {
                         type: 'function',

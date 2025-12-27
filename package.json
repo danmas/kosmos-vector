@@ -23,7 +23,6 @@
     "test:sql-order-system": "bun tests/test-sql-order-system.js"
   },
   "dependencies": {
-    "@aian-vector/core": "1.0.0",
     "@modelcontextprotocol/sdk": "^1.24.3",
     "chalk": "^5.4.1",
     "cors": "^2.8.5",

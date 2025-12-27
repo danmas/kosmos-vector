@@ -50,7 +50,7 @@
 | file_id           | INTEGER              | Ссылка на файл (ON DELETE CASCADE)                                       |
 | ai_item_id        | INTEGER              | Ссылка на ai_item (для чанков уровня 0 с сущностями)                     |
 | parent_chunk_id   | INTEGER              | Ссылка на родительский чанк (для иерархических уровней)                  |
-| chunk_content     | JSONB NOT NULL        | Содержимое чанка в формате JSON (обычно содержит поле `text` с текстом) |
+| chunk_content     | JSONB NOT NULL        | Содержимое чанка в формате JSON (обычно содержит поле `text` с текстом, может содержать `comment`) |
 | embedding         | VECTOR               | Вектор эмбеддинга (pgvector)                                             |
 | chunk_index       | INTEGER              | Порядковый индекс чанка в файле/уровне                                   |
 | type              | TEXT                 | Тип чанка (по умолчанию 'текст')                                         |
@@ -66,6 +66,31 @@
 - `idx_chunk_vector_ai_item_id`
 - `idx_ai_item_full_name`
 - `idx_ai_item_context_code`
+
+### Таблица `ai_comment`
+
+Хранит комментарии для AI Items. Связана с `ai_item` логически по паре `(context_code, full_name)` без внешних ключей.
+
+| Поле              | Тип                  | Описание                                                                 |
+|-------------------|----------------------|--------------------------------------------------------------------------|
+| id                | SERIAL PRIMARY KEY   | Уникальный идентификатор комментария                                     |
+| context_code      | TEXT NOT NULL        | Код контекста (логическая связь с ai_item)                              |
+| full_name         | TEXT NOT NULL        | Полное имя AI Item (логическая связь с ai_item)                         |
+| comment           | TEXT                 | Текст комментария (может быть NULL)                                     |
+| created_at        | TIMESTAMP WITH TIME ZONE | Время создания (по умолчанию CURRENT_TIMESTAMP)                      |
+| updated_at        | TIMESTAMP WITH TIME ZONE | Время последнего обновления (по умолчанию CURRENT_TIMESTAMP)        |
+
+#### Ограничения
+- `UNIQUE(context_code, full_name)` — один комментарий на AI Item
+- Нет внешних ключей — связь только логическая
+
+#### Индексы
+- `idx_ai_comment_context_full_name` — для быстрого поиска по паре (context_code, full_name)
+
+#### Особенности
+- Комментарии автоматически создаются при INSERT L0 чанков, если в `chunk_content.comment` присутствует значение
+- При перезаписи L0 существующие комментарии **не перезаписываются** (накапливаются)
+- При удалении `ai_item` комментарии остаются в базе (orphan records)
 
 ## Основные возможности DbService
 
@@ -102,6 +127,14 @@
 - `updateAiItemContext(itemId, newContextCode)` — смена контекста.
 - `createAiItem(params)` — ручное создание/обновление AI Item и связывание с чанком.
 - `cleanupOrphanedAiItems()` — удаляет AI Item, на которые нет ссылок из чанков уровня 0.
+
+### Работа с комментариями AI Items
+- Автоматическое создание комментариев при INSERT L0 чанков из `chunk_content.comment`.
+- `getAiComment(contextCode, fullName)` — получение комментария для AI Item.
+- `createAiCommentIfNotExists(contextCode, fullName, comment)` — создание комментария только если не существует (используется при автоматическом создании).
+- `createAiComment(contextCode, fullName, comment)` — создание или обновление комментария (UPSERT).
+- `updateAiComment(contextCode, fullName, comment)` — обновление существующего комментария.
+- `deleteAiComment(contextCode, fullName)` — удаление комментария.
 
 ### Дополнительно
 - `getContextCodes()` — список всех используемых контекстных кодов.

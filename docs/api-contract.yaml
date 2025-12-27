@@ -223,6 +223,56 @@ components:
           nullable: true
           description: Время последнего обновления анализа
 
+    # ────────────────────────────────────── AI Comment
+    AiComment:
+      type: object
+      required: [comment, createdAt]
+      properties:
+        comment:
+          type: string
+          description: Текст комментария для ai_item
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          description: Время создания комментария
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время последнего обновления комментария
+
+    AiCommentResponse:
+      type: object
+      required: [success, itemId, comment, createdAt]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        itemId:
+          type: string
+          description: ID AiItem (full_name)
+          example: "utils.fetchData"
+        comment:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    AiCommentRequest:
+      type: object
+      required: [comment]
+      properties:
+        comment:
+          type: string
+          description: Текст комментария
+          example: "Этот метод обрабатывает HTTP запросы"
+
     # ────────────────────────────────────── Статистика
     TypeStat:
       type: object
@@ -816,6 +866,156 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/AiItem' }
         '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/items/{id}/comment:
+    get:
+      tags: [Core]
+      summary: Получить комментарий для AiItem
+      description: |
+        Возвращает комментарий для указанного AiItem.
+        Комментарий может быть создан автоматически при сохранении L0 чанка или вручную через API.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID AiItem (full_name)
+          schema: { type: string }
+          example: "utils.fetchData"
+      responses:
+        '200':
+          description: Комментарий найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AiCommentResponse' }
+        '404':
+          description: Комментарий не найден для данного AiItem
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example:
+                success: false
+                error: "Comment not found for item: utils.fetchData"
+
+    post:
+      tags: [Core]
+      summary: Создать комментарий для AiItem
+      description: |
+        Создает или обновляет комментарий для указанного AiItem.
+        Если комментарий уже существует, он будет обновлен.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID AiItem (full_name)
+          schema: { type: string }
+          example: "utils.fetchData"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AiCommentRequest' }
+            example:
+              comment: "Этот метод обрабатывает HTTP запросы и возвращает JSON ответ"
+      responses:
+        '200':
+          description: Комментарий успешно создан или обновлен
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AiCommentResponse' }
+        '400':
+          description: Неверный формат данных
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    put:
+      tags: [Core]
+      summary: Обновить комментарий для AiItem
+      description: |
+        Обновляет существующий комментарий для указанного AiItem.
+        Если комментарий не существует, возвращает ошибку 404.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID AiItem (full_name)
+          schema: { type: string }
+          example: "utils.fetchData"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AiCommentRequest' }
+      responses:
+        '200':
+          description: Комментарий успешно обновлен
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AiCommentResponse' }
+        '404':
+          description: Комментарий не найден для данного AiItem
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    delete:
+      tags: [Core]
+      summary: Удалить комментарий для AiItem
+      description: |
+        Удаляет комментарий для указанного AiItem.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID AiItem (full_name)
+          schema: { type: string }
+          example: "utils.fetchData"
+      responses:
+        '200':
+          description: Комментарий успешно удален
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Comment deleted successfully for item: utils.fetchData"
+        '404':
+          description: Комментарий не найден для данного AiItem
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
 
   /api/items/{id}/logic-graph:
     get:
