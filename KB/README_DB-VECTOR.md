@@ -81,12 +81,7 @@
 ### Вспомогательные / legacy таблицы
 (Возможно, не используются активно — проверь код на упоминания)
 
-- `documents`, `documents384` — старые таблицы векторов (1536 и 384 dim).
-- `file_info` — метаданные файлов (filename unique, context_code, file_hash, timestamps).
-- `chunks_info` — счётчик чанков по file_id (ссылается на chunk_vector.id — выглядит ошибочно).
-- `rag_documents` + `rag_chunks` — альтернативная RAG-структура.
-- `tasks` — простые задачи с RLS по user_id.
-
+- `file_info` — метаданные файлов (filename unique, 
 ## Индексы (ключевые)
 - chunk_vector: по file_id, parent_chunk_id, ai_item_id, level, type, embedding (ivfflat cosine), created_at.
 - ai_item: по context_code, full_name.

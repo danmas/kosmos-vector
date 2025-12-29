@@ -98,7 +98,7 @@ async function parsePlpgsqlFunctionL1(code) {
         , 'bool_similar', 'bool_not_similar', 'bool_similar_to', 'bool_not_similar_to', 'bool_regex', 'bool_not_regex'
         , 'bool_iregex', 'bool_not_iregex'
         , 'pg_sequences', 'pg_sequence_last_value', 'pg_sequence_next_value', 'pg_sequence_set_last_value'
-        , 'pg_sequence_set_next_value'
+        , 'pg_sequence_set_next_value', 'array_to_json',  'array_agg', 'json_strip_nulls'
     ]);
 
     // 6. Вызовы функций: schema.func( или func(
