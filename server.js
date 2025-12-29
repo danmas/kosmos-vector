@@ -219,8 +219,10 @@ console.log('Server started — log buffer initialized');
 const express = require('express');
 const { Client } = require('pg');
 const { DbService, EmbeddingsFactory, PostgresVectorStore } = require('./packages/core');
+const { checkLLMAvailability, LLM_BASE_URL } = require('./packages/core/llmClient');
 const aiRoutes = require('./routes/ai');
 const filesRoutes = require('./routes/files');
+const chatRoutes = require('./routes/chat');
 
 const cors = require('cors');
 
@@ -279,6 +281,9 @@ app.use(aiRoutes(dbService, vectorStore, embeddings));
 // Подключаем роуты для файлов
 app.use(filesRoutes(dbService, embeddings));
 
+// Подключаем роуты для чата
+app.use('/api', chatRoutes(dbService, vectorStore, embeddings));
+
 // Конфигурация для UI
 app.get('/api/config', (req, res) => {
   try {
@@ -334,8 +339,19 @@ app.get('/api/available-models', async (req, res) => {
   }
 });
 
-const server = app.listen(port, () => {
+const server = app.listen(port, async () => {
   console.log(`Server v2 listening at http://localhost:${port}`);
+  
+  // Проверка доступности LLM сервера
+  console.log('Проверка доступности LLM сервера...');
+  const isLLMAvailable = await checkLLMAvailability();
+  if (isLLMAvailable) {
+    console.log('✅ LLM сервер (kosmos-model) доступен');
+  } else {
+    console.warn('⚠️  LLM сервер (kosmos-model) недоступен!');
+    console.warn('⚠️  Маршрут /api/chat может не работать корректно.');
+    console.warn(`⚠️  Проверьте настройки LLM_BASE_URL (текущее: ${LLM_BASE_URL})`);
+  }
 });
 
 server.on('error', (err) => {

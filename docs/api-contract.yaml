@@ -385,6 +385,37 @@ components:
         usedContextIds: { type: array, items: { type: string } }
         timestamp: { type: string, format: date-time }
 
+    AskRequest:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          description: Сообщение пользователя
+          example: "Что такое JavaScript?"
+        systemPrompt:
+          type: string
+          nullable: true
+          description: Системный промпт (опционально)
+          example: "Отвечай кратко и по делу"
+        model:
+          type: string
+          nullable: true
+          description: Имя модели (опционально, по умолчанию из конфига)
+          example: "FAST"
+
+    AskResponse:
+      type: object
+      required: [response, timestamp]
+      properties:
+        response:
+          type: string
+          description: Ответ от LLM
+        timestamp:
+          type: string
+          format: date-time
+          description: Время ответа
+
     SuccessResponse:
       type: object
       required: [success]
@@ -1283,6 +1314,35 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ChatResponse' }
+
+  /api/ask:
+    post:
+      tags: [RAG Chat]
+      summary: Прямой запрос к LLM
+      description: |
+        Отправляет запрос напрямую к LLM без использования RAG/векторизации.
+        Используется для простых вопросов, не требующих контекста из кодовой базы.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AskRequest' }
+      responses:
+        '200':
+          description: Ответ от LLM
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AskResponse' }
+        '400':
+          description: Неверный запрос
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500':
+          description: Ошибка сервера или LLM недоступен
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
 
   # ────────────────────────────────────── PIPELINE
   /api/pipeline/start:

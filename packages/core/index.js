@@ -8,5 +8,6 @@ module.exports = {
   EmbeddingsFactory: require('./EmbeddingsFactory'),
   SimpleChatModel: require('./SimpleChatModel'),
   SimpleEmbeddings: require('./SimpleEmbeddings'),
+  llmClient: require('./llmClient'),
   ...fileMatchUtils,
 };
