@@ -2379,6 +2379,166 @@ class DbService {
     }
   }
 
+/*
+  AGENT-SCRIPT
+*/
+
+
+/**
+ * Получение скрипта для агента
+ * @param {string} contextCode - Контекстный код
+ * @param {string} question - Вопрос
+ * @returns {Promise<Object|null>} { id, script, question } или null если не найдено
+ */
+  async getAgentScript(contextCode, question) {
+    try {
+      const result = await this.pgClient.query(`
+        SELECT id, script, question
+        FROM public.agent_script
+        WHERE context_code = $1 AND question = $2
+      `, [contextCode, question]);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return result.rows[0];
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка getAgentScript("${contextCode}", "${question}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Выполнение произвольного SELECT запроса (только для чтения)
+   * @param {string} sql - SQL запрос (должен начинаться с SELECT)
+   * @param {Array} params - Параметры запроса
+   * @returns {Promise<Array>} Массив строк результата
+   */
+  async queryRaw(sql, params = []) {
+    try {
+      const trimmedSql = sql.trim();
+      if (!trimmedSql.toUpperCase().startsWith('SELECT')) {
+        throw new Error('Only SELECT queries are allowed');
+      }
+
+      const result = await this.pgClient.query(sql, params);
+      return result.rows;
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка queryRaw:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Поиск похожего скрипта через FTS (Full Text Search)
+   * @param {string} contextCode - Контекстный код
+   * @param {string} question - Вопрос для поиска
+   * @param {number} threshold - Минимальный ранг для совпадения (по умолчанию 0.1)
+   * @returns {Promise<Object|null>} { id, question, script, rank } или null
+   */
+  async fuzzySearchScripts(contextCode, question, threshold = 0.1) {
+    try {
+      const result = await this.pgClient.query(`
+        SELECT id, question, script, 
+               ts_rank(to_tsvector('russian', question), plainto_tsquery('russian', $1)) as rank
+        FROM public.agent_script
+        WHERE context_code = $2
+          AND to_tsvector('russian', question) @@ plainto_tsquery('russian', $1)
+          AND is_valid = true
+        ORDER BY rank DESC, usage_count DESC
+        LIMIT 1
+      `, [question, contextCode]);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      const script = result.rows[0];
+      // Проверяем порог релевантности
+      if (script.rank < threshold) {
+        return null;
+      }
+
+      return {
+        id: script.id,
+        question: script.question,
+        script: script.script,
+        rank: parseFloat(script.rank)
+      };
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка fuzzySearchScripts("${contextCode}", "${question}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Сохранение нового скрипта в agent_script
+   * @param {string} contextCode - Контекстный код
+   * @param {string} question - Вопрос
+   * @param {string} script - Код скрипта
+   * @param {boolean} isValid - Флаг валидности (по умолчанию false)
+   * @returns {Promise<Object>} { id, question, script, created_at }
+   */
+  async saveAgentScript(contextCode, question, script, isValid = false) {
+    try {
+      // Проверяем, нет ли уже такого вопроса (UNIQUE constraint)
+      const existing = await this.pgClient.query(`
+        SELECT id FROM public.agent_script
+        WHERE context_code = $1 AND question = $2
+      `, [contextCode, question]);
+
+      if (existing.rows.length > 0) {
+        // Обновляем существующий
+        const result = await this.pgClient.query(`
+          UPDATE public.agent_script
+          SET script = $1, is_valid = $2, updated_at = CURRENT_TIMESTAMP
+          WHERE context_code = $3 AND question = $4
+          RETURNING id, question, script, created_at, updated_at
+        `, [script, isValid, contextCode, question]);
+
+        return result.rows[0];
+      } else {
+        // Создаём новый
+        const result = await this.pgClient.query(`
+          INSERT INTO public.agent_script (context_code, question, script, is_valid)
+          VALUES ($1, $2, $3, $4)
+          RETURNING id, question, script, created_at, updated_at
+        `, [contextCode, question, script, isValid]);
+
+        return result.rows[0];
+      }
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка saveAgentScript("${contextCode}", "${question}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Инкремент счётчика использования скрипта
+   * @param {number} scriptId - ID скрипта
+   * @returns {Promise<Object>} Обновлённый скрипт с usage_count
+   */
+  async incrementUsage(scriptId) {
+    try {
+      const result = await this.pgClient.query(`
+        UPDATE public.agent_script
+        SET usage_count = usage_count + 1, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+        RETURNING id, usage_count, question
+      `, [scriptId]);
+
+      if (result.rows.length === 0) {
+        throw new Error(`Script with id ${scriptId} not found`);
+      }
+
+      return result.rows[0];
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка incrementUsage(${scriptId}):`, error);
+      throw error;
+    }
+  }
+
 }
 
 module.exports = DbService; 

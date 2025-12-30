@@ -219,7 +219,7 @@ console.log('Server started — log buffer initialized');
 const express = require('express');
 const { Client } = require('pg');
 const { DbService, EmbeddingsFactory, PostgresVectorStore } = require('./packages/core');
-const { checkLLMAvailability, LLM_BASE_URL } = require('./packages/core/llmClient');
+const { checkLLMAvailability, LLM_BASE_URL, LLM_MODEL, callLLM } = require('./packages/core/llmClient');
 const aiRoutes = require('./routes/ai');
 const filesRoutes = require('./routes/files');
 const chatRoutes = require('./routes/chat');
@@ -234,6 +234,17 @@ app.use(cors()); // Разрешает всё (удобно для разраб�
 app.use(express.static('public'));
 
 app.use(express.json()); // Для парсинга JSON в теле запроса
+
+// Обработчик ошибок для некорректного JSON
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid JSON in request body'
+    });
+  }
+  next(err);
+});
 
 // Инициализация клиента PostgreSQL
 const pgClient = new Client({
@@ -251,6 +262,11 @@ const embeddings = embeddingsFactory.createEmbeddings();
 
 // Инициализация векторного хранилища
 const vectorStore = new PostgresVectorStore(embeddings, dbService);
+
+// Подключаем роуты для Natural Query Engine (agent scripts) ПЕРЕД apiRouter
+// чтобы избежать конфликта с validateContextCode middleware
+const agentScriptRoutes = require('./routes/agentScript');
+app.use('/api', agentScriptRoutes(dbService));
 
 const apiRouter = require('./routes/api')(dbService, serverLogs);
 app.use('/api', apiRouter);
@@ -347,10 +363,45 @@ const server = app.listen(port, async () => {
   const isLLMAvailable = await checkLLMAvailability();
   if (isLLMAvailable) {
     console.log('✅ LLM сервер (kosmos-model) доступен');
+    
+    // Тестовый запрос для проверки работоспособности
+    try {
+      console.log('Проверка работоспособности LLM...');
+      const testMessages = [
+        { role: 'user', content: 'Какая ты модель? Ответь коротко.' }
+      ];
+      const testResponse = await callLLM(testMessages);
+      console.log(`✅ LLM ответил: ${testResponse.trim()}`);
+    } catch (error) {
+      console.warn(`⚠️  LLM сервер доступен, но запрос не выполнен: ${error.message}`);
+      
+      // Логируем детали запроса для отладки
+      const requestBody = {
+        model: LLM_MODEL(),
+        messages: [
+          { role: 'user', content: 'Какая ты модель? Ответь коротко.' }
+        ],
+        temperature: 0.3
+      };
+      
+      const requestHeaders = {
+        "Content-Type": "application/json"
+      };
+      
+      if (process.env.LLM_API_KEY) {
+        requestHeaders["Authorization"] = "Bearer [скрыто]";
+      }
+      
+      console.error('📤 Отправленный запрос к LLM:');
+      console.error(`   URL: ${LLM_BASE_URL()}/chat/completions`);
+      console.error(`   Method: POST`);
+      console.error(`   Headers:`, JSON.stringify(requestHeaders, null, 2));
+      console.error(`   Body:`, JSON.stringify(requestBody, null, 2));
+    }
   } else {
     console.warn('⚠️  LLM сервер (kosmos-model) недоступен!');
     console.warn('⚠️  Маршрут /api/chat может не работать корректно.');
-    console.warn(`⚠️  Проверьте настройки LLM_BASE_URL (текущее: ${LLM_BASE_URL})`);
+    console.warn(`⚠️  Проверьте настройки LLM_BASE_URL (текущее: ${LLM_BASE_URL()})`);
   }
 });
 

@@ -425,3 +425,39 @@ grant delete, insert, references, select, trigger, truncate, update on public.li
 
 grant delete, insert, references, select, trigger, truncate, update on public.link to service_role;
 
+
+-------------------------------------------------------------
+--- AGENT-SCRIPT
+-------------------------------------------------------------
+
+CREATE TABLE public.agent_script (
+    id serial PRIMARY KEY,
+    context_code text NOT NULL,
+    question text NOT NULL,
+    script text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    usage_count int DEFAULT 0,
+    is_valid boolean DEFAULT false
+);
+
+CREATE UNIQUE INDEX idx_agent_script_unique 
+    ON public.agent_script (context_code, question);
+
+CREATE INDEX idx_agent_script_question_fts 
+    ON public.agent_script USING gin (to_tsvector('russian', question));
+
+-- Функция (если ещё нет в БД)
+CREATE OR REPLACE FUNCTION public.update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Триггер на agent_script
+CREATE TRIGGER trg_agent_script_updated_at
+    BEFORE UPDATE ON public.agent_script
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_updated_at();

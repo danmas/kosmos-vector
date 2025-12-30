@@ -1,0 +1,312 @@
+// routes/agentScript.js
+// Роутер для управления agent scripts и Natural Query Engine
+const express = require('express');
+const { callLLM } = require('../packages/core/llmClient');
+const { executeScript, validateScript } = require('../packages/core/scriptSandbox');
+const { getScriptGenerationPrompt, getHumanizePrompt } = require('../packages/core/naturalQueryPrompts');
+
+const router = express.Router();
+
+module.exports = (dbService) => {
+  // Middleware для валидации context-code
+  const validateContextCode = (req, res, next) => {
+    const contextCode = req.query['context-code'] || req.query.contextCode || req.body.contextCode;
+
+    if (!contextCode) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required parameter: context-code'
+      });
+    }
+
+    req.contextCode = contextCode;
+    next();
+  };
+
+  // === CRUD маршруты для agent-scripts ===
+
+  // GET /api/agent-scripts — список скриптов (с пагинацией)
+  router.get('/agent-scripts', validateContextCode, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit) || 50;
+      const offset = parseInt(req.query.offset) || 0;
+
+      const rows = await dbService.pgClient.query(`
+        SELECT id, question, usage_count, is_valid, created_at, updated_at
+        FROM public.agent_script
+        WHERE context_code = $1
+        ORDER BY created_at DESC
+        LIMIT $2 OFFSET $3
+      `, [req.contextCode, limit, offset]);
+
+      res.json({ success: true, scripts: rows.rows });
+    } catch (error) {
+      console.error('[API/AGENT-SCRIPTS] Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // GET /api/agent-scripts/:id — детальная информация о скрипте
+  router.get('/agent-scripts/:id', validateContextCode, async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const result = await dbService.pgClient.query(`
+        SELECT id, question, script, usage_count, is_valid, created_at, updated_at
+        FROM public.agent_script
+        WHERE id = $1 AND context_code = $2
+      `, [id, req.contextCode]);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Script not found' });
+      }
+
+      res.json({ success: true, script: result.rows[0] });
+    } catch (error) {
+      console.error('[API/AGENT-SCRIPTS/:ID] Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // PUT /api/agent-scripts/:id — редактировать (script и/или is_valid)
+  router.put('/agent-scripts/:id', validateContextCode, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { script, is_valid } = req.body;
+
+      if (script === undefined && is_valid === undefined) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Nothing to update. Provide "script" and/or "is_valid"' 
+        });
+      }
+
+      const updates = [];
+      const params = [id, req.contextCode];
+
+      if (script !== undefined) {
+        // Валидация скрипта перед сохранением
+        const validation = validateScript(script);
+        if (!validation.valid) {
+          return res.status(400).json({
+            success: false,
+            error: `Invalid script: ${validation.error}`
+          });
+        }
+        updates.push(`script = $${params.length + 1}`);
+        params.push(script);
+      }
+      if (is_valid !== undefined) {
+        updates.push(`is_valid = $${params.length + 1}`);
+        params.push(is_valid);
+      }
+
+      const result = await dbService.pgClient.query(`
+        UPDATE public.agent_script
+        SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1 AND context_code = $2
+        RETURNING id, question, script, is_valid, updated_at
+      `, params);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Script not found' });
+      }
+
+      res.json({ success: true, script: result.rows[0] });
+    } catch (error) {
+      console.error('[API/AGENT-SCRIPTS/:ID/PUT] Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // DELETE /api/agent-scripts/:id
+  router.delete('/agent-scripts/:id', validateContextCode, async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const result = await dbService.pgClient.query(`
+        DELETE FROM public.agent_script
+        WHERE id = $1 AND context_code = $2
+        RETURNING id
+      `, [id, req.contextCode]);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Script not found' });
+      }
+
+      res.json({ success: true, message: 'Script deleted' });
+    } catch (error) {
+      console.error('[API/AGENT-SCRIPTS/:ID/DELETE] Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === POST /api/v1/natural-query — основной эндпоинт Natural Query Engine ===
+  router.post('/v1/natural-query', async (req, res) => {
+    try {
+      // Проверяем, что body существует и это объект
+      if (!req.body || typeof req.body !== 'object') {
+        return res.status(400).json({
+          success: false,
+          error: 'Request body is required and must be a JSON object'
+        });
+      }
+
+      const { question, contextCode } = req.body;
+
+      if (!question || typeof question !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: 'Field "question" is required and must be a string'
+        });
+      }
+
+      if (!contextCode || typeof contextCode !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: 'Field "contextCode" is required and must be a string'
+        });
+      }
+
+      let scriptId = null;
+      let scriptCode = null;
+      let cached = false;
+
+      // Шаг 1: Поиск похожего скрипта в кэше через FTS
+      const cachedScript = await dbService.fuzzySearchScripts(contextCode, question);
+      
+      if (cachedScript) {
+        // Нашли похожий скрипт — используем его
+        scriptId = cachedScript.id;
+        scriptCode = cachedScript.script;
+        cached = true;
+        
+        // Инкрементируем счётчик использования
+        await dbService.incrementUsage(scriptId);
+        console.log(`[NaturalQuery] Использован кэшированный скрипт #${scriptId} (rank: ${cachedScript.rank.toFixed(3)})`);
+      } else {
+        // Шаг 2: Генерируем новый скрипт через LLM
+        console.log(`[NaturalQuery] Генерация нового скрипта для вопроса: "${question}"`);
+        
+        const prompt = getScriptGenerationPrompt(question);
+        const messages = [
+          { role: 'system', content: 'Ты генератор async JS-скриптов для анализа кодовой базы. Возвращай только код функции execute, без лишних комментариев и объяснений.' },
+          { role: 'user', content: prompt }
+        ];
+
+        scriptCode = await callLLM(messages);
+        
+        // Очищаем ответ от markdown code blocks, если есть
+        scriptCode = scriptCode.trim();
+        if (scriptCode.startsWith('```')) {
+          scriptCode = scriptCode.replace(/^```(?:javascript|js)?\n?/, '').replace(/\n?```$/, '');
+        }
+
+        // Валидация сгенерированного скрипта
+        const validation = validateScript(scriptCode);
+        if (!validation.valid) {
+          console.error(`[NaturalQuery] Сгенерированный скрипт невалиден: ${validation.error}`);
+          return res.status(500).json({
+            success: false,
+            error: `Generated script is invalid: ${validation.error}`,
+            generatedScript: scriptCode
+          });
+        }
+
+        // Сохраняем скрипт в БД (is_valid = false, т.к. ещё не проверен на практике)
+        const savedScript = await dbService.saveAgentScript(contextCode, question, scriptCode, false);
+        scriptId = savedScript.id;
+        console.log(`[NaturalQuery] Сохранён новый скрипт #${scriptId}`);
+      }
+
+      // Шаг 3: Выполняем скрипт в sandbox
+      let rawData = null;
+      let executionError = null;
+
+      try {
+        rawData = await executeScript(scriptCode, contextCode, dbService);
+        
+        // Если скрипт вернул ошибку уточнения
+        if (rawData && typeof rawData === 'object' && rawData.error === 'clarify') {
+          return res.json({
+            success: true,
+            human: rawData.message || 'Требуется уточнение вопроса',
+            raw: [],
+            scriptId: scriptId,
+            cached: cached,
+            clarify: true
+          });
+        }
+
+        // Если скрипт выполнился успешно и это новый скрипт — помечаем как валидный
+        if (!cached && scriptId) {
+          await dbService.pgClient.query(`
+            UPDATE public.agent_script
+            SET is_valid = true
+            WHERE id = $1
+          `, [scriptId]);
+        }
+      } catch (error) {
+        executionError = error;
+        console.error(`[NaturalQuery] Ошибка выполнения скрипта #${scriptId}:`, error);
+        
+        // Помечаем скрипт как невалидный
+        if (scriptId) {
+          await dbService.pgClient.query(`
+            UPDATE public.agent_script
+            SET is_valid = false
+            WHERE id = $1
+          `, [scriptId]);
+        }
+
+        return res.status(500).json({
+          success: false,
+          error: `Script execution failed: ${error.message}`,
+          scriptId: scriptId,
+          cached: cached
+        });
+      }
+
+      // Шаг 4: Превращаем rawData в человекочитаемый текст через LLM
+      let humanText = '';
+      try {
+        const humanizePrompt = getHumanizePrompt(question, rawData);
+        const humanizeMessages = [
+          { role: 'system', content: 'Ты помощник для анализа кодовой базы. Превращай сырые данные в понятный текст на русском языке.' },
+          { role: 'user', content: humanizePrompt }
+        ];
+        
+        humanText = await callLLM(humanizeMessages);
+      } catch (error) {
+        console.error('[NaturalQuery] Ошибка humanize:', error);
+        // Если humanize упал, используем fallback
+        humanText = `Найдено ${Array.isArray(rawData) ? rawData.length : 1} результат(ов). См. raw данные.`;
+      }
+
+      // Шаг 5: Возвращаем результат
+      res.json({
+        success: true,
+        human: humanText,
+        raw: rawData,
+        scriptId: scriptId,
+        cached: cached
+      });
+
+    } catch (error) {
+      console.error('[API/NATURAL-QUERY] Ошибка:', error);
+      // Проверяем, что ответ ещё не был отправлен
+      if (!res.headersSent) {
+        res.status(500).json({
+          success: false,
+          error: error.message || 'Internal server error'
+        });
+      } else {
+        // Если ответ уже отправлен, логируем ошибку
+        console.error('[API/NATURAL-QUERY] Критическая ошибка после отправки ответа:', error);
+      }
+    }
+  });
+
+  return router;
+};
+

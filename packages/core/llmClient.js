@@ -6,20 +6,39 @@ const { join } = require('path');
 // === КОНФИГУРАЦИЯ ===
 // Путь к config.json
 const configPath = join(process.cwd(), 'config.json');
-let config = {};
 
-// Приоритет: config.json > process.env > значения по умолчанию
-if (existsSync(configPath)) {
-  try {
-    config = JSON.parse(readFileSync(configPath, 'utf-8'));
-  } catch (error) {
-    console.warn('⚠️ Ошибка чтения config.json, используем переменные окружения');
+/**
+ * Чтение конфигурации из config.json (динамически, каждый раз)
+ * Приоритет: config.json > process.env > значения по умолчанию
+ * @returns {Object} { LLM_BASE_URL, LLM_API_KEY, LLM_MODEL }
+ */
+function getConfig() {
+  let config = {};
+  
+  // Читаем config.json каждый раз
+  if (existsSync(configPath)) {
+    try {
+      config = JSON.parse(readFileSync(configPath, 'utf-8'));
+    } catch (error) {
+      console.warn('⚠️ Ошибка чтения config.json, используем переменные окружения:', error.message);
+    }
   }
+  
+  return {
+    LLM_BASE_URL: config.LLM_BASE_URL || process.env.LLM_BASE_URL || "http://localhost:3002/v1",
+    LLM_API_KEY: process.env.LLM_API_KEY || "",
+    LLM_MODEL: config.LLM_MODEL || process.env.LLM_MODEL || "FAST"
+  };
 }
 
-const LLM_BASE_URL = config.LLM_BASE_URL || process.env.LLM_BASE_URL || "http://localhost:3002/v1";
-const LLM_API_KEY = process.env.LLM_API_KEY || "";
-const LLM_MODEL = config.LLM_MODEL || process.env.LLM_MODEL || "FAST";
+// Экспортируем геттеры для обратной совместимости
+function getLLM_BASE_URL() {
+  return getConfig().LLM_BASE_URL;
+}
+
+function getLLM_MODEL() {
+  return getConfig().LLM_MODEL;
+}
 
 // === ТИПЫ ===
 /**
@@ -35,25 +54,34 @@ const LLM_MODEL = config.LLM_MODEL || process.env.LLM_MODEL || "FAST";
  * @param {string} model - Имя модели (по умолчанию из конфига)
  * @returns {Promise<string>} Текстовый ответ от модели
  */
-async function callLLM(messages, model = LLM_MODEL) {
+async function callLLM(messages, model = null) {
+  // Читаем конфиг каждый раз
+  const config = getConfig();
+  const actualModel = model || config.LLM_MODEL;
+  
   const headers = {
     "Content-Type": "application/json",
   };
   
-  if (LLM_API_KEY) {
-    headers["Authorization"] = `Bearer ${LLM_API_KEY}`;
+  if (config.LLM_API_KEY) {
+    headers["Authorization"] = `Bearer ${config.LLM_API_KEY}`;
   }
 
   try {
-    console.log(`📡 Отправка запроса к ${LLM_BASE_URL} (Model: ${model})...`);
+    console.log(`📡 Отправка запроса к ${config.LLM_BASE_URL} (Model: ${actualModel})...`);
+    console.log('Headers:', headers);
+    console.log('Messages:', messages);
+    console.log('Model:', actualModel);
+    console.log('Temperature:', 0.3);
+    console.log('Max Tokens:', 4096);
     
-    const res = await fetch(`${LLM_BASE_URL}/chat/completions`, {
+    const res = await fetch(`${config.LLM_BASE_URL}/chat/completions`, {
       method: "POST",
       headers,
       body: JSON.stringify({
-        model,
+        model: actualModel,
         messages,
-        temperature: 0.3, // Настройте температуру под задачи (0.1 - код, 0.7 - креатив)
+        temperature: 0.0 // Настройте температуру под задачи (0.1 - код, 0.7 - креатив)
         // max_tokens: 4096, // Опционально
       }),
     });
@@ -88,6 +116,9 @@ async function callLLM(messages, model = LLM_MODEL) {
  */
 async function checkLLMAvailability(timeout = 5000) {
   try {
+    // Читаем конфиг каждый раз
+    const config = getConfig();
+    
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -95,17 +126,17 @@ async function checkLLMAvailability(timeout = 5000) {
       "Content-Type": "application/json",
     };
     
-    if (LLM_API_KEY) {
-      headers["Authorization"] = `Bearer ${LLM_API_KEY}`;
+    if (config.LLM_API_KEY) {
+      headers["Authorization"] = `Bearer ${config.LLM_API_KEY}`;
     }
 
     // Отправляем минимальный тестовый запрос
-    const res = await fetch(`${LLM_BASE_URL}/chat/completions`, {
+    const res = await fetch(`${config.LLM_BASE_URL}/chat/completions`, {
       method: "POST",
       headers,
       signal: controller.signal,
       body: JSON.stringify({
-        model: LLM_MODEL,
+        model: config.LLM_MODEL,
         messages: [{ role: "user", content: "test" }],
         max_tokens: 5, // Минимальный ответ для проверки
       }),
@@ -127,10 +158,18 @@ async function checkLLMAvailability(timeout = 5000) {
   }
 }
 
+// Экспорт модуля
+// Для обратной совместимости LLM_BASE_URL и LLM_MODEL доступны как функции
+// Используйте getConfig() для получения всех значений сразу
 module.exports = {
   callLLM,
   checkLLMAvailability,
-  LLM_BASE_URL,
-  LLM_MODEL
+  getConfig,
+  getLLM_BASE_URL,
+  getLLM_MODEL,
+  // Для обратной совместимости - свойства как функции
+  // В коде используйте: LLM_BASE_URL() вместо LLM_BASE_URL
+  LLM_BASE_URL: getLLM_BASE_URL,
+  LLM_MODEL: getLLM_MODEL
 };
 

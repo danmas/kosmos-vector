@@ -2,10 +2,16 @@ openapi: 3.0.3
 info:
   title: AiItem RAG Architect API
   info:
-    version: 2.2.0
+    version: 2.3.0
     description: |
       RESTful API для системы RAG-анализа кодовой базы.
 
+      Версия 2.3.0:
+      • Добавлен Natural Query Engine: запросы на естественном языке с автогенерацией скриптов
+      • Эндпоинт /api/v1/natural-query для интеллектуального анализа кодовой базы
+      • CRUD для управления кэшем скриптов: /api/agent-scripts
+      • FTS-поиск похожих вопросов для переиспользования скриптов
+      
       Версия 2.2.0:
       • Добавлена поддержка Logic Graph: сохранение и получение графов логики функций через /api/items/{id}/logic-graph
       • Интеграция с Logic Architect для визуализации потока управления функций
@@ -34,6 +40,8 @@ tags:
     description: Классическая настройка проекта (полностью поддерживается и расширена)
   - name: RAG Chat
     description: Чат с RAG-движком
+  - name: Natural Query
+    description: Natural Query Engine — запросы на естественном языке с автогенерацией скриптов
   - name: Pipeline
     description: Управление pipeline обработки
   - name: Streaming
@@ -415,6 +423,127 @@ components:
           type: string
           format: date-time
           description: Время ответа
+
+    # ────────────────────────────────────── Natural Query Engine
+    NaturalQueryRequest:
+      type: object
+      required: [question, contextCode]
+      properties:
+        question:
+          type: string
+          description: Вопрос на естественном языке для анализа кодовой базы
+          example: "Какие типы связей используются в проекте?"
+        contextCode:
+          type: string
+          description: Контекстный код для изоляции данных
+          example: "CARL"
+
+    NaturalQueryResponse:
+      type: object
+      required: [success, human, raw, scriptId, cached]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        human:
+          type: string
+          description: Человекочитаемый ответ на русском языке, сгенерированный из raw данных
+          example: "В проекте используются следующие типы связей: calls, reads_from, updates, inserts_into, imports"
+        raw:
+          description: Сырые данные, возвращённые скриптом (массив или объект)
+          oneOf:
+            - type: array
+              items: {}
+            - type: object
+          example:
+            - code: "calls"
+              label: "calls"
+              description: "Function calls another function"
+        scriptId:
+          type: integer
+          description: ID сохранённого скрипта в таблице agent_script
+          example: 42
+        cached:
+          type: boolean
+          description: true если скрипт был найден в кэше через FTS, false если был сгенерирован заново
+          example: false
+
+    AgentScript:
+      type: object
+      required: [id, question, script, usage_count, is_valid, created_at, updated_at]
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор скрипта
+          example: 42
+        question:
+          type: string
+          description: Вопрос, для которого был сгенерирован скрипт
+          example: "Какие типы связей используются в проекте?"
+        script:
+          type: string
+          description: Код async функции execute(contextCode) для выполнения запроса
+          example: "async function execute(contextCode) { const rows = await DbService.queryRaw(`SELECT ...`, [contextCode]); return rows; }"
+        usage_count:
+          type: integer
+          description: Количество раз, сколько скрипт был использован
+          example: 5
+        is_valid:
+          type: boolean
+          description: Флаг валидности скрипта (true если скрипт успешно выполнился, false если был ошибка)
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания скрипта
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления скрипта
+
+    AgentScriptListResponse:
+      type: object
+      required: [success, scripts]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        scripts:
+          type: array
+          items:
+            type: object
+            required: [id, question, usage_count, is_valid, created_at, updated_at]
+            properties:
+              id: { type: integer }
+              question: { type: string }
+              usage_count: { type: integer }
+              is_valid: { type: boolean }
+              created_at: { type: string, format: date-time }
+              updated_at: { type: string, format: date-time }
+
+    AgentScriptDetailResponse:
+      type: object
+      required: [success, script]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        script:
+          $ref: '#/components/schemas/AgentScript'
+
+    AgentScriptUpdateRequest:
+      type: object
+      description: Поля для обновления скрипта
+      properties:
+        script:
+          type: string
+          description: Новый код скрипта (опционально)
+          example: "async function execute(contextCode) { ... }"
+        is_valid:
+          type: boolean
+          description: Новое значение флага валидности (опционально)
+          example: true
+      minProperties: 1
 
     SuccessResponse:
       type: object
@@ -1340,6 +1469,217 @@ paths:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
         '500':
           description: Ошибка сервера или LLM недоступен
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  # ────────────────────────────────────── NATURAL QUERY ENGINE
+  /api/v1/natural-query:
+    post:
+      tags: [Natural Query]
+      summary: Запрос на естественном языке с автогенерацией скрипта
+      description: |
+        Natural Query Engine — интеллектуальный слой для анализа кодовой базы.
+        
+        Пользователь задаёт вопрос на естественном языке, система:
+        1. Ищет похожий вопрос в кэше через FTS (Full Text Search)
+        2. Если не найден — генерирует новый async JS-скрипт через LLM
+        3. Выполняет скрипт в sandbox (только SELECT запросы к БД)
+        4. Превращает raw данные в человекочитаемый текст через LLM
+        5. Сохраняет скрипт в кэш для повторного использования
+        
+        Скрипты кэшируются в таблице agent_script и могут быть переиспользованы
+        при похожих вопросах. Скрипты можно просматривать, редактировать и удалять
+        через CRUD эндпоинты /api/agent-scripts.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NaturalQueryRequest' }
+      responses:
+        '200':
+          description: Успешный ответ с результатами выполнения скрипта
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NaturalQueryResponse' }
+        '400':
+          description: Неверный запрос (отсутствуют обязательные поля)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500':
+          description: Ошибка генерации или выполнения скрипта
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/agent-scripts:
+    get:
+      tags: [Natural Query]
+      summary: Список всех сохранённых скриптов
+      description: |
+        Возвращает список всех скриптов для указанного context-code с пагинацией.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных
+          schema:
+            type: string
+            example: "CARL"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 1000
+          description: Количество скриптов на странице
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: Смещение для пагинации
+      responses:
+        '200':
+          description: Список скриптов
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AgentScriptListResponse' }
+        '400':
+          description: Отсутствует context-code
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500':
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/agent-scripts/{id}:
+    get:
+      tags: [Natural Query]
+      summary: Получить детали скрипта
+      description: |
+        Возвращает полную информацию о скрипте, включая его код.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID скрипта
+          schema:
+            type: integer
+            example: 42
+      responses:
+        '200':
+          description: Детали скрипта
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AgentScriptDetailResponse' }
+        '404':
+          description: Скрипт не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '400':
+          description: Отсутствует context-code
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    put:
+      tags: [Natural Query]
+      summary: Обновить скрипт
+      description: |
+        Обновляет скрипт: можно изменить код скрипта и/или флаг is_valid.
+        При обновлении кода выполняется валидация на безопасность.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID скрипта
+          schema:
+            type: integer
+            example: 42
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AgentScriptUpdateRequest' }
+      responses:
+        '200':
+          description: Скрипт успешно обновлён
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AgentScriptDetailResponse' }
+        '400':
+          description: Неверный запрос (нет полей для обновления или скрипт невалиден)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '404':
+          description: Скрипт не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    delete:
+      tags: [Natural Query]
+      summary: Удалить скрипт
+      description: |
+        Удаляет скрипт из кэша. Это действие нельзя отменить.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID скрипта
+          schema:
+            type: integer
+            example: 42
+      responses:
+        '200':
+          description: Скрипт успешно удалён
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Script deleted"
+        '404':
+          description: Скрипт не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '400':
+          description: Отсутствует context-code
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
