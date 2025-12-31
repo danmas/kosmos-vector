@@ -438,7 +438,8 @@ CREATE TABLE public.agent_script (
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     usage_count int DEFAULT 0,
-    is_valid boolean DEFAULT false
+    is_valid boolean DEFAULT false,
+    last_result jsonb DEFAULT NULL
 );
 
 CREATE UNIQUE INDEX idx_agent_script_unique 

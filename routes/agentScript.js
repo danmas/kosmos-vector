@@ -32,7 +32,7 @@ module.exports = (dbService) => {
       const offset = parseInt(req.query.offset) || 0;
 
       const rows = await dbService.pgClient.query(`
-        SELECT id, question, usage_count, is_valid, created_at, updated_at
+        SELECT id, question, usage_count, is_valid, last_result, created_at, updated_at
         FROM public.agent_script
         WHERE context_code = $1
         ORDER BY created_at DESC
@@ -52,7 +52,7 @@ module.exports = (dbService) => {
       const { id } = req.params;
 
       const result = await dbService.pgClient.query(`
-        SELECT id, question, script, usage_count, is_valid, created_at, updated_at
+        SELECT id, question, script, usage_count, is_valid, last_result, created_at, updated_at
         FROM public.agent_script
         WHERE id = $1 AND context_code = $2
       `, [id, req.contextCode]);
@@ -110,7 +110,7 @@ module.exports = (dbService) => {
         UPDATE public.agent_script
         SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP
         WHERE id = $1 AND context_code = $2
-        RETURNING id, question, script, is_valid, updated_at
+        RETURNING id, question, script, is_valid, last_result, updated_at
       `, params);
 
       if (result.rows.length === 0) {
@@ -317,7 +317,29 @@ module.exports = (dbService) => {
         humanText = `Найдено ${Array.isArray(rawData) ? rawData.length : 1} результат(ов). См. raw данные.`;
       }
 
-      // Шаг 5: Возвращаем результат
+      // Шаг 5: Сохраняем результат выполнения в БД (если скрипт выполнился успешно)
+      if (scriptId && !executionError && rawData !== null) {
+        try {
+          const resultToSave = {
+            raw: rawData,
+            human: humanText,
+            executed_at: new Date().toISOString()
+          };
+          
+          await dbService.pgClient.query(`
+            UPDATE public.agent_script
+            SET last_result = $1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2
+          `, [JSON.stringify(resultToSave), scriptId]);
+          
+          console.log(`[NaturalQuery] Результат выполнения сохранён в last_result для скрипта #${scriptId}`);
+        } catch (saveError) {
+          // Не прерываем выполнение, если сохранение результата не удалось
+          console.error(`[NaturalQuery] Ошибка сохранения результата для скрипта #${scriptId}:`, saveError);
+        }
+      }
+
+      // Шаг 6: Возвращаем результат
       res.json({
         success: true,
         human: humanText,

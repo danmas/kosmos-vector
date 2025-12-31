@@ -74,10 +74,10 @@ langchain-rag-example/
 
 ## Настройка PostgreSQL
 
-Для хранения векторных представлений используется таблица `chunk_vector` в схеме `public`:
+Для хранения векторных представлений используется таблица `file_vectors` в схеме `public`:
 
 ```sql
-CREATE TABLE IF NOT EXISTS public.chunk_vector (
+CREATE TABLE IF NOT EXISTS public.file_vectors (
   id UUID DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
   file_url TEXT NOT NULL,
   embedding VECTOR(1536),
@@ -104,7 +104,7 @@ npm start
 3. Для каждого чанка создается векторное представление (эмбеддинг) с помощью OpenAI Embeddings API
 4. Эмбеддинги сохраняются в:
    - Векторное хранилище в памяти для быстрого доступа
-   - Таблицу `chunk_vector` в PostgreSQL для постоянного хранения
+   - Таблицу `file_vectors` в PostgreSQL для постоянного хранения
 5. Когда пользователь задает вопрос, происходит:
    - Создание эмбеддинга для вопроса
    - Поиск наиболее релевантных фрагментов текста в векторном хранилище
