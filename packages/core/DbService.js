@@ -2500,11 +2500,23 @@ class DbService {
         return result.rows[0];
       } else {
         // Создаём новый
+        // Логируем количество переводов строк перед INSERT
+        const newlineCount = (script.match(/\n/g) || []).length;
+        console.log(`[DB] Сохранение скрипта: ${newlineCount} переводов строк, длина: ${script.length} символов`);
+        
         const result = await this.pgClient.query(`
           INSERT INTO public.agent_script (context_code, question, script, is_valid)
           VALUES ($1, $2, $3, $4)
           RETURNING id, question, script, created_at, updated_at
         `, [contextCode, question, script, isValid]);
+
+        // Проверяем, что вернулось из БД
+        const returnedNewlineCount = (result.rows[0].script.match(/\n/g) || []).length;
+        console.log(`[DB] Скрипт сохранён: ${returnedNewlineCount} переводов строк в возвращённом значении`);
+        
+        if (newlineCount !== returnedNewlineCount) {
+          console.warn(`[DB] ⚠️  Несоответствие переводов строк: было ${newlineCount}, вернулось ${returnedNewlineCount}`);
+        }
 
         return result.rows[0];
       }

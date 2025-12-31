@@ -61,7 +61,12 @@ module.exports = (dbService) => {
         return res.status(404).json({ success: false, error: 'Script not found' });
       }
 
-      res.json({ success: true, script: result.rows[0] });
+      // Логируем количество переводов строк при чтении из БД
+      const scriptFromDB = result.rows[0];
+      const newlineCountInDB = (scriptFromDB.script.match(/\n/g) || []).length;
+      console.log(`[API/AGENT-SCRIPTS/:ID] Чтение скрипта #${id}: ${newlineCountInDB} переводов строк в БД, длина=${scriptFromDB.script.length}`);
+
+      res.json({ success: true, script: scriptFromDB });
     } catch (error) {
       console.error('[API/AGENT-SCRIPTS/:ID] Ошибка:', error);
       res.status(500).json({ success: false, error: error.message });
@@ -196,10 +201,28 @@ module.exports = (dbService) => {
 
         scriptCode = await callLLM(messages);
         
+        // Логируем что пришло от LLM
+        const initialNewlines = (scriptCode.match(/\n/g) || []).length;
+        console.log(`[NaturalQuery] Ответ от LLM: длина=${scriptCode.length}, переводов строк=${initialNewlines}`);
+        
         // Очищаем ответ от markdown code blocks, если есть
-        scriptCode = scriptCode.trim();
-        if (scriptCode.startsWith('```')) {
-          scriptCode = scriptCode.replace(/^```(?:javascript|js)?\n?/, '').replace(/\n?```$/, '');
+        // ВАЖНО: сохраняем переводы строк внутри скрипта!
+        // Проверяем наличие markdown блоков
+        const trimmedCheck = scriptCode.trim();
+        const hasMarkdown = trimmedCheck.startsWith('```');
+        console.log(`[NaturalQuery] Markdown блоков: ${hasMarkdown}`);
+        
+        if (hasMarkdown) {
+          // Убираем markdown code blocks с начала и конца, но сохраняем переводы строк в коде
+          scriptCode = scriptCode.replace(/^[\s]*```(?:javascript|js)?[\s]*\n?/, '').replace(/\n?[\s]*```[\s]*$/, '');
+          // Убираем только пустые строки в самом начале и конце, но сохраняем структуру кода
+          scriptCode = scriptCode.replace(/^\n+/, '').replace(/\n+$/, '');
+          
+          const afterMarkdownNewlines = (scriptCode.match(/\n/g) || []).length;
+          console.log(`[NaturalQuery] После удаления markdown: переводов строк=${afterMarkdownNewlines}`);
+        } else {
+          // Убираем только ведущие/замыкающие пробелы и табы (но НЕ переводы строк \n)
+          scriptCode = scriptCode.replace(/^[ \t\r]+/, '').replace(/[ \t\r]+$/, '');
         }
 
         // Валидация сгенерированного скрипта
@@ -214,9 +237,20 @@ module.exports = (dbService) => {
         }
 
         // Сохраняем скрипт в БД (is_valid = false, т.к. ещё не проверен на практике)
+        // Логируем количество переводов строк перед сохранением
+        const newlineCountBefore = (scriptCode.match(/\n/g) || []).length;
+        console.log(`[NaturalQuery] Сохранение скрипта: ${newlineCountBefore} переводов строк в исходном коде`);
+        
         const savedScript = await dbService.saveAgentScript(contextCode, question, scriptCode, false);
         scriptId = savedScript.id;
-        console.log(`[NaturalQuery] Сохранён новый скрипт #${scriptId}`);
+        
+        // Проверяем, что вернулось из БД
+        const newlineCountAfter = (savedScript.script.match(/\n/g) || []).length;
+        console.log(`[NaturalQuery] Сохранён новый скрипт #${scriptId}: ${newlineCountAfter} переводов строк после сохранения`);
+        
+        if (newlineCountBefore !== newlineCountAfter) {
+          console.warn(`[NaturalQuery] ⚠️  Потеря переводов строк: было ${newlineCountBefore}, стало ${newlineCountAfter}`);
+        }
       }
 
       // Шаг 3: Выполняем скрипт в sandbox

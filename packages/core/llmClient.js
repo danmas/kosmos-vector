@@ -100,6 +100,36 @@ async function callLLM(messages, model = null) {
       throw new Error("Пустой ответ от модели (структура JSON может отличаться)");
     }
 
+    // Логируем детальный ответ от LLM
+    const responseLength = response.length;
+    const newlineCount = (response.match(/\n/g) || []).length;
+    console.log(`✅ Ответ от LLM получен:`);
+    console.log(`   Длина: ${responseLength} символов`);
+    console.log(`   Переводов строк: ${newlineCount}`);
+    console.log(`   ${'─'.repeat(60)}`);
+    
+    // Если ответ не очень длинный (до 2000 символов), выводим полностью
+    // Иначе выводим первые 1000 символов и последние 200
+    if (responseLength <= 2000) {
+      console.log(`   Полный ответ:`);
+      response.split('\n').forEach(line => {
+        console.log(`   ${line}`);
+      });
+    } else {
+      console.log(`   Первые 1000 символов:`);
+      const firstPart = response.substring(0, 1000);
+      firstPart.split('\n').forEach(line => {
+        console.log(`   ${line}`);
+      });
+      console.log(`   ... (пропущено ${responseLength - 1200} символов) ...`);
+      console.log(`   Последние 200 символов:`);
+      const lastPart = response.substring(responseLength - 200);
+      lastPart.split('\n').forEach(line => {
+        console.log(`   ${line}`);
+      });
+    }
+    console.log(`   ${'─'.repeat(60)}`);
+
     return response;
 
   } catch (e) {

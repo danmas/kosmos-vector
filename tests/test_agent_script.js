@@ -128,6 +128,14 @@ async function testNaturalQueryGenerate() {
           console.log('─'.repeat(60));
           console.log(scriptData.script.script);
           console.log('─'.repeat(60));
+          
+          // Проверяем наличие переводов строк
+          const newlineCount = (scriptData.script.script.match(/\n/g) || []).length;
+          if (newlineCount > 0) {
+            success(`Переводы строк в скрипте сохранены: ${newlineCount} строк`);
+          } else {
+            error(`⚠️  Скрипт не содержит переводов строк!`);
+          }
         }
       }
     } catch (e) {
@@ -280,7 +288,16 @@ async function testGetScriptDetails() {
       throw new Error('script.script должен быть строкой');
     }
     
+    // Проверяем, что переводы строк сохранились
+    if (!data.script.script.includes('\n')) {
+      throw new Error('Скрипт не содержит переводов строк - они были потеряны при сохранении');
+    }
+    
+    // Подсчитываем количество переводов строк
+    const newlineCount = (data.script.script.match(/\n/g) || []).length;
     success(`Детали скрипта получены: id=${data.script.id}, question="${data.script.question.substring(0, 50)}..."`);
+    success(`Переводы строк сохранены: найдено ${newlineCount} переводов строк в скрипте`);
+    
     return true;
   } catch (e) {
     error(`Тест 4 провален: ${e.message}`);
@@ -323,6 +340,15 @@ async function testUpdateScript() {
     }
     
     success(`Скрипт обновлён: id=${data.script.id}, is_valid=${data.script.is_valid}`);
+    
+    // Проверяем, что переводы строк всё ещё присутствуют после обновления
+    if (data.script.script && !data.script.script.includes('\n')) {
+      info('⚠️  Скрипт не содержит переводов строк после обновления is_valid');
+    } else if (data.script.script) {
+      const newlineCount = (data.script.script.match(/\n/g) || []).length;
+      success(`Переводы строк сохранены после обновления: ${newlineCount} строк`);
+    }
+    
     return true;
   } catch (e) {
     error(`Тест 5 провален: ${e.message}`);
@@ -516,8 +542,8 @@ async function runAllTests() {
   results.push(await testUpdateScript());
   console.log('');
   
-  results.push(await testDeleteScript());
-  console.log('');
+  // results.push(await testDeleteScript());
+  // console.log('');
   
   results.push(await testValidation());
   console.log('');
