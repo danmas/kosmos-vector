@@ -177,82 +177,96 @@ module.exports = (dbService) => {
       let scriptCode = null;
       let cached = false;
 
-      // Шаг 1: Поиск похожего скрипта в кэше через FTS
-      const cachedScript = await dbService.fuzzySearchScripts(contextCode, question);
+      // Шаг 1: Сначала проверяем точное совпадение вопроса
+      const exactScript = await dbService.getAgentScriptByExactQuestion(contextCode, question);
       
-      if (cachedScript) {
-        // Нашли похожий скрипт — используем его
-        scriptId = cachedScript.id;
-        scriptCode = cachedScript.script;
+      if (exactScript) {
+        // Точное совпадение найдено — используем его без FTS и без LLM
+        scriptId = exactScript.id;
+        scriptCode = exactScript.script;
         cached = true;
         
         // Инкрементируем счётчик использования
         await dbService.incrementUsage(scriptId);
-        console.log(`[NaturalQuery] Использован кэшированный скрипт #${scriptId} (rank: ${cachedScript.rank.toFixed(3)})`);
+        console.log(`[NaturalQuery] Использован скрипт с точным совпадением #${scriptId}`);
       } else {
-        // Шаг 2: Генерируем новый скрипт через LLM
-        console.log(`[NaturalQuery] Генерация нового скрипта для вопроса: "${question}"`);
+        // Шаг 1.2: Поиск похожего скрипта в кэше через FTS
+        const cachedScript = await dbService.fuzzySearchScripts(contextCode, question);
         
-        const prompt = getScriptGenerationPrompt(question);
-        const messages = [
-          { role: 'system', content: 'Ты генератор async JS-скриптов для анализа кодовой базы. Возвращай только код функции execute, без лишних комментариев и объяснений.' },
-          { role: 'user', content: prompt }
-        ];
-
-        scriptCode = await callLLM(messages);
-        
-        // Логируем что пришло от LLM
-        const initialNewlines = (scriptCode.match(/\n/g) || []).length;
-        console.log(`[NaturalQuery] Ответ от LLM: длина=${scriptCode.length}, переводов строк=${initialNewlines}`);
-        
-        // Очищаем ответ от markdown code blocks, если есть
-        // ВАЖНО: сохраняем переводы строк внутри скрипта!
-        // Проверяем наличие markdown блоков
-        const trimmedCheck = scriptCode.trim();
-        const hasMarkdown = trimmedCheck.startsWith('```');
-        console.log(`[NaturalQuery] Markdown блоков: ${hasMarkdown}`);
-        
-        if (hasMarkdown) {
-          // Убираем markdown code blocks с начала и конца, но сохраняем переводы строк в коде
-          scriptCode = scriptCode.replace(/^[\s]*```(?:javascript|js)?[\s]*\n?/, '').replace(/\n?[\s]*```[\s]*$/, '');
-          // Убираем только пустые строки в самом начале и конце, но сохраняем структуру кода
-          scriptCode = scriptCode.replace(/^\n+/, '').replace(/\n+$/, '');
+        if (cachedScript) {
+          // Нашли похожий скрипт — используем его
+          scriptId = cachedScript.id;
+          scriptCode = cachedScript.script;
+          cached = true;
           
-          const afterMarkdownNewlines = (scriptCode.match(/\n/g) || []).length;
-          console.log(`[NaturalQuery] После удаления markdown: переводов строк=${afterMarkdownNewlines}`);
+          // Инкрементируем счётчик использования
+          await dbService.incrementUsage(scriptId);
+          console.log(`[NaturalQuery] Использован кэшированный скрипт #${scriptId} (rank: ${cachedScript.rank.toFixed(3)})`);
         } else {
-          // Убираем только ведущие/замыкающие пробелы и табы (но НЕ переводы строк \n)
-          scriptCode = scriptCode.replace(/^[ \t\r]+/, '').replace(/[ \t\r]+$/, '');
-        }
+          // Шаг 2: Генерируем новый скрипт через LLM
+          console.log(`[NaturalQuery] Генерация нового скрипта для вопроса: "${question}"`);
+          
+          const prompt = getScriptGenerationPrompt(question);
+          const messages = [
+            { role: 'system', content: 'Ты генератор async JS-скриптов для анализа кодовой базы. Возвращай только код функции execute, без лишних комментариев и объяснений.' },
+            { role: 'user', content: prompt }
+          ];
 
-        // Валидация сгенерированного скрипта
-        const validation = validateScript(scriptCode);
-        if (!validation.valid) {
-          console.error(`[NaturalQuery] Сгенерированный скрипт невалиден: ${validation.error}`);
-          return res.status(500).json({
-            success: false,
-            error: `Generated script is invalid: ${validation.error}`,
-            human: `Сгенерированный скрипт невалиден: ${validation.error}. Попробуйте переформулировать вопрос или обратитесь к администратору.`,
-            script: scriptCode,
-            scriptId: null,
-            cached: false
-          });
-        }
+          scriptCode = await callLLM(messages);
+          
+          // Логируем что пришло от LLM
+          const initialNewlines = (scriptCode.match(/\n/g) || []).length;
+          console.log(`[NaturalQuery] Ответ от LLM: длина=${scriptCode.length}, переводов строк=${initialNewlines}`);
+          
+          // Очищаем ответ от markdown code blocks, если есть
+          // ВАЖНО: сохраняем переводы строк внутри скрипта!
+          // Проверяем наличие markdown блоков
+          const trimmedCheck = scriptCode.trim();
+          const hasMarkdown = trimmedCheck.startsWith('```');
+          console.log(`[NaturalQuery] Markdown блоков: ${hasMarkdown}`);
+          
+          if (hasMarkdown) {
+            // Убираем markdown code blocks с начала и конца, но сохраняем переводы строк в коде
+            scriptCode = scriptCode.replace(/^[\s]*```(?:javascript|js)?[\s]*\n?/, '').replace(/\n?[\s]*```[\s]*$/, '');
+            // Убираем только пустые строки в самом начале и конце, но сохраняем структуру кода
+            scriptCode = scriptCode.replace(/^\n+/, '').replace(/\n+$/, '');
+            
+            const afterMarkdownNewlines = (scriptCode.match(/\n/g) || []).length;
+            console.log(`[NaturalQuery] После удаления markdown: переводов строк=${afterMarkdownNewlines}`);
+          } else {
+            // Убираем только ведущие/замыкающие пробелы и табы (но НЕ переводы строк \n)
+            scriptCode = scriptCode.replace(/^[ \t\r]+/, '').replace(/[ \t\r]+$/, '');
+          }
 
-        // Сохраняем скрипт в БД (is_valid = false, т.к. ещё не проверен на практике)
-        // Логируем количество переводов строк перед сохранением
-        const newlineCountBefore = (scriptCode.match(/\n/g) || []).length;
-        console.log(`[NaturalQuery] Сохранение скрипта: ${newlineCountBefore} переводов строк в исходном коде`);
-        
-        const savedScript = await dbService.saveAgentScript(contextCode, question, scriptCode, false);
-        scriptId = savedScript.id;
-        
-        // Проверяем, что вернулось из БД
-        const newlineCountAfter = (savedScript.script.match(/\n/g) || []).length;
-        console.log(`[NaturalQuery] Сохранён новый скрипт #${scriptId}: ${newlineCountAfter} переводов строк после сохранения`);
-        
-        if (newlineCountBefore !== newlineCountAfter) {
-          console.warn(`[NaturalQuery] ⚠️  Потеря переводов строк: было ${newlineCountBefore}, стало ${newlineCountAfter}`);
+          // Валидация сгенерированного скрипта
+          const validation = validateScript(scriptCode);
+          if (!validation.valid) {
+            console.error(`[NaturalQuery] Сгенерированный скрипт невалиден: ${validation.error}`);
+            return res.status(500).json({
+              success: false,
+              error: `Generated script is invalid: ${validation.error}`,
+              human: `Сгенерированный скрипт невалиден: ${validation.error}. Попробуйте переформулировать вопрос или обратитесь к администратору.`,
+              script: scriptCode,
+              scriptId: null,
+              cached: false
+            });
+          }
+
+          // Сохраняем скрипт в БД (is_valid = false, т.к. ещё не проверен на практике)
+          // Логируем количество переводов строк перед сохранением
+          const newlineCountBefore = (scriptCode.match(/\n/g) || []).length;
+          console.log(`[NaturalQuery] Сохранение скрипта: ${newlineCountBefore} переводов строк в исходном коде`);
+          
+          const savedScript = await dbService.saveAgentScript(contextCode, question, scriptCode, false);
+          scriptId = savedScript.id;
+          
+          // Проверяем, что вернулось из БД
+          const newlineCountAfter = (savedScript.script.match(/\n/g) || []).length;
+          console.log(`[NaturalQuery] Сохранён новый скрипт #${scriptId}: ${newlineCountAfter} переводов строк после сохранения`);
+          
+          if (newlineCountBefore !== newlineCountAfter) {
+            console.warn(`[NaturalQuery] ⚠️  Потеря переводов строк: было ${newlineCountBefore}, стало ${newlineCountAfter}`);
+          }
         }
       }
 
@@ -339,6 +353,7 @@ module.exports = (dbService) => {
       }
 
       // Шаг 5: Сохраняем результат выполнения в БД (если скрипт выполнился успешно)
+      let lastResult = null;
       if (scriptId && !executionError && rawData !== null) {
         try {
           const resultToSave = {
@@ -353,10 +368,27 @@ module.exports = (dbService) => {
             WHERE id = $2
           `, [JSON.stringify(resultToSave), scriptId]);
           
+          lastResult = resultToSave;
           console.log(`[NaturalQuery] Результат выполнения сохранён в last_result для скрипта #${scriptId}`);
         } catch (saveError) {
           // Не прерываем выполнение, если сохранение результата не удалось
           console.error(`[NaturalQuery] Ошибка сохранения результата для скрипта #${scriptId}:`, saveError);
+        }
+      } else if (scriptId && cached) {
+        // Для кэшированных скриптов получаем last_result из БД, если есть
+        try {
+          const result = await dbService.pgClient.query(`
+            SELECT last_result
+            FROM public.agent_script
+            WHERE id = $1
+          `, [scriptId]);
+          
+          if (result.rows.length > 0 && result.rows[0].last_result) {
+            lastResult = result.rows[0].last_result;
+          }
+        } catch (error) {
+          // Игнорируем ошибку получения last_result
+          console.error(`[NaturalQuery] Ошибка получения last_result для скрипта #${scriptId}:`, error);
         }
       }
 
@@ -366,7 +398,8 @@ module.exports = (dbService) => {
         human: humanText,
         raw: rawData,
         scriptId: scriptId,
-        cached: cached
+        cached: cached,
+        last_result: lastResult
       });
 
     } catch (error) {

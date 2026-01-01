@@ -2434,6 +2434,36 @@ class DbService {
   }
 
   /**
+   * Поиск скрипта по точному совпадению вопроса
+   * @param {string} contextCode - Контекстный код
+   * @param {string} question - Точный вопрос
+   * @returns {Promise<Object|null>} { id, question, script } или null
+   */
+  async getAgentScriptByExactQuestion(contextCode, question) {
+    try {
+      const result = await this.pgClient.query(`
+        SELECT id, question, script
+        FROM public.agent_script
+        WHERE context_code = $1 AND question = $2 AND is_valid = true
+        LIMIT 1
+      `, [contextCode, question]);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return {
+        id: result.rows[0].id,
+        question: result.rows[0].question,
+        script: result.rows[0].script
+      };
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка getAgentScriptByExactQuestion("${contextCode}", "${question}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Поиск похожего скрипта через FTS (Full Text Search)
    * @param {string} contextCode - Контекстный код
    * @param {string} question - Вопрос для поиска
