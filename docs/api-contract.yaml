@@ -465,8 +465,32 @@ components:
           example: 42
         cached:
           type: boolean
-          description: true если скрипт был найден в кэше через FTS, false если был сгенерирован заново
+          description: true если скрипт был найден в кэше (точное совпадение или FTS), false если был сгенерирован заново
           example: false
+        last_result:
+          type: object
+          nullable: true
+          description: Последний сохранённый результат выполнения скрипта (если есть). Содержит raw, human и executed_at.
+          properties:
+            raw:
+              description: Сырые данные последнего выполнения
+              oneOf:
+                - type: array
+                  items: {}
+                - type: object
+            human:
+              type: string
+              description: Человекочитаемый текст последнего выполнения
+            executed_at:
+              type: string
+              format: date-time
+              description: Время последнего выполнения скрипта
+          example:
+            raw:
+              - code: "calls"
+                label: "calls"
+            human: "В проекте используются следующие типы связей..."
+            executed_at: "2024-01-15T10:30:00.000Z"
 
     NaturalQueryErrorResponse:
       type: object
@@ -522,6 +546,30 @@ components:
           type: boolean
           description: Флаг валидности скрипта (true если скрипт успешно выполнился, false если был ошибка)
           example: true
+        last_result:
+          type: object
+          nullable: true
+          description: Последний сохранённый результат выполнения скрипта (если есть). Содержит raw, human и executed_at.
+          properties:
+            raw:
+              description: Сырые данные последнего выполнения
+              oneOf:
+                - type: array
+                  items: {}
+                - type: object
+            human:
+              type: string
+              description: Человекочитаемый текст последнего выполнения
+            executed_at:
+              type: string
+              format: date-time
+              description: Время последнего выполнения скрипта
+          example:
+            raw:
+              - code: "calls"
+                label: "calls"
+            human: "В проекте используются следующие типы связей..."
+            executed_at: "2024-01-15T10:30:00.000Z"
         created_at:
           type: string
           format: date-time
@@ -548,6 +596,19 @@ components:
               question: { type: string }
               usage_count: { type: integer }
               is_valid: { type: boolean }
+              last_result:
+                type: object
+                nullable: true
+                description: Последний сохранённый результат выполнения скрипта
+                properties:
+                  raw:
+                    description: Сырые данные последнего выполнения
+                    oneOf:
+                      - type: array
+                        items: {}
+                      - type: object
+                  human: { type: string }
+                  executed_at: { type: string, format: date-time }
               created_at: { type: string, format: date-time }
               updated_at: { type: string, format: date-time }
 

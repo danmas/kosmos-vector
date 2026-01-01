@@ -13,8 +13,10 @@ flowchart TB
     end
     
     subgraph Cache [Поиск в кэше]
-        FTS[FTS поиск в agent_script]
-        Found{Найден?}
+        Exact[Точное совпадение question]
+        ExactFound{Найден?}
+        FTS[FTS поиск похожих вопросов]
+        FTSFound{Найден?}
     end
     
     subgraph Generate [Генерация скрипта]
@@ -31,10 +33,13 @@ flowchart TB
         Response["{ human, raw, scriptId, cached }"]
     end
     
-    Q --> FTS
-    FTS --> Found
-    Found -->|Да| Sandbox
-    Found -->|Нет| LLM
+    Q --> Exact
+    Exact --> ExactFound
+    ExactFound -->|Да| Sandbox
+    ExactFound -->|Нет| FTS
+    FTS --> FTSFound
+    FTSFound -->|Да| Sandbox
+    FTSFound -->|Нет| LLM
     LLM --> Save
     Save --> Sandbox
     Sandbox --> Humanize
@@ -46,7 +51,7 @@ flowchart TB
 | Файл | Назначение |
 |------|------------|
 | `routes/agentScript.js` | Роутер: CRUD для agent_scripts + natural-query эндпоинт |
-| `packages/core/DbService.js` | Методы: queryRaw, fuzzySearchScripts, saveAgentScript, incrementUsage |
+| `packages/core/DbService.js` | Методы: queryRaw, getAgentScriptByExactQuestion, fuzzySearchScripts, saveAgentScript, incrementUsage |
 | `packages/core/scriptSandbox.js` | Модуль: executeScript() + validateScript() |
 | `packages/core/naturalQueryPrompts.js` | Промпты: getScriptGenerationPrompt, getHumanizePrompt |
 
@@ -138,9 +143,27 @@ async function executeScript(scriptCode, contextCode, dbService, timeoutMs = 500
 }
 ```
 
-### 2. FTS поиск (DbService.fuzzySearchScripts)
+### 2. Двухэтапный поиск в кэше
 
-Использует GIN-индекс на `to_tsvector('russian', question)`:
+#### 2.1. Точное совпадение (getAgentScriptByExactQuestion)
+
+Сначала выполняется проверка точного совпадения вопроса для мгновенного кэширования:
+
+```sql
+SELECT id, question, script
+FROM public.agent_script
+WHERE context_code = $1 AND question = $2 AND is_valid = true
+LIMIT 1
+```
+
+**Преимущества:**
+- Мгновенный результат без вызова LLM
+- Использует индекс на `(context_code, question)`
+- Не требует FTS-поиска для точных совпадений
+
+#### 2.2. FTS поиск похожих вопросов (fuzzySearchScripts)
+
+Если точное совпадение не найдено, выполняется FTS-поиск для похожих вопросов. Использует GIN-индекс на `to_tsvector('russian', question)`:
 
 ```sql
 SELECT id, question, script, 
@@ -152,6 +175,13 @@ WHERE context_code = $2
 ORDER BY rank DESC, usage_count DESC
 LIMIT 1
 ```
+
+**Порог релевантности:** по умолчанию `threshold = 0.1`. Если ранг совпадения ниже порога, скрипт не используется.
+
+**Логика поиска:**
+1. Сначала проверяется точное совпадение — если найдено, скрипт используется без LLM
+2. Если точного совпадения нет, выполняется FTS-поиск похожих вопросов
+3. Если FTS ничего не нашёл или ранг слишком низкий, генерируется новый скрипт через LLM
 
 ### 3. Системный промпт (naturalQueryPrompts.js)
 
@@ -165,8 +195,9 @@ LIMIT 1
 
 | Метод | Описание |
 |-------|----------|
-| `queryRaw(sql, params)` | Выполнение SELECT-запросов |
-| `fuzzySearchScripts(contextCode, question, threshold)` | FTS-поиск похожих скриптов |
+| `queryRaw(sql, params)` | Выполнение SELECT и WITH (CTE) запросов |
+| `getAgentScriptByExactQuestion(contextCode, question)` | Поиск скрипта по точному совпадению вопроса (используется первым для быстрого кэширования) |
+| `fuzzySearchScripts(contextCode, question, threshold)` | FTS-поиск похожих скриптов (используется если точное совпадение не найдено) |
 | `saveAgentScript(contextCode, question, script, isValid)` | Сохранение скрипта |
 | `incrementUsage(scriptId)` | Инкремент счётчика использования |
 
