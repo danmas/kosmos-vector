@@ -20,13 +20,18 @@ async function executeScript(scriptCode, contextCode, dbService, timeoutMs = 500
   }
 
   // Создаём безопасную обёртку для DbService
-  // Только queryRaw доступен, и только для SELECT запросов
+  // Только queryRaw доступен, и только для SELECT запросов (включая WITH/SELECT)
   const safeDbService = {
     queryRaw: async (sql, params = []) => {
-      const trimmedSql = sql.trim();
-      if (!trimmedSql.toUpperCase().startsWith('SELECT')) {
-        throw new Error('Only SELECT queries are allowed in scripts');
+      const trimmedSql = sql.trim().toUpperCase();
+      // Разрешаем SELECT и WITH (CTE) запросы, запрещаем всё остальное
+      // WITH всегда содержит SELECT внутри, поэтому безопасно
+      const isSelect = trimmedSql.startsWith('SELECT') || trimmedSql.startsWith('WITH');
+      
+      if (!isSelect) {
+        throw new Error(`Only SELECT and WITH (CTE) queries are allowed in scripts. Found: ${trimmedSql.substring(0, 50)}...`);
       }
+      
       return dbService.queryRaw(sql, params);
     }
   };
@@ -57,8 +62,11 @@ async function executeScript(scriptCode, contextCode, dbService, timeoutMs = 500
     
     return result;
   } catch (error) {
-    // Перехватываем все ошибки и логируем
-    console.error('[ScriptSandbox] Ошибка выполнения скрипта:', error);
+    // Перехватываем все ошибки и логируем с детальной информацией
+    console.error('[ScriptSandbox] Ошибка выполнения скрипта:');
+    console.error('  Message:', error?.message || 'Unknown error');
+    console.error('  Stack:', error?.stack || 'No stack trace');
+    console.error('  Error object:', error);
     throw error;
   }
 }

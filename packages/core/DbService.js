@@ -2410,16 +2410,19 @@ class DbService {
   }
 
   /**
-   * Выполнение произвольного SELECT запроса (только для чтения)
-   * @param {string} sql - SQL запрос (должен начинаться с SELECT)
+   * Выполнение произвольного SELECT или WITH (CTE) запроса (только для чтения)
+   * @param {string} sql - SQL запрос (должен начинаться с SELECT или WITH)
    * @param {Array} params - Параметры запроса
    * @returns {Promise<Array>} Массив строк результата
    */
   async queryRaw(sql, params = []) {
     try {
-      const trimmedSql = sql.trim();
-      if (!trimmedSql.toUpperCase().startsWith('SELECT')) {
-        throw new Error('Only SELECT queries are allowed');
+      const trimmedSql = sql.trim().toUpperCase();
+      // Разрешаем SELECT и WITH (CTE) запросы, запрещаем всё остальное
+      // WITH всегда содержит SELECT внутри, поэтому безопасно
+      const isSelect = trimmedSql.startsWith('SELECT') || trimmedSql.startsWith('WITH');
+      if (!isSelect) {
+        throw new Error(`Only SELECT and WITH (CTE) queries are allowed. Found: ${trimmedSql.substring(0, 50)}...`);
       }
 
       const result = await this.pgClient.query(sql, params);

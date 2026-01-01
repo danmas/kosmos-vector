@@ -232,7 +232,10 @@ module.exports = (dbService) => {
           return res.status(500).json({
             success: false,
             error: `Generated script is invalid: ${validation.error}`,
-            generatedScript: scriptCode
+            human: `Сгенерированный скрипт невалиден: ${validation.error}. Попробуйте переформулировать вопрос или обратитесь к администратору.`,
+            script: scriptCode,
+            scriptId: null,
+            cached: false
           });
         }
 
@@ -282,7 +285,10 @@ module.exports = (dbService) => {
         }
       } catch (error) {
         executionError = error;
-        console.error(`[NaturalQuery] Ошибка выполнения скрипта #${scriptId}:`, error);
+        const errorMessage = error?.message || error?.toString() || 'Unknown error';
+        console.error(`[NaturalQuery] Ошибка выполнения скрипта #${scriptId}:`, errorMessage);
+        console.error(`[NaturalQuery] Stack trace:`, error?.stack || 'No stack trace');
+        console.error(`[NaturalQuery] Скрипт, который вызвал ошибку:`, scriptCode);
         
         // Помечаем скрипт как невалидный
         if (scriptId) {
@@ -293,10 +299,25 @@ module.exports = (dbService) => {
           `, [scriptId]);
         }
 
+        // Формируем человекочитаемое сообщение об ошибке
+        let humanError = `Произошла ошибка при выполнении скрипта: ${errorMessage}`;
+        
+        // Специальная обработка различных типов ошибок
+        if (errorMessage.includes('is not defined')) {
+          const variableName = errorMessage.match(/(\w+)\s+is not defined/)?.[1] || 'переменная';
+          humanError = `Ошибка в скрипте: переменная '${variableName}' не определена. Проверьте сгенерированный скрипт и убедитесь, что все переменные правильно объявлены.`;
+        } else if (errorMessage.includes('Only SELECT') || errorMessage.includes('Only SELECT and WITH')) {
+          humanError = `Ошибка безопасности: скрипт пытается выполнить запрос, который не разрешён. Разрешены только SELECT и WITH (CTE) запросы. Проверьте сгенерированный скрипт.`;
+        } else if (errorMessage.includes('timeout')) {
+          humanError = `Скрипт выполняется слишком долго (таймаут). Попробуйте упростить запрос или разбить его на части.`;
+        }
+
         return res.status(500).json({
           success: false,
-          error: `Script execution failed: ${error.message}`,
+          error: `Script execution failed: ${errorMessage}`,
+          human: humanError,
           scriptId: scriptId,
+          script: scriptCode || null,
           cached: cached
         });
       }

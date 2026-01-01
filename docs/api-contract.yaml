@@ -11,7 +11,7 @@ info:
       • Эндпоинт /api/v1/natural-query для интеллектуального анализа кодовой базы
       • CRUD для управления кэшем скриптов: /api/agent-scripts
       • FTS-поиск похожих вопросов для переиспользования скриптов
-      
+
       Версия 2.2.0:
       • Добавлена поддержка Logic Graph: сохранение и получение графов логики функций через /api/items/{id}/logic-graph
       • Интеграция с Logic Architect для визуализации потока управления функций
@@ -466,6 +466,36 @@ components:
         cached:
           type: boolean
           description: true если скрипт был найден в кэше через FTS, false если был сгенерирован заново
+          example: false
+
+    NaturalQueryErrorResponse:
+      type: object
+      required: [success, error]
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          type: string
+          description: Техническое описание ошибки (для разработчиков)
+          example: "Script execution failed: rows is not defined"
+        human:
+          type: string
+          description: Человекочитаемое описание ошибки на русском языке
+          example: "Произошла ошибка при выполнении скрипта: переменная 'rows' не определена. Проверьте сгенерированный скрипт и исправьте ошибку."
+        scriptId:
+          type: integer
+          nullable: true
+          description: ID скрипта, который пытались выполнить (null если скрипт не был сохранён)
+          example: 42
+        script:
+          type: string
+          nullable: true
+          description: Код сгенерированного скрипта (для отладки)
+          example: "async function execute(contextCode) { const rows = ... }"
+        cached:
+          type: boolean
+          description: true если скрипт был из кэша, false если был сгенерирован
           example: false
 
     AgentScript:
@@ -1511,7 +1541,7 @@ paths:
           description: Ошибка генерации или выполнения скрипта
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              schema: { $ref: '#/components/schemas/NaturalQueryErrorResponse' }
 
   /api/agent-scripts:
     get:
