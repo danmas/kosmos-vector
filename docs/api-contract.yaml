@@ -1775,6 +1775,51 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
 
+  /api/agent-scripts/{id}/execute:
+    post:
+      tags: [Natural Query]
+      summary: Выполнить существующий скрипт
+      description: |
+        Выполняет существующий скрипт по его ID. Скрипт загружается из кэша,
+        выполняется в sandbox, результат humanize'ится через LLM и сохраняется в last_result.
+        Также инкрементируется счётчик использования скрипта.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID скрипта для выполнения
+          schema:
+            type: integer
+            example: 42
+      responses:
+        '200':
+          description: Скрипт успешно выполнен
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NaturalQueryResponse' }
+        '404':
+          description: Скрипт не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '400':
+          description: Отсутствует context-code
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500':
+          description: Ошибка выполнения скрипта
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NaturalQueryErrorResponse' }
+
   # ────────────────────────────────────── PIPELINE
   /api/pipeline/start:
     post:

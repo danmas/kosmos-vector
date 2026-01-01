@@ -146,6 +146,157 @@ module.exports = (dbService) => {
     }
   });
 
+  // POST /api/agent-scripts/:id/execute — выполнить существующий скрипт
+  router.post('/agent-scripts/:id/execute', validateContextCode, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const contextCode = req.contextCode;
+      const scriptId = parseInt(id, 10);
+
+      if (isNaN(scriptId)) {
+        return res.status(400).json({ success: false, error: 'Invalid script ID' });
+      }
+
+      // Получаем скрипт из БД
+      const result = await dbService.pgClient.query(`
+        SELECT id, question, script, is_valid
+        FROM public.agent_script
+        WHERE id = $1 AND context_code = $2
+      `, [scriptId, contextCode]);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Script not found' });
+      }
+
+      const scriptData = result.rows[0];
+      const scriptCode = scriptData.script;
+      const question = scriptData.question;
+      // scriptId уже определён выше
+
+      console.log(`[API/AGENT-SCRIPTS/:ID/EXECUTE] Выполнение скрипта #${scriptId}: "${question.substring(0, 50)}..."`);
+
+      // Выполняем скрипт в sandbox
+      let rawData = null;
+      let executionError = null;
+
+      try {
+        rawData = await executeScript(scriptCode, contextCode, dbService);
+        
+        // Если скрипт вернул ошибку уточнения
+        if (rawData && typeof rawData === 'object' && rawData.error === 'clarify') {
+          return res.json({
+            success: true,
+            human: rawData.message || 'Требуется уточнение вопроса',
+            raw: [],
+            scriptId: scriptId,
+            cached: false,
+            clarify: true
+          });
+        }
+
+        // Помечаем скрипт как валидный при успешном выполнении
+        await dbService.pgClient.query(`
+          UPDATE public.agent_script
+          SET is_valid = true
+          WHERE id = $1
+        `, [scriptId]);
+      } catch (error) {
+        executionError = error;
+        const errorMessage = error?.message || error?.toString() || 'Unknown error';
+        console.error(`[API/AGENT-SCRIPTS/:ID/EXECUTE] Ошибка выполнения скрипта #${scriptId}:`, errorMessage);
+        console.error(`[API/AGENT-SCRIPTS/:ID/EXECUTE] Stack trace:`, error?.stack || 'No stack trace');
+        
+        // Помечаем скрипт как невалидный
+        await dbService.pgClient.query(`
+          UPDATE public.agent_script
+          SET is_valid = false
+          WHERE id = $1
+        `, [scriptId]);
+
+        // Формируем человекочитаемое сообщение об ошибке
+        let humanError = `Произошла ошибка при выполнении скрипта: ${errorMessage}`;
+        
+        if (errorMessage.includes('is not defined')) {
+          const variableName = errorMessage.match(/(\w+)\s+is not defined/)?.[1] || 'переменная';
+          humanError = `Ошибка в скрипте: переменная '${variableName}' не определена. Проверьте скрипт и убедитесь, что все переменные правильно объявлены.`;
+        } else if (errorMessage.includes('Only SELECT') || errorMessage.includes('Only SELECT and WITH')) {
+          humanError = `Ошибка безопасности: скрипт пытается выполнить запрос, который не разрешён. Разрешены только SELECT и WITH (CTE) запросы. Проверьте скрипт.`;
+        } else if (errorMessage.includes('timeout')) {
+          humanError = `Скрипт выполняется слишком долго (таймаут). Попробуйте упростить запрос или разбить его на части.`;
+        }
+
+        return res.status(500).json({
+          success: false,
+          error: `Script execution failed: ${errorMessage}`,
+          human: humanError,
+          scriptId: scriptId,
+          script: scriptCode,
+          cached: false
+        });
+      }
+
+      // Превращаем rawData в человекочитаемый текст через LLM
+      let humanText = '';
+      try {
+        const humanizePrompt = getHumanizePrompt(question, rawData);
+        const humanizeMessages = [
+          { role: 'system', content: 'Ты помощник для анализа кодовой базы. Превращай сырые данные в понятный текст на русском языке.' },
+          { role: 'user', content: humanizePrompt }
+        ];
+        
+        humanText = await callLLM(humanizeMessages);
+      } catch (error) {
+        console.error('[API/AGENT-SCRIPTS/:ID/EXECUTE] Ошибка humanize:', error);
+        humanText = `Найдено ${Array.isArray(rawData) ? rawData.length : 1} результат(ов). См. raw данные.`;
+      }
+
+      // Сохраняем результат выполнения в БД
+      let lastResult = null;
+      if (!executionError && rawData !== null) {
+        try {
+          const resultToSave = {
+            raw: rawData,
+            human: humanText,
+            executed_at: new Date().toISOString()
+          };
+          
+          await dbService.pgClient.query(`
+            UPDATE public.agent_script
+            SET last_result = $1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2
+          `, [JSON.stringify(resultToSave), scriptId]);
+          
+          lastResult = resultToSave;
+          console.log(`[API/AGENT-SCRIPTS/:ID/EXECUTE] Результат выполнения сохранён в last_result для скрипта #${scriptId}`);
+        } catch (saveError) {
+          console.error(`[API/AGENT-SCRIPTS/:ID/EXECUTE] Ошибка сохранения результата для скрипта #${scriptId}:`, saveError);
+        }
+      }
+
+      // Инкрементируем счётчик использования
+      await dbService.incrementUsage(scriptId);
+
+      // Возвращаем результат
+      res.json({
+        success: true,
+        human: humanText,
+        raw: rawData,
+        scriptId: scriptId,
+        cached: false,
+        last_result: lastResult
+      });
+
+    } catch (error) {
+      console.error('[API/AGENT-SCRIPTS/:ID/EXECUTE] Ошибка:', error);
+      if (!res.headersSent) {
+        res.status(500).json({
+          success: false,
+          error: error.message || 'Internal server error'
+        });
+      }
+    }
+  });
+
   // === POST /api/v1/natural-query — основной эндпоинт Natural Query Engine ===
   router.post('/v1/natural-query', async (req, res) => {
     try {
