@@ -1718,6 +1718,85 @@ class DbService {
     }
   }
 
+  /**
+   * Очистка векторной базы данных для конкретного context-code
+   * Удаляет все векторы, ai_item и файлы для указанного контекста
+   * @param {string} contextCode - Код контекста для очистки
+   * @returns {Promise<Object>} Статистика удаленных записей
+   */
+  async clearVectorDbByContextCode(contextCode) {
+    try {
+      if (!contextCode) {
+        throw new Error('contextCode is required');
+      }
+
+      console.log(`[DB] Начало очистки векторной БД для context-code: "${contextCode}"`);
+
+      // 1. Получаем ID файлов для этого context-code
+      const filesResult = await this.pgClient.query(
+        'SELECT id FROM public.files WHERE context_code = $1',
+        [contextCode]
+      );
+      const fileIds = filesResult.rows.map(row => row.id);
+      const filesCount = fileIds.length;
+
+      // 2. Удаляем ai_item для этого context-code
+      const aiItemsResult = await this.pgClient.query(
+        'DELETE FROM public.ai_item WHERE context_code = $1 RETURNING id',
+        [contextCode]
+      );
+      const aiItemsCount = aiItemsResult.rows.length;
+
+      // 3. Удаляем ai_comment для этого context-code
+      const aiCommentsResult = await this.pgClient.query(
+        'DELETE FROM public.ai_comment WHERE context_code = $1 RETURNING id',
+        [contextCode]
+      );
+      const aiCommentsCount = aiCommentsResult.rows.length;
+
+      // 4. Удаляем чанки для файлов этого context-code
+      // Используем JOIN для универсальности (работает с UUID и INTEGER)
+      let chunksCount = 0;
+      if (fileIds.length > 0) {
+        // Используем подзапрос с JOIN для удаления чанков, связанных с файлами нужного context-code
+        // Это работает независимо от типа file_id (UUID или INTEGER)
+        const chunksResult = await this.pgClient.query(
+          `DELETE FROM public.chunk_vector 
+           WHERE file_id IN (
+             SELECT id FROM public.files WHERE context_code = $1
+           ) 
+           RETURNING id`,
+          [contextCode]
+        );
+        chunksCount = chunksResult.rows.length;
+      }
+
+      // 5. Удаляем файлы для этого context-code (каскадно удалятся связанные чанки, но мы уже удалили их выше)
+      await this.pgClient.query(
+        'DELETE FROM public.files WHERE context_code = $1',
+        [contextCode]
+      );
+
+      console.log(`[DB] ✅ Очистка завершена для context-code "${contextCode}":`);
+      console.log(`[DB]    - Файлов: ${filesCount}`);
+      console.log(`[DB]    - Чанков: ${chunksCount}`);
+      console.log(`[DB]    - AI Items: ${aiItemsCount}`);
+      console.log(`[DB]    - AI Comments: ${aiCommentsCount}`);
+
+      return {
+        success: true,
+        contextCode,
+        deletedFiles: filesCount,
+        deletedChunks: chunksCount,
+        deletedAiItems: aiItemsCount,
+        deletedAiComments: aiCommentsCount
+      };
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка при очистке векторной БД для context-code "${contextCode}":`, error);
+      throw error;
+    }
+  }
+
 
   // API для kosmos-UI (aiitem-rag-architect)
 

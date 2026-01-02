@@ -200,7 +200,11 @@ module.exports = (dbService, logBuffer) => {
 
       const item = await dbService.getFullAiItemByFullName(decodedId, req.contextCode || null);
       if (!item) {
-        return res.status(404).json({ success: false, error: 'AiItem not found' });
+        return res.status(404).json({ 
+          success: false, 
+          error: 'AiItem not found',
+          message: `AiItem "${decodedId}" not found for context-code "${req.contextCode || 'null'}". Check if the item exists with a different context-code.`
+        });
       }
 
       res.json(item);
@@ -1525,6 +1529,37 @@ module.exports = (dbService, logBuffer) => {
       });
     } catch (error) {
       console.error('[API/LOGS/SESSIONS] Ошибка:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  // === DELETE /api/vector-db - Очистить векторную базу данных для context-code ===
+  router.delete('/vector-db', async (req, res) => {
+    try {
+      const contextCode = req.query['context-code'] || req.query.contextCode;
+      
+      if (!contextCode) {
+        return res.status(400).json({
+          success: false,
+          error: 'context-code parameter is required',
+          message: 'Please provide context-code as query parameter: ?context-code=TEST'
+        });
+      }
+
+      console.log(`[API/VECTOR-DB] Запрос на очистку векторной БД для context-code: "${contextCode}"`);
+      
+      const result = await dbService.clearVectorDbByContextCode(contextCode);
+      
+      res.json({
+        success: true,
+        message: `Vector database cleared successfully for context-code: ${contextCode}`,
+        ...result
+      });
+    } catch (error) {
+      console.error('[API/VECTOR-DB] Ошибка:', error);
       res.status(500).json({
         success: false,
         error: error.message
