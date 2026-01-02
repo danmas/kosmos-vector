@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const CONFIG_DIR = path.join(process.cwd(), 'data', 'kb-configs');
+const CONFIG_DIR = path.join(process.cwd(), 'kb-configs');
 
 // Создаём директорию при старте сервера, если её нет
 if (!fs.existsSync(CONFIG_DIR)) {

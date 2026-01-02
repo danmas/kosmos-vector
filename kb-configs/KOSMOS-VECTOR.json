@@ -1,0 +1,121 @@
+{
+  "rootPath": "C:\\ERV\\projects-ex\\kosmos-vector\\",
+  "includeMask": "**/*.{sql,*.js,ts,tsx,py,java,go}",
+  "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
+  "fileSelection": [
+    "./client/parse_and_upload_sql.js",
+    "./client/parse_sql_functions.js",
+    "./client/test-1.js",
+    "./packages/core/DbService.js",
+    "./packages/core/EmbeddingsFactory.js",
+    "./packages/core/index.js",
+    "./packages/core/kbConfigService.js",
+    "./packages/core/PostgresVectorStore.js",
+    "./packages/core/SimpleChatModel.js",
+    "./packages/core/SimpleEmbeddings.js",
+    "./packages/core/textSplitters.js",
+    "./packages/core/vectorOperations.js",
+    "./routes/loaders/sqlFunctionLoader.js",
+    "./routes/loaders/tableSchemaLoader.js",
+    "./routes/pipeline/step1Runner.js",
+    "./routes/pipeline/step2Runner.js",
+    "./routes/pipeline/stepLogger.js",
+    "./routes/ai.js",
+    "./routes/api.js",
+    "./routes/files.js",
+    "./routes/pipelineHistory.js",
+    "./routes/pipelineState.js",
+    "./tests/api_test.js",
+    "./tests/folder_cycle_test.js",
+    "./tests/full_cycle_test.js",
+    "./tests/md_cycle_test.js",
+    "./tests/run_all_tests.js",
+    "./tests/run_tests.js",
+    "./tests/test-epample-ShoppingCart.js",
+    "./tests/test-sql-order-system.js",
+    "./example-usage.js",
+    "./server.js"
+  ],
+  "lastUpdated": "2025-12-25T07:53:09.666Z",
+  "metadata": {
+    "projectName": "New Project",
+    "description": "RAG knowledge base",
+    "tags": [],
+    "custom_settings": ""
+  },
+  "pipelineConfig": {
+    "parsing": {},
+    "dependencies": {},
+    "enrichment": {},
+    "vectorization": {
+      "embeddingModel": "Google Gemini (text-embedding-004)",
+      "chunkStrategy": "Semantic (Ailtem / Function-based)"
+    },
+    "indexing": {}
+  },
+  "pipelineDefinitions": [
+    {
+      "id": 1,
+      "name": "parsing",
+      "label": "Polyglot Parsing (L0)",
+      "description": "Parsing AST for .py, .ts, .go, .java files...",
+      "configurationSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "id": 2,
+      "name": "dependencies",
+      "label": "Dependencies Extraction (L1)",
+      "description": "Resolving imports, class hierarchy, and calls...",
+      "configurationSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "id": 3,
+      "name": "enrichment",
+      "label": "Enrichment (L2)",
+      "description": "Generating natural language descriptions via LLM...",
+      "configurationSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "id": 4,
+      "name": "vectorization",
+      "label": "Vectorization",
+      "description": "Creating embeddings (text-embedding-ada-002 or Gecko)...",
+      "configurationSchema": {
+        "type": "object",
+        "properties": {
+          "embeddingModel": {
+            "type": "string",
+            "description": "Embedding model to use",
+            "default": "Google Gemini (text-embedding-004)",
+            "enum": ["Google Gemini (text-embedding-004)", "text-embedding-ada-002", "Gecko"]
+          },
+          "chunkStrategy": {
+            "type": "string",
+            "description": "Strategy for chunking code",
+            "default": "Semantic (Ailtem / Function-based)",
+            "enum": ["Semantic (Ailtem / Function-based)"]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "name": "indexing",
+      "label": "Indexing",
+      "description": "Building FAISS/ChromaDB index...",
+      "configurationSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}

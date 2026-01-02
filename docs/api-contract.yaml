@@ -710,6 +710,42 @@ components:
           nullable: true
           description: Детальный отчет о выполнении шага в произвольном формате JSON (структура зависит от конкретного шага, доступен после завершения)
 
+    PipelineStepDefinition:
+      type: object
+      required: [id, name, label, description]
+      properties:
+        id:
+          type: integer
+          description: ID шага (1-5)
+        name:
+          type: string
+          description: Системное имя шага
+          enum: [parsing, dependencies, enrichment, vectorization, indexing]
+        label:
+          type: string
+          description: Человекочитаемое название
+        description:
+          type: string
+          description: Подробное описание того, что делает этот шаг
+        configurationSchema:
+          type: object
+          description: Спецификация доступных настроек для этого шага (для динамического построения UI)
+
+    PipelineContextDefinition:
+      type: object
+      required: [steps]
+      properties:
+        steps:
+          type: array
+          items: { $ref: '#/components/schemas/PipelineStepDefinition' }
+
+    PipelineContextConfig:
+      type: object
+      description: Конфигурация шагов pipeline для конкретного контекста
+      additionalProperties:
+        type: object
+        description: Объект настроек для конкретного шага (например, { "embeddingModel": "..." })
+
     PipelineStepsStatusResponse:
       type: object
       required: [success, steps]
@@ -2052,6 +2088,69 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/pipeline/context-definition:
+    get:
+      tags: [Pipeline]
+      summary: Получить определения шагов для контекста
+      description: |
+        Возвращает список доступных шагов, их описания и схемы настроек для текущего context-code.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      responses:
+        '200':
+          description: Определения шагов
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PipelineContextDefinition' }
+
+  /api/pipeline/context-config:
+    get:
+      tags: [Pipeline]
+      summary: Получить текущую конфигурацию шагов для контекста
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      responses:
+        '200':
+          description: Конфигурация шагов
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PipelineContextConfig' }
+
+    post:
+      tags: [Pipeline]
+      summary: Обновить конфигурацию шагов для контекста
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PipelineContextConfig' }
+      responses:
+        '200':
+          description: Конфигурация обновлена
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PipelineContextConfig' }
 
   # ────────────────────────────────────── STREAMING
   /api/logs/stream:

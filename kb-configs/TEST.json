@@ -1,0 +1,94 @@
+{
+  "rootPath": "C:\\ERV\\projects-ex\\aian-vector\\client",
+  "includeMask": "**/**.sql",
+  "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
+  "fileSelection": [],
+  "lastUpdated": "2026-01-02T10:10:10.576Z",
+  "metadata": {
+    "projectName": "New Project",
+    "description": "RAG knowledge base",
+    "tags": [],
+    "custom_settings": "functions_loading:\n  enabled: false\ntable_loading:\n  enabled: true\n  schema: carl_data\n  include_patterns:\n    - \"%excel%\"\n  exclude_patterns:\n    - \"%\"\n    - \"\\\\_%\"\n  exclude_names:\n    - \"a\"\n    - \"auction_b20210519\"\n    - \"test_table\""
+  },
+  "pipelineConfig": {
+    "parsing": {},
+    "dependencies": {},
+    "enrichment": {},
+    "vectorization": {
+      "embeddingModel": "Google Gemini (text-embedding-004)",
+      "chunkStrategy": "Semantic (Ailtem / Function-based)"
+    },
+    "indexing": {}
+  },
+  "pipelineDefinitions": [
+    {
+      "id": 1,
+      "name": "parsing",
+      "label": "Polyglot Parsing (L0)",
+      "description": "Parsing AST for .py, .ts, .go, .java files...",
+      "configurationSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "id": 2,
+      "name": "dependencies",
+      "label": "Dependencies Extraction (L1)",
+      "description": "Resolving imports, class hierarchy, and calls...",
+      "configurationSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "id": 3,
+      "name": "enrichment",
+      "label": "Enrichment (L2)",
+      "description": "Generating natural language descriptions via LLM...",
+      "configurationSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "id": 4,
+      "name": "vectorization",
+      "label": "Vectorization",
+      "description": "Creating embeddings (text-embedding-ada-002 or Gecko)...",
+      "configurationSchema": {
+        "type": "object",
+        "properties": {
+          "embeddingModel": {
+            "type": "string",
+            "description": "Embedding model to use",
+            "default": "Google Gemini (text-embedding-004)",
+            "enum": [
+              "Google Gemini (text-embedding-004)",
+              "text-embedding-ada-002",
+              "Gecko"
+            ]
+          },
+          "chunkStrategy": {
+            "type": "string",
+            "description": "Strategy for chunking code",
+            "default": "Semantic (Ailtem / Function-based)",
+            "enum": [
+              "Semantic (Ailtem / Function-based)"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "name": "indexing",
+      "label": "Indexing",
+      "description": "Building FAISS/ChromaDB index...",
+      "configurationSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}

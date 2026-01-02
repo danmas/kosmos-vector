@@ -8,6 +8,7 @@ const { Minimatch } = require('minimatch');
 const pipelineStateManager = require('./pipelineState');
 const pipelineHistoryManager = require('./pipelineHistory');
 const kbConfigService = require('../packages/core/kbConfigService');
+const pipelineConfigService = require('../packages/core/pipelineConfigService');
 
 // Импортируем serverLogs, logsSseConnections и функции для работы с сессиями
 const { serverLogs, logsSseConnections, getLogsBySession, saveSessionLogs } = require('../server');
@@ -1080,6 +1081,65 @@ module.exports = (dbService, logBuffer) => {
       res.status(500).json({
         success: false,
         error: error.message
+      });
+    }
+  });
+
+  // === Pipeline Context Definition and Configuration ===
+  // GET /pipeline/context-definition — получить определения шагов для контекста
+  router.get('/pipeline/context-definition', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const steps = await pipelineConfigService.getPipelineDefinitions(contextCode);
+      
+      res.json({
+        steps: steps
+      });
+    } catch (error) {
+      console.error('[API/PIPELINE/CONTEXT-DEFINITION] Ошибка:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to retrieve pipeline context definition'
+      });
+    }
+  });
+
+  // GET /pipeline/context-config — получить текущую конфигурацию шагов для контекста
+  router.get('/pipeline/context-config', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const config = await pipelineConfigService.getPipelineConfig(contextCode);
+      
+      res.json(config);
+    } catch (error) {
+      console.error('[API/PIPELINE/CONTEXT-CONFIG/GET] Ошибка:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to retrieve pipeline context config'
+      });
+    }
+  });
+
+  // POST /pipeline/context-config — обновить конфигурацию шагов для контекста
+  router.post('/pipeline/context-config', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      
+      if (!req.body || typeof req.body !== 'object') {
+        return res.status(400).json({
+          success: false,
+          error: 'Request body must be a JSON object'
+        });
+      }
+
+      const savedConfig = await pipelineConfigService.savePipelineConfig(contextCode, req.body);
+      
+      res.json(savedConfig);
+    } catch (error) {
+      console.error('[API/PIPELINE/CONTEXT-CONFIG/POST] Ошибка:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to save pipeline context config'
       });
     }
   });

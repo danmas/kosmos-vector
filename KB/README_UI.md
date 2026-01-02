@@ -95,7 +95,7 @@ UI вызывает POST `/vectorize/:filename` с телом `{ params, context
 
 ## Knowledge Base Configuration
 
-Система использует конфигурацию Knowledge Base для управления выбором файлов проекта. Конфигурация хранится в `./data/kb-configs/{context-code}.json` и содержит:
+Система использует конфигурацию Knowledge Base для управления выбором файлов проекта. Конфигурация хранится в `./kb-configs/{context-code}.json` и содержит:
 
 - `rootPath` — абсолютный путь к проекту на сервере
 - `includeMask` — glob-паттерн для фильтрации файлов (например, `**/*.sql`)

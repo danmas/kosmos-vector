@@ -23,7 +23,7 @@
 
 ## Knowledge Base Configuration
 
-Конфигурация Knowledge Base хранится в `./data/kb-configs/{context-code}.json` и управляется через `packages/core/kbConfigService.js`.
+Конфигурация Knowledge Base хранится в `./kb-configs/{context-code}.json` и управляется через `packages/core/kbConfigService.js`.
 
 **Структура конфигурации:**
 - `rootPath` — абсолютный путь к проекту
