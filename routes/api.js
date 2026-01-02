@@ -102,6 +102,24 @@ module.exports = (dbService, logBuffer) => {
     }
   });
 
+  // === Маршрут для получения списка context codes (БЕЗ валидации context-code) ===
+  router.get('/contexts', async (req, res) => {
+    try {
+      const contexts = await kbConfigService.getAllContextCodes();
+      
+      res.json({
+        success: true,
+        contexts: contexts
+      });
+    } catch (error) {
+      console.error('[API/CONTEXTS] Ошибка:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to get context codes list'
+      });
+    }
+  });
+
   // Middleware для валидации обязательного параметра context-code
   const validateContextCode = (req, res, next) => {
     const contextCode = req.query['context-code'] || req.query.contextCode;
@@ -1258,6 +1276,11 @@ module.exports = (dbService, logBuffer) => {
         }
 
         if (stats.isDirectory()) {
+          // Проверяем, игнорируется ли директория
+          if (isIgnored(currentRelPath)) {
+            return null; // полностью игнорируем директорию
+          }
+
           let entries;
           try {
             entries = fs.readdirSync(currentAbsPath);

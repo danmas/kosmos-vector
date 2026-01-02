@@ -12,11 +12,27 @@ const { Minimatch } = require('minimatch');
  */
 function createMatchers(includeMask, ignorePatterns) {
   const includeMatcher = new Minimatch(includeMask || '**/*', { dot: true });
-  const ignoreMatchers = (ignorePatterns || '')
+  
+  // Parse ignore patterns and expand directory patterns
+  // For pattern like **/data/** also add **/data to match the directory itself
+  const rawPatterns = (ignorePatterns || '')
     .split(',')
     .map(p => p.trim())
-    .filter(p => p)
-    .map(p => new Minimatch(p, { dot: true }));
+    .filter(p => p);
+  
+  const expandedPatterns = [];
+  for (const pattern of rawPatterns) {
+    expandedPatterns.push(pattern);
+    // If pattern ends with /** (directory contents), also add pattern for directory itself
+    if (pattern.endsWith('/**')) {
+      const dirPattern = pattern.slice(0, -3); // Remove /**
+      if (dirPattern && !expandedPatterns.includes(dirPattern)) {
+        expandedPatterns.push(dirPattern);
+      }
+    }
+  }
+  
+  const ignoreMatchers = expandedPatterns.map(p => new Minimatch(p, { dot: true }));
   
   return { includeMatcher, ignoreMatchers };
 }

@@ -119,9 +119,32 @@ async function saveConfig(contextCode, updates) {
   }
 }
 
+/**
+ * Получает список всех доступных context codes из директории конфигураций.
+ * @returns {Promise<string[]>} Массив context codes
+ */
+async function getAllContextCodes() {
+  try {
+    if (!fs.existsSync(CONFIG_DIR)) {
+      return [];
+    }
+    
+    const files = fs.readdirSync(CONFIG_DIR);
+    const contextCodes = files
+      .filter(file => file.endsWith('.json'))
+      .map(file => file.replace('.json', ''));
+    
+    return contextCodes;
+  } catch (error) {
+    console.error('[KBConfig] Ошибка получения списка context codes:', error);
+    throw new Error('Failed to get context codes list');
+  }
+}
+
 module.exports = {
   getConfig,
   saveConfig,
   getConfigFilePath,
+  getAllContextCodes,
   CONFIG_DIR
 };
