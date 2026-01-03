@@ -8,6 +8,7 @@ const { Minimatch } = require('minimatch');
 const kbConfigService = require('../../packages/core/kbConfigService');
 const { createMatchers, normalizeRelativePath, isIgnored: checkIgnored, isIncluded: checkIncluded } = require('../../packages/core/fileMatchUtils');
 const { loadSqlFunctionsFromFile } = require('../loaders/sqlFunctionLoader');
+const { loadJsFunctionsFromFile } = require('../loaders/jsFunctionLoader');
 const { getFilteredTableNames, loadTableSchema } = require('../loaders/tableSchemaLoader');
 const { createStepLogger } = require('./stepLogger');
 
@@ -114,6 +115,40 @@ function parseFunctionsLoadingConfig(customSettingsYaml) {
 }
 
 /**
+ * Парсинг настроек загрузки JS файлов из YAML строки custom_settings
+ * @param {string|null} customSettingsYaml - YAML строка из metadata.custom_settings
+ * @returns {object} Объект с настройками { enabled } (по умолчанию enabled: false для обратной совместимости)
+ */
+function parseJsLoadingConfig(customSettingsYaml) {
+  if (!customSettingsYaml || typeof customSettingsYaml !== 'string' || customSettingsYaml.trim() === '') {
+    return { enabled: false }; // По умолчанию отключено (обратная совместимость)
+  }
+
+  try {
+    const parsed = yaml.load(customSettingsYaml);
+    
+    if (!parsed || typeof parsed !== 'object') {
+      return { enabled: false };
+    }
+
+    const jsLoading = parsed.js_loading;
+    
+    if (!jsLoading || typeof jsLoading !== 'object') {
+      return { enabled: false };
+    }
+
+    if (typeof jsLoading.enabled !== 'boolean') {
+      return { enabled: false };
+    }
+
+    return { enabled: jsLoading.enabled };
+  } catch (error) {
+    console.error(`[Step1] Ошибка парсинга YAML из custom_settings для js_loading: ${error.message}`);
+    return { enabled: false };
+  }
+}
+
+/**
  * Запуск шага 1 pipeline: загрузка SQL-функций и схем таблиц
  * Теперь полностью использует KnowledgeBaseConfig (rootPath, masks, fileSelection)
  *
@@ -152,9 +187,10 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
 
   const tasks = [];
 
-  // Получаем custom_settings для проверки функций и таблиц
+  // Получаем custom_settings для проверки функций, JS и таблиц
   const customSettings = kbConfig.metadata?.custom_settings || null;
   const functionsLoadingConfig = parseFunctionsLoadingConfig(customSettings);
+  const jsLoadingConfig = parseJsLoadingConfig(customSettings);
 
   // Подготовка матчеров (используем общие функции для синхронизации с /api/project/tree)
   const { includeMatcher, ignoreMatchers } = createMatchers(includeMask, ignorePatterns);
@@ -244,6 +280,68 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     logger.log('Загрузка функций отключена в конфигурации (functions_loading.enabled = false)');
   }
 
+  // === Сканирование JS-файлов (если включено) ===
+  let jsFilePaths = [];
+  
+  if (jsLoadingConfig.enabled) {
+    logger.log('Сканирование JS файлов включено');
+    
+    // === Режим 1: Точный выбор файлов ===
+    if (fileSelection.length > 0) {
+      for (const relPath of fileSelection) {
+        const cleanRel = relPath.startsWith('./') ? relPath.slice(2) : relPath;
+        const absPath = path.join(rootPath, cleanRel);
+
+        if (!fs.existsSync(absPath)) continue;
+        if (!absPath.toLowerCase().endsWith('.js')) continue;
+        if (isIgnored(relPath)) continue;
+
+        jsFilePaths.push(absPath);
+      }
+    } 
+    // === Режим 2: Glob-маски ===
+    else {
+      function scanDirectoryForJs(currentDir, baseRelPath = '.') {
+        if (!fs.existsSync(currentDir)) return;
+
+        const entries = fs.readdirSync(currentDir);
+        for (const entry of entries) {
+          const absPath = path.join(currentDir, entry);
+          const relPath = path.join(baseRelPath, entry).replace(/\\/g, '/');
+          const fullRelPath = normalizeRelativePath(relPath);
+
+          try {
+            const stats = fs.statSync(absPath);
+
+            if (stats.isDirectory()) {
+              if (!isIgnored(fullRelPath)) {
+                scanDirectoryForJs(absPath, relPath);
+              }
+            } else if (stats.isFile() && absPath.toLowerCase().endsWith('.js')) {
+              if (isIgnored(fullRelPath)) continue;
+              jsFilePaths.push(absPath);
+            }
+          } catch (err) {
+            logger.warn(`Ошибка доступа к ${absPath}: ${err.message}`);
+          }
+        }
+      }
+
+      scanDirectoryForJs(rootPath, '.');
+    }
+
+    logger.log(`Найдено ${jsFilePaths.length} JS-файлов для обработки`);
+    for (const filePath of jsFilePaths) {
+      tasks.push({
+        type: 'js',
+        path: filePath,
+        name: path.basename(filePath)
+      });
+    }
+  } else {
+    logger.log('Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)');
+  }
+
   // === Обработка таблиц из custom_settings (YAML) ===
   let allTables = [];
   
@@ -296,7 +394,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
   }
 
   logger.log(`=====================`);
-  logger.log(`Всего задач: ${tasks.length} (${sqlFilePaths.length} SQL-файлов + ${allTables.length} таблиц)`);
+  logger.log(`Всего задач: ${tasks.length} (${sqlFilePaths.length} SQL + ${jsFilePaths.length} JS + ${allTables.length} таблиц)`);
   logger.log(`=====================`);
 
   // === Инициализация отчета ===
@@ -312,6 +410,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     },
     details: {
       sqlFiles: [],
+      jsFiles: [],
       tables: [],
       errors: []
     }
@@ -348,6 +447,38 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
             if (func.errors?.length > 0) {
               report.summary.errors += func.errors.length;
               func.errors.forEach(err => report.details.errors.push({ type: 'sql', name: `${fileReport.filename}:${func.full_name}`, message: err }));
+            }
+          });
+        } else {
+          report.summary.skipped++;
+        }
+      } else if (task.type === 'js') {
+        const fileReport = await loadJsFunctionsFromFile(task.path, contextCode, dbService, pipelineState);
+
+        if (fileReport) {
+          report.details.jsFiles.push(fileReport);
+
+          if (fileReport.fileId) {
+            report.summary.totalFiles++;
+            report.summary.totalFunctions += fileReport.functionsProcessed || 0;
+
+            fileReport.functions.forEach(func => {
+              if (func.aiItemId) report.summary.totalAiItems++;
+              if (func.chunkL0Id || func.chunkL1Id) report.summary.totalChunks++;
+            });
+          } else {
+            report.summary.skipped++;
+          }
+
+          // Ошибки из файла и функций
+          if (fileReport.errors?.length > 0) {
+            report.summary.errors += fileReport.errors.length;
+            fileReport.errors.forEach(err => report.details.errors.push({ type: 'js', name: fileReport.filename, message: err }));
+          }
+          fileReport.functions.forEach(func => {
+            if (func.errors?.length > 0) {
+              report.summary.errors += func.errors.length;
+              func.errors.forEach(err => report.details.errors.push({ type: 'js', name: `${fileReport.filename}:${func.full_name}`, message: err }));
             }
           });
         } else {

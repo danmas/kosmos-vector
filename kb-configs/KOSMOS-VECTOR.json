@@ -1,16 +1,14 @@
 {
   "rootPath": "C:\\ERV\\projects-ex\\kosmos-vector\\",
-  "includeMask": "**/*.{sql,*.js,*.ts,tsx,py,java,go}",
+  "includeMask": "**/*.{sql,*.js",
   "ignorePatterns": "**/.cursor/**,**/.vscode/**,**/data/**,**/tmp/**,**/tests/**,**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
-  "fileSelection": [
-    "./server.js"
-  ],
-  "lastUpdated": "2026-01-02T11:24:30.136Z",
+  "fileSelection": [],
+  "lastUpdated": "2026-01-03T07:32:14.011Z",
   "metadata": {
     "projectName": "New Project",
     "description": "RAG knowledge base",
     "tags": [],
-    "custom_settings": ""
+    "custom_settings": "js_loading:\n  enabled: true\n\nfunctions_loading:\n  enabled: false\n\ntable_loading:\n  enabled: false\n  schema: public\n  include_patterns:\n    - \"%\"\n  exclude_patterns:\n    - \"pg_%\""
   },
   "pipelineConfig": {
     "parsing": {},
