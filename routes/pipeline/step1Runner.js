@@ -9,6 +9,7 @@ const kbConfigService = require('../../packages/core/kbConfigService');
 const { createMatchers, normalizeRelativePath, isIgnored: checkIgnored, isIncluded: checkIncluded } = require('../../packages/core/fileMatchUtils');
 const { loadSqlFunctionsFromFile } = require('../loaders/sqlFunctionLoader');
 const { loadJsFunctionsFromFile } = require('../loaders/jsFunctionLoader');
+const { loadTsFunctionsFromFile } = require('../loaders/tsFunctionLoader');
 const { getFilteredTableNames, loadTableSchema } = require('../loaders/tableSchemaLoader');
 const { createStepLogger } = require('./stepLogger');
 
@@ -149,6 +150,40 @@ function parseJsLoadingConfig(customSettingsYaml) {
 }
 
 /**
+ * Парсинг настроек загрузки TS файлов из YAML строки custom_settings
+ * @param {string|null} customSettingsYaml - YAML строка из metadata.custom_settings
+ * @returns {object} Объект с настройками { enabled } (по умолчанию enabled: false для обратной совместимости)
+ */
+function parseTsLoadingConfig(customSettingsYaml) {
+  if (!customSettingsYaml || typeof customSettingsYaml !== 'string' || customSettingsYaml.trim() === '') {
+    return { enabled: false }; // По умолчанию отключено (обратная совместимость)
+  }
+
+  try {
+    const parsed = yaml.load(customSettingsYaml);
+    
+    if (!parsed || typeof parsed !== 'object') {
+      return { enabled: false };
+    }
+
+    const tsLoading = parsed.ts_loading;
+    
+    if (!tsLoading || typeof tsLoading !== 'object') {
+      return { enabled: false };
+    }
+
+    if (typeof tsLoading.enabled !== 'boolean') {
+      return { enabled: false };
+    }
+
+    return { enabled: tsLoading.enabled };
+  } catch (error) {
+    console.error(`[Step1] Ошибка парсинга YAML из custom_settings для ts_loading: ${error.message}`);
+    return { enabled: false };
+  }
+}
+
+/**
  * Запуск шага 1 pipeline: загрузка SQL-функций и схем таблиц
  * Теперь полностью использует KnowledgeBaseConfig (rootPath, masks, fileSelection)
  *
@@ -187,10 +222,11 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
 
   const tasks = [];
 
-  // Получаем custom_settings для проверки функций, JS и таблиц
+  // Получаем custom_settings для проверки функций, JS, TS и таблиц
   const customSettings = kbConfig.metadata?.custom_settings || null;
   const functionsLoadingConfig = parseFunctionsLoadingConfig(customSettings);
   const jsLoadingConfig = parseJsLoadingConfig(customSettings);
+  const tsLoadingConfig = parseTsLoadingConfig(customSettings);
 
   // Подготовка матчеров (используем общие функции для синхронизации с /api/project/tree)
   const { includeMatcher, ignoreMatchers } = createMatchers(includeMask, ignorePatterns);
@@ -342,6 +378,73 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     logger.log('Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)');
   }
 
+  // === Сканирование TS-файлов (если включено) ===
+  let tsFilePaths = [];
+  
+  if (tsLoadingConfig.enabled) {
+    logger.log('Сканирование TS файлов включено');
+    
+    // === Режим 1: Точный выбор файлов ===
+    if (fileSelection.length > 0) {
+      for (const relPath of fileSelection) {
+        const cleanRel = relPath.startsWith('./') ? relPath.slice(2) : relPath;
+        const absPath = path.join(rootPath, cleanRel);
+
+        if (!fs.existsSync(absPath)) continue;
+        const lower = absPath.toLowerCase();
+        if (!lower.endsWith('.ts') && !lower.endsWith('.tsx')) continue;
+        if (lower.endsWith('.d.ts')) continue; // Пропускаем declaration файлы
+        if (isIgnored(relPath)) continue;
+
+        tsFilePaths.push(absPath);
+      }
+    } 
+    // === Режим 2: Glob-маски ===
+    else {
+      function scanDirectoryForTs(currentDir, baseRelPath = '.') {
+        if (!fs.existsSync(currentDir)) return;
+
+        const entries = fs.readdirSync(currentDir);
+        for (const entry of entries) {
+          const absPath = path.join(currentDir, entry);
+          const relPath = path.join(baseRelPath, entry).replace(/\\/g, '/');
+          const fullRelPath = normalizeRelativePath(relPath);
+
+          try {
+            const stats = fs.statSync(absPath);
+
+            if (stats.isDirectory()) {
+              if (!isIgnored(fullRelPath)) {
+                scanDirectoryForTs(absPath, relPath);
+              }
+            } else if (stats.isFile()) {
+              const lower = absPath.toLowerCase();
+              if ((lower.endsWith('.ts') || lower.endsWith('.tsx')) && !lower.endsWith('.d.ts')) {
+                if (isIgnored(fullRelPath)) continue;
+                tsFilePaths.push(absPath);
+              }
+            }
+          } catch (err) {
+            logger.warn(`Ошибка доступа к ${absPath}: ${err.message}`);
+          }
+        }
+      }
+
+      scanDirectoryForTs(rootPath, '.');
+    }
+
+    logger.log(`Найдено ${tsFilePaths.length} TS-файлов для обработки`);
+    for (const filePath of tsFilePaths) {
+      tasks.push({
+        type: 'ts',
+        path: filePath,
+        name: path.basename(filePath)
+      });
+    }
+  } else {
+    logger.log('Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)');
+  }
+
   // === Обработка таблиц из custom_settings (YAML) ===
   let allTables = [];
   
@@ -394,7 +497,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
   }
 
   logger.log(`=====================`);
-  logger.log(`Всего задач: ${tasks.length} (${sqlFilePaths.length} SQL + ${jsFilePaths.length} JS + ${allTables.length} таблиц)`);
+  logger.log(`Всего задач: ${tasks.length} (${sqlFilePaths.length} SQL + ${jsFilePaths.length} JS + ${tsFilePaths.length} TS + ${allTables.length} таблиц)`);
   logger.log(`=====================`);
 
   // === Инициализация отчета ===
@@ -411,6 +514,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     details: {
       sqlFiles: [],
       jsFiles: [],
+      tsFiles: [],
       tables: [],
       errors: []
     }
@@ -479,6 +583,38 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
             if (func.errors?.length > 0) {
               report.summary.errors += func.errors.length;
               func.errors.forEach(err => report.details.errors.push({ type: 'js', name: `${fileReport.filename}:${func.full_name}`, message: err }));
+            }
+          });
+        } else {
+          report.summary.skipped++;
+        }
+      } else if (task.type === 'ts') {
+        const fileReport = await loadTsFunctionsFromFile(task.path, contextCode, dbService, pipelineState);
+
+        if (fileReport) {
+          report.details.tsFiles.push(fileReport);
+
+          if (fileReport.fileId) {
+            report.summary.totalFiles++;
+            report.summary.totalFunctions += fileReport.functionsProcessed || 0;
+
+            fileReport.functions.forEach(func => {
+              if (func.aiItemId) report.summary.totalAiItems++;
+              if (func.chunkL0Id || func.chunkL1Id) report.summary.totalChunks++;
+            });
+          } else {
+            report.summary.skipped++;
+          }
+
+          // Ошибки из файла и функций
+          if (fileReport.errors?.length > 0) {
+            report.summary.errors += fileReport.errors.length;
+            fileReport.errors.forEach(err => report.details.errors.push({ type: 'ts', name: fileReport.filename, message: err }));
+          }
+          fileReport.functions.forEach(func => {
+            if (func.errors?.length > 0) {
+              report.summary.errors += func.errors.length;
+              func.errors.forEach(err => report.details.errors.push({ type: 'ts', name: `${fileReport.filename}:${func.full_name}`, message: err }));
             }
           });
         } else {

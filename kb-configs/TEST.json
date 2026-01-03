@@ -1,14 +1,14 @@
 {
   "rootPath": "C:\\ERV\\projects-ex\\aian-vector\\client",
-  "includeMask": "**/**.sql,**/*.js",
+  "includeMask": "**/*.ts",
   "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
   "fileSelection": [],
-  "lastUpdated": "2026-01-02T15:33:41.590Z",
+  "lastUpdated": "2026-01-03T08:00:39.419Z",
   "metadata": {
     "projectName": "New Project",
     "description": "RAG knowledge base",
     "tags": [],
-    "custom_settings": "functions_loading:\n  enabled: false\ntable_loading:\n  enabled: true\n  schema: carl_data\n  include_patterns:\n    - \"%excel%\"\n  exclude_patterns:\n    - \"%\"\n    - \"\\\\_%\"\n  exclude_names:\n    - \"a\"\n    - \"auction_b20210519\"\n    - \"test_table\""
+    "custom_settings": "functions_loading:\n  enabled: false\nts_loading:\n  enabled: true\njs_loading:\n  enabled: false\ntable_loading:\n  enabled: false\n  schema: carl_data\n  include_patterns:\n    - \"%excel%\"\n  exclude_patterns:\n    - \"%\"\n    - \"\\\\_%\"\n  exclude_names:\n    - \"a\"\n    - \"auction_b20210519\"\n    - \"test_table\""
   },
   "pipelineConfig": {
     "parsing": {},
