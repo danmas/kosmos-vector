@@ -2,9 +2,16 @@ openapi: 3.0.3
 info:
   title: AiItem RAG Architect API
   info:
-    version: 2.3.1
+    version: 2.4.0
     description: |
       RESTful API для системы RAG-анализа кодовой базы.
+
+      Версия 2.4.0:
+      • Добавлен Prompts API: полный CRUD для управления промптами LLM
+      • Гранулярный доступ к промптам: /api/prompts/l1l2/{fileType}/{objectType}/{level}
+      • Импорт/экспорт промптов в JSON/YAML
+      • Валидация структуры промптов без сохранения
+      • Промпты хранятся глобально в prompts.json (файловая система)
 
       Версия 2.3.0:
       • Добавлен Natural Query Engine: запросы на естественном языке с автогенерацией скриптов
@@ -48,6 +55,11 @@ tags:
     description: Server-Sent Events (логи, прогресс)
   - name: System
     description: Health, логи, контракт
+  - name: Prompts
+    description: |
+      Управление промптами для LLM.
+      Промпты хранятся глобально в файле prompts.json и применяются ко всем контекстам.
+      Изменения сохраняются в файловую систему и персистентны между перезапусками.
 
 components:
   schemas:
@@ -635,6 +647,122 @@ components:
           description: Новое значение флага валидности (опционально)
           example: true
       minProperties: 1
+
+    # ────────────────────────────────────── Prompts
+    PromptTemplate:
+      type: object
+      required: [prompt, inputText]
+      properties:
+        prompt:
+          type: string
+          description: Основной промпт (инструкция для LLM)
+          example: "Проанализируй эту SQL функцию и опиши её зависимости."
+        inputText:
+          type: string
+          description: Дополнительный текст/вопрос для уточнения контекста
+          example: "Какие другие функции или таблицы использует этот код?"
+
+    L1L2TemplateLevel:
+      type: object
+      properties:
+        l1:
+          $ref: '#/components/schemas/PromptTemplate'
+          description: Промпт для уровня 1 (зависимости/связи)
+        l2:
+          $ref: '#/components/schemas/PromptTemplate'
+          description: Промпт для уровня 2 (бизнес-логика)
+
+    L1L2ObjectTemplates:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/L1L2TemplateLevel'
+      description: Промпты для типов объектов (function, table, class, section и т.д.)
+
+    L1L2Templates:
+      type: object
+      properties:
+        sql:
+          $ref: '#/components/schemas/L1L2ObjectTemplates'
+          description: Промпты для SQL объектов (function, table, view)
+        js:
+          $ref: '#/components/schemas/L1L2ObjectTemplates'
+          description: Промпты для JavaScript объектов (function, class)
+        md:
+          $ref: '#/components/schemas/L1L2ObjectTemplates'
+          description: Промпты для Markdown (section)
+
+    RagPrompts:
+      type: object
+      required: [systemPrompt, userPromptTemplate]
+      properties:
+        systemPrompt:
+          type: string
+          description: Системный промпт для RAG-чата
+        userPromptTemplate:
+          type: string
+          description: "Шаблон пользовательского промпта. Плейсхолдеры: {context}, {question}"
+
+    NaturalQueryPrompts:
+      type: object
+      required: [scriptGeneration, humanize]
+      properties:
+        scriptGeneration:
+          type: string
+          description: "Промпт для генерации JS-скриптов. Плейсхолдер: {question}"
+        humanize:
+          type: string
+          description: "Промпт для humanize. Плейсхолдеры: {question}, {rawData}"
+
+    VectorOperationsPrompts:
+      type: object
+      required: [qaPromptTemplate]
+      properties:
+        qaPromptTemplate:
+          type: string
+          description: "Шаблон QA промпта. Плейсхолдеры: {context}, {question}"
+
+    PromptsConfig:
+      type: object
+      required: [l1l2Templates, rag, naturalQuery, vectorOperations]
+      properties:
+        l1l2Templates:
+          $ref: '#/components/schemas/L1L2Templates'
+        rag:
+          $ref: '#/components/schemas/RagPrompts'
+        naturalQuery:
+          $ref: '#/components/schemas/NaturalQueryPrompts'
+        vectorOperations:
+          $ref: '#/components/schemas/VectorOperationsPrompts'
+
+    PromptsConfigResponse:
+      type: object
+      required: [success, prompts]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        prompts:
+          $ref: '#/components/schemas/PromptsConfig'
+        savedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    PromptCategoryEnum:
+      type: string
+      enum: [l1l2Templates, rag, naturalQuery, vectorOperations]
+
+    FileTypeEnum:
+      type: string
+      enum: [sql, js, md]
+
+    ObjectTypeEnum:
+      type: string
+      enum: [function, table, view, class, section]
+
+    LevelEnum:
+      type: string
+      enum: [l1, l2]
 
     SuccessResponse:
       type: object
@@ -2216,6 +2344,362 @@ paths:
         '200':
           content:
             text/event-stream: { schema: { type: string } }
+
+  # ────────────────────────────────────── PROMPTS (глобальные, без context-code)
+  /api/prompts:
+    get:
+      tags: [Prompts]
+      summary: Получить все промпты
+      description: Возвращает полную конфигурацию промптов из prompts.json
+      operationId: getPrompts
+      responses:
+        '200':
+          description: Полная конфигурация промптов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromptsConfigResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags: [Prompts]
+      summary: Обновить все промпты
+      description: Полностью заменяет конфигурацию промптов и сохраняет в prompts.json
+      operationId: updatePrompts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfig'
+      responses:
+        '200':
+          description: Промпты успешно обновлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromptsConfigResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/prompts/{category}:
+    get:
+      tags: [Prompts]
+      summary: Получить категорию промптов
+      operationId: getPromptsCategory
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/PromptCategoryEnum'
+      responses:
+        '200':
+          description: Промпты категории
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, category, data]
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  category: { $ref: '#/components/schemas/PromptCategoryEnum' }
+                  data: { type: object }
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Prompts]
+      summary: Частично обновить категорию промптов
+      operationId: patchPromptsCategory
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/PromptCategoryEnum'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Категория успешно обновлена
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, category, data]
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  category: { $ref: '#/components/schemas/PromptCategoryEnum' }
+                  data: { type: object }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/prompts/l1l2/{fileType}/{objectType}/{level}:
+    get:
+      tags: [Prompts]
+      summary: Получить конкретный L1/L2 промпт
+      operationId: getL1L2Prompt
+      parameters:
+        - name: fileType
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/FileTypeEnum'
+        - name: objectType
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ObjectTypeEnum'
+        - name: level
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/LevelEnum'
+      responses:
+        '200':
+          description: Промпт найден
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, fileType, objectType, level, data]
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  fileType: { $ref: '#/components/schemas/FileTypeEnum' }
+                  objectType: { $ref: '#/components/schemas/ObjectTypeEnum' }
+                  level: { $ref: '#/components/schemas/LevelEnum' }
+                  data: { $ref: '#/components/schemas/PromptTemplate' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Prompts]
+      summary: Обновить конкретный L1/L2 промпт
+      operationId: updateL1L2Prompt
+      parameters:
+        - name: fileType
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/FileTypeEnum'
+        - name: objectType
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ObjectTypeEnum'
+        - name: level
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/LevelEnum'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptTemplate'
+      responses:
+        '200':
+          description: Промпт успешно обновлен
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, fileType, objectType, level, data]
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  fileType: { $ref: '#/components/schemas/FileTypeEnum' }
+                  objectType: { $ref: '#/components/schemas/ObjectTypeEnum' }
+                  level: { $ref: '#/components/schemas/LevelEnum' }
+                  data: { $ref: '#/components/schemas/PromptTemplate' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    delete:
+      tags: [Prompts]
+      summary: Удалить L1/L2 промпт
+      operationId: deleteL1L2Prompt
+      parameters:
+        - name: fileType
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/FileTypeEnum'
+        - name: objectType
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ObjectTypeEnum'
+        - name: level
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/LevelEnum'
+      responses:
+        '200':
+          description: Промпт удален
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/prompts/l1l2/{fileType}:
+    post:
+      tags: [Prompts]
+      summary: Добавить новый тип объекта
+      description: Добавляет новый тип объекта с L1/L2 промптами для указанного типа файла
+      operationId: addL1L2ObjectType
+      parameters:
+        - name: fileType
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/FileTypeEnum'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [objectType, templates]
+              properties:
+                objectType:
+                  type: string
+                  example: "trigger"
+                templates:
+                  $ref: '#/components/schemas/L1L2TemplateLevel'
+      responses:
+        '201':
+          description: Тип объекта добавлен
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, fileType, objectType, data]
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  fileType: { type: string }
+                  objectType: { type: string }
+                  data: { $ref: '#/components/schemas/L1L2TemplateLevel' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/prompts/reload:
+    post:
+      tags: [Prompts]
+      summary: Перезагрузить промпты из файла
+      description: Сбрасывает кэш и перезагружает промпты из prompts.json
+      operationId: reloadPrompts
+      responses:
+        '200':
+          description: Промпты перезагружены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromptsConfigResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/prompts/validate:
+    post:
+      tags: [Prompts]
+      summary: Валидировать структуру промптов
+      description: Проверяет структуру без сохранения
+      operationId: validatePrompts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfig'
+      responses:
+        '200':
+          description: Структура валидна
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, valid]
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  valid: { type: boolean, enum: [true] }
+                  message: { type: string }
+        '400':
+          description: Структура невалидна
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, valid, errors]
+                properties:
+                  success: { type: boolean, enum: [false] }
+                  valid: { type: boolean, enum: [false] }
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        path: { type: string }
+                        message: { type: string }
+
+  /api/prompts/export:
+    get:
+      tags: [Prompts]
+      summary: Экспортировать промпты
+      operationId: exportPrompts
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, yaml]
+            default: json
+      responses:
+        '200':
+          description: Файл промптов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromptsConfig'
+            application/x-yaml:
+              schema:
+                type: string
+
+  /api/prompts/import:
+    post:
+      tags: [Prompts]
+      summary: Импортировать промпты
+      operationId: importPrompts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfig'
+          application/x-yaml:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Промпты импортированы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromptsConfigResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   # ────────────────────────────────────── DEPRECATED (обратная совместимость)
   /api/files:

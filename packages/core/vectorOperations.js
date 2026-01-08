@@ -2,6 +2,7 @@
 const SimpleChatModel = require("./SimpleChatModel");
 const { RetrievalQAChain, loadQAStuffChain } = require("langchain/chains");
 const { PromptTemplate } = require("@langchain/core/prompts");
+const promptsService = require("./promptsService");
 
 
 /**
@@ -55,15 +56,8 @@ async function answerQuestion(question, vectorStore, contextCode = null, returnD
     // Создаём кастомный промпт-шаблон, чтобы можно было его вернуть
     let promptTemplate;
     if (returnDocumentsAndPrompt) {
-      promptTemplate = PromptTemplate.fromTemplate(
-        `Используй следующие фрагменты контекста для ответа на вопрос в конце. 
-        Если ты не знаешь ответа, просто скажи, что не знаешь, не пытайся придумать ответ.
-        
-        {context}
-        
-        Вопрос: {question}
-        Ответ:`
-      );
+      const qaPromptTemplate = promptsService.getQaPromptTemplate();
+      promptTemplate = PromptTemplate.fromTemplate(qaPromptTemplate);
     }
     
     // Создание цепочки для ответа на вопросы

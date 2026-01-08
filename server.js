@@ -223,6 +223,7 @@ const { checkLLMAvailability, LLM_BASE_URL, LLM_MODEL, callLLM } = require('./pa
 const aiRoutes = require('./routes/ai');
 const filesRoutes = require('./routes/files');
 const chatRoutes = require('./routes/chat');
+const promptsRoutes = require('./routes/prompts');
 
 const cors = require('cors');
 
@@ -296,6 +297,9 @@ app.use(aiRoutes(dbService, vectorStore, embeddings));
 
 // Подключаем роуты для файлов
 app.use(filesRoutes(dbService, embeddings));
+
+// Подключаем роуты для промптов
+app.use('/api/prompts', promptsRoutes);
 
 // Подключаем роуты для чата
 app.use('/api', chatRoutes(dbService, vectorStore, embeddings));

@@ -1,0 +1,81 @@
+{
+  "l1l2Templates": {
+    "sql": {
+      "function": {
+        "l1": {
+          "prompt": "Проанализируй эту SQL функцию/процедуру и опиши её зависимости от других объектов базы данных.",
+          "inputText": "Какие другие функции, процедуры или таблицы использует этот код? Опиши связи между объектами."
+        },
+        "l2": {
+          "prompt": "Опиши бизнес-логику этой SQL функции/процедуры простым языком.",
+          "inputText": "Что делает эта функция? Какую бизнес-задачу она решает? Опиши алгоритм работы."
+        }
+      },
+      "table": {
+        "l1": {
+          "prompt": "Опиши связи этой таблицы с другими объектами базы данных.",
+          "inputText": "Какие таблицы ссылаются на эту через внешние ключи? С какими таблицами она связана?"
+        },
+        "l2": {
+          "prompt": "Опиши назначение этой таблицы в системе.",
+          "inputText": "Какие данные хранятся в этой таблице? Для каких бизнес-процессов она используется?"
+        }
+      },
+      "view": {
+        "l1": {
+          "prompt": "Опиши связи этого представления с другими объектами базы данных.",
+          "inputText": "Какие таблицы или другие представления использует это представление?"
+        },
+        "l2": {
+          "prompt": "Опиши назначение этого представления в системе.",
+          "inputText": "Для чего используется это представление? Какие данные оно предоставляет?"
+        }
+      }
+    },
+    "js": {
+      "function": {
+        "l1": {
+          "prompt": "Проанализируй эту JavaScript функцию и опиши её зависимости.",
+          "inputText": "Какие другие функции она вызывает? Какие модули импортирует? К каким данным обращается?"
+        },
+        "l2": {
+          "prompt": "Опиши бизнес-логику этой JavaScript функции простым языком.",
+          "inputText": "Что делает эта функция? Какую задачу она решает? Опиши алгоритм работы."
+        }
+      },
+      "class": {
+        "l1": {
+          "prompt": "Проанализируй этот JavaScript класс и опиши его зависимости.",
+          "inputText": "Какие другие классы он использует? Какие интерфейсы реализует? Какие методы экспортирует?"
+        },
+        "l2": {
+          "prompt": "Опиши назначение этого JavaScript класса.",
+          "inputText": "Какую роль играет этот класс в системе? Какую функциональность он предоставляет?"
+        }
+      }
+    },
+    "md": {
+      "section": {
+        "l1": {
+          "prompt": "Проанализируй эту секцию документации и опиши её связи с другими частями проекта.",
+          "inputText": "Какие другие секции документации или код связаны с этой секцией?"
+        },
+        "l2": {
+          "prompt": "Кратко опиши содержание этой секции документации.",
+          "inputText": "О чём эта секция? Какую информацию она содержит?"
+        }
+      }
+    }
+  },
+  "rag": {
+    "systemPrompt": "Ты помощник для анализа кодовой базы. Используй предоставленный контекст из документов для ответа на вопрос пользователя. \nЕсли в контексте нет информации для ответа, честно скажи об этом. Отвечай на русском языке.",
+    "userPromptTemplate": "Контекст из кодовой базы:\n\n{context}\n\nВопрос пользователя: {question}\n\nОтвет:"
+  },
+  "naturalQuery": {
+    "scriptGeneration": "Ты — генератор простых async JS-скриптов для анализа кодовой базы в KOSMOS-VECTOR.\n\nКлючевые правила идентификации: все AiItems и связи уникальны по паре (context_code + full_name). full_name — это полное имя вроде \"schema.function\" или \"module.exportFunc\".\n\nДоступные инструменты в скрипте:\n- Только fetch к разрешённым GET-эндпоинтам: /api/items, /api/items-list, /api/items/{id}, /api/graph, /api/stats (с ?context-code=${contextCode}).\n- Прямой SQL через DbService.queryRaw(`SELECT ...`, [params]) — ТОЛЬКО SELECT! Всегда WHERE context_code = $1.\n\nСкрипт: одна async function execute(contextCode) { ... return rawData; } // rawData — массив или объект\nМаксимум 4 запроса. Если вопрос не реализуем точно — return { error: \"clarify\", message: \"Уточни: ...\" }\n\nСправочник типов связей (link_type):\ncode: calls → \"Function calls another function\"\ncode: reads_from → \"SELECT / FROM / JOIN table\"\ncode: updates → \"UPDATE table\"\ncode: inserts_into → \"INSERT INTO table\"\ncode: imports → \"JS/TS import module or symbol\"\ncode: depends_on → \"General dependency (reserved)\"\n\nКлючевые таблицы:\n- ai_item (id serial, full_name text, context_code text, type text, file_id uuid references files(id))\n- link (source text, target text, link_type_id int references link_type(id), context_code text)\n- link_type (id serial, code text, label text, description text)\n- chunk_vector (ai_item_id int references ai_item(id), full_name text, level text, file_id uuid)\n- files (id uuid, filename text, context_code text)\n\nВсе SQL с WHERE context_code = $1.\n\nСхема отношений:\nai_item --> files (file_id)\nchunk_vector --> ai_item (ai_item_id)\nchunk_vector --> files (file_id)\nlink --> link_type (link_type_id)\n\nПримеры:\n\nВопрос: Какие типы связей вообще используются в проекте?\n\nСкрипт:\nasync function execute(contextCode) {\n  const rows = await DbService.queryRaw(`\n    SELECT lt.code, lt.label, lt.description\n    FROM link_type lt\n    WHERE EXISTS (\n      SELECT 1 FROM link l \n      WHERE l.link_type_id = lt.id AND l.context_code = $1\n    )\n    ORDER BY lt.id\n  `, [contextCode]);\n  return rows;\n}\n\nВопрос: Список всех функций, которые читают таблицу carl_data.users (обратная связь reads_from)?\n\nСкрипт:\nasync function execute(contextCode) {\n  const tableName = \"carl_data.users\";\n  const rows = await DbService.queryRaw(`\n    SELECT ai.full_name, ai.type, f.filename\n    FROM link l\n    JOIN link_type lt ON l.link_type_id = lt.id\n    JOIN ai_item ai ON l.source = ai.full_name AND ai.context_code = l.context_code\n    JOIN files f ON ai.file_id = f.id\n    WHERE l.context_code = $1\n      AND lt.code = 'reads_from'\n      AND l.target = $2\n    ORDER BY ai.full_name\n  `, [contextCode, tableName]);\n  return rows;\n}\n\nВопрос: Топ-10 самых вызываемых функций (по типу связи calls)?\n\nСкрипт:\nasync function execute(contextCode) {\n  const rows = await DbService.queryRaw(`\n    SELECT l.target AS called_function, COUNT(*) AS calls_count\n    FROM link l\n    JOIN link_type lt ON l.link_type_id = lt.id\n    WHERE l.context_code = $1 AND lt.code = 'calls'\n    GROUP BY l.target\n    ORDER BY calls_count DESC\n    LIMIT 10\n  `, [contextCode]);\n  return rows;\n}\n\nВопрос: Все таблицы, которые обновляются хотя бы одной функцией из схемы carl_comm?\n\nСкрипт:\nasync function execute(contextCode) {\n  const schemaPrefix = \"carl_comm.\";\n  const rows = await DbService.queryRaw(`\n    SELECT DISTINCT l.target AS table_name\n    FROM link l\n    JOIN link_type lt ON l.link_type_id = lt.id\n    JOIN ai_item ai ON l.source = ai.full_name AND ai.context_code = l.context_code\n    WHERE l.context_code = $1\n      AND lt.code = 'updates'\n      AND ai.full_name LIKE $2 || '%'\n  `, [contextCode, schemaPrefix]);\n  return rows;\n}\n\nВопрос: Список всех импортов в JS-файлах?\n\nСкрипт:\nasync function execute(contextCode) {\n  const rows = await DbService.queryRaw(`\n    SELECT l.source AS importer, l.target AS imported\n    FROM link l\n    JOIN link_type lt ON l.link_type_id = lt.id\n    WHERE l.context_code = $1 AND lt.code = 'imports'\n    ORDER BY l.source, l.target\n  `, [contextCode]);\n  return rows;\n}\n\nТеперь вопрос пользователя: {question}\nСгенерируй только код скрипта как строку, без лишнего.",
+    "humanize": "Ты помощник для анализа кодовой базы. Преврати сырые данные из базы данных в понятный человекочитаемый текст на русском языке.\n\nВопрос пользователя: {question}\n\nСырые данные из базы:\n{rawData}\n\nСформулируй краткий, но информативный ответ на русском языке. Используй данные из rawData для конкретики. Если данных нет или массив пуст, честно скажи об этом."
+  },
+  "vectorOperations": {
+    "qaPromptTemplate": "Используй следующие фрагменты контекста для ответа на вопрос в конце. \n        Если ты не знаешь ответа, просто скажи, что не знаешь, не пытайся придумать ответ.\n        \n        {context}\n        \n        Вопрос: {question}\n        Ответ:"
+  }
+}

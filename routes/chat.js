@@ -2,6 +2,7 @@
 // Роутер для RAG-чата с интеграцией kosmos-model LLM
 const express = require('express');
 const { callLLM } = require('../packages/core/llmClient');
+const promptsService = require('../packages/core/promptsService');
 
 const router = express.Router();
 
@@ -62,17 +63,12 @@ module.exports = (dbService, vectorStore, embeddings) => {
             // Собираем ID использованных чанков
             const usedContextIds = relevantDocs.map(doc => doc.id);
 
-            // Формируем промпт для LLM
-            const systemPrompt = `Ты помощник для анализа кодовой базы. Используй предоставленный контекст из документов для ответа на вопрос пользователя. 
-Если в контексте нет информации для ответа, честно скажи об этом. Отвечай на русском языке.`;
-
-            const userPrompt = `Контекст из кодовой базы:
-
-${contextText}
-
-Вопрос пользователя: ${message}
-
-Ответ:`;
+            // Формируем промпт для LLM из prompts.json
+            const ragPrompts = promptsService.getRagPrompts();
+            const systemPrompt = ragPrompts.systemPrompt;
+            const userPrompt = ragPrompts.userPromptTemplate
+                .replace('{context}', contextText)
+                .replace('{question}', message);
 
             // Формируем сообщения для LLM
             const messages = [

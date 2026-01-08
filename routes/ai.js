@@ -1,5 +1,6 @@
 const express = require('express');
 const VectorOperations = require('../packages/core/vectorOperations');
+const promptsService = require('../packages/core/promptsService');
 const path = require('path');
 
 const router = express.Router();
@@ -7,42 +8,40 @@ const router = express.Router();
 module.exports = (dbService, vectorStore, embeddings) => {
     // Вспомогательная функция для получения шаблонов промптов
     function getPromptTemplates(fileType, objectType, level) {
-        // Убедимся, что все параметры - строки
-        const ft = (fileType || 'js').toString().toUpperCase();
-        const ot = (objectType || 'function').toString().toUpperCase();
-        const l = `L${level}`;
-
-        // Нормализация objectType для разных языков
-        let normalizedOt = ot;
-        
-        // SQL нормализация
-        if (ft === 'SQL') {
-            if (ot && (ot.includes('FUNCTION') || ot.includes('PROCEDURE'))) normalizedOt = 'FUNCTION';
-            else if (ot && (ot.includes('TABLE') || ot.includes('TYPE') || ot.includes('DOMAIN') || ot.includes('SEQUENCE'))) normalizedOt = 'TABLE';
-            else if (ot && ot.includes('VIEW')) normalizedOt = 'VIEW';
-        } 
-        // JavaScript нормализация
-        else if (ft === 'JS') {
-            if (ot && (ot.includes('METHOD') || ot.includes('FUNCTION'))) normalizedOt = 'FUNCTION';
-            else if (ot && ot.includes('CLASS')) normalizedOt = 'CLASS';
-            else normalizedOt = 'FUNCTION'; // По умолчанию для JS
+        try {
+            const result = promptsService.getL1L2Prompt(fileType, objectType, level);
+            
+            // Для обратной совместимости формируем имена шаблонов
+            const ft = (fileType || 'js').toString().toUpperCase();
+            const ot = (objectType || 'function').toString().toUpperCase();
+            const l = `L${level}`;
+            
+            // Нормализация для формирования имени шаблона
+            let normalizedOt = ot;
+            if (ft === 'SQL') {
+                if (ot && (ot.includes('FUNCTION') || ot.includes('PROCEDURE'))) normalizedOt = 'FUNCTION';
+                else if (ot && (ot.includes('TABLE') || ot.includes('TYPE') || ot.includes('DOMAIN') || ot.includes('SEQUENCE'))) normalizedOt = 'TABLE';
+                else if (ot && ot.includes('VIEW')) normalizedOt = 'VIEW';
+            } else if (ft === 'JS') {
+                if (ot && (ot.includes('METHOD') || ot.includes('FUNCTION'))) normalizedOt = 'FUNCTION';
+                else if (ot && ot.includes('CLASS')) normalizedOt = 'CLASS';
+                else normalizedOt = 'FUNCTION';
+            } else if (ft === 'MD') {
+                normalizedOt = 'SECTION';
+            }
+            
+            const promptTemplateName = `${ft}_${l}_${normalizedOt}_PROMPT`;
+            const inputTextTemplateName = `${ft}_${l}_${normalizedOt}_INPUT_TEXT`;
+            
+            return {
+                prompt: result.prompt,
+                inputText: result.inputText,
+                promptTemplateName,
+                inputTextTemplateName
+            };
+        } catch (error) {
+            throw new Error(`Ошибка получения промпта: ${error.message}`);
         }
-        // Markdown нормализация
-        else if (ft === 'MD') {
-            normalizedOt = 'SECTION';
-        }
-
-        const promptTemplateName = `${ft}_${l}_${normalizedOt}_PROMPT`;
-        const inputTextTemplateName = `${ft}_${l}_${normalizedOt}_INPUT_TEXT`;
-
-        const prompt = process.env[promptTemplateName];
-        const inputText = process.env[inputTextTemplateName];
-
-        if (!prompt || !inputText) {
-            throw new Error(`Template variables not found in .env: ${promptTemplateName} or ${inputTextTemplateName}`);
-        }
-
-        return { prompt, inputText, promptTemplateName, inputTextTemplateName };
     }
 
     // Dummy function to simulate calling an external AI service
