@@ -326,6 +326,140 @@ module.exports = (dbService, logBuffer) => {
     }
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAGS — Теги для AI Items
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // === GET /api/items/:id/tags - Получить теги AI Item ===
+  router.get('/items/:id/tags', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const decodedId = decodeURIComponent(id);
+      const contextCode = req.contextCode;
+
+      // Проверяем существование AI Item
+      const exists = await dbService.aiItemExists(contextCode, decodedId);
+      if (!exists) {
+        return res.status(404).json({ 
+          success: false, 
+          error: `AI Item not found: ${decodedId}` 
+        });
+      }
+
+      const tags = await dbService.getAiItemTags(contextCode, decodedId);
+      res.json({
+        success: true,
+        itemId: decodedId,
+        tags
+      });
+    } catch (error) {
+      console.error('[API/ITEM/TAGS] GET Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === POST /api/items/:id/tags - Добавить теги к AI Item (bulk) ===
+  router.post('/items/:id/tags', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const decodedId = decodeURIComponent(id);
+      const contextCode = req.contextCode;
+      const { tagCodes } = req.body;
+
+      if (!tagCodes || !Array.isArray(tagCodes) || tagCodes.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'tagCodes is required and must be a non-empty array' 
+        });
+      }
+
+      const tags = await dbService.addTagsToAiItem(contextCode, decodedId, tagCodes);
+      res.json({
+        success: true,
+        itemId: decodedId,
+        tags
+      });
+    } catch (error) {
+      if (error.code === 'AI_ITEM_NOT_FOUND') {
+        return res.status(404).json({ success: false, error: error.message });
+      }
+      if (error.code === 'TAGS_NOT_FOUND') {
+        return res.status(404).json({ success: false, error: error.message });
+      }
+      console.error('[API/ITEM/TAGS] POST Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === DELETE /api/items/:id/tags - Удалить теги у AI Item (bulk) ===
+  router.delete('/items/:id/tags', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const decodedId = decodeURIComponent(id);
+      const contextCode = req.contextCode;
+      const { tagCodes } = req.body;
+
+      if (!tagCodes || !Array.isArray(tagCodes) || tagCodes.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'tagCodes is required and must be a non-empty array' 
+        });
+      }
+
+      // Проверяем существование AI Item
+      const exists = await dbService.aiItemExists(contextCode, decodedId);
+      if (!exists) {
+        return res.status(404).json({ 
+          success: false, 
+          error: `AI Item not found: ${decodedId}` 
+        });
+      }
+
+      const tags = await dbService.removeTagsFromAiItem(contextCode, decodedId, tagCodes);
+      res.json({
+        success: true,
+        itemId: decodedId,
+        tags
+      });
+    } catch (error) {
+      console.error('[API/ITEM/TAGS] DELETE Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === PUT /api/items/:id/tags - Синхронизировать теги AI Item (заменить все) ===
+  router.put('/items/:id/tags', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const decodedId = decodeURIComponent(id);
+      const contextCode = req.contextCode;
+      const { tagCodes } = req.body;
+
+      if (!tagCodes || !Array.isArray(tagCodes)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'tagCodes is required and must be an array' 
+        });
+      }
+
+      const tags = await dbService.syncAiItemTags(contextCode, decodedId, tagCodes);
+      res.json({
+        success: true,
+        itemId: decodedId,
+        tags
+      });
+    } catch (error) {
+      if (error.code === 'AI_ITEM_NOT_FOUND') {
+        return res.status(404).json({ success: false, error: error.message });
+      }
+      if (error.code === 'TAGS_NOT_FOUND') {
+        return res.status(404).json({ success: false, error: error.message });
+      }
+      console.error('[API/ITEM/TAGS] PUT Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // === 3.5. GET /api/items/:id/logic-graph - Получить анализ логики для AiItem ===
   router.get('/items/:id/logic-graph', async (req, res) => {
     try {
@@ -1533,6 +1667,176 @@ module.exports = (dbService, logBuffer) => {
         success: false,
         error: error.message
       });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAGS CRUD — Управление тегами
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // === GET /api/tags - Получить список всех тегов ===
+  router.get('/tags', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const tags = await dbService.getAllTags(contextCode);
+      res.json({
+        success: true,
+        tags
+      });
+    } catch (error) {
+      console.error('[API/TAGS] GET Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === POST /api/tags - Создать новый тег ===
+  router.post('/tags', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const { code, name, description } = req.body;
+
+      if (!code || typeof code !== 'string' || code.trim().length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'code is required and must be a non-empty string' 
+        });
+      }
+
+      if (!name || typeof name !== 'string' || name.trim().length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'name is required and must be a non-empty string' 
+        });
+      }
+
+      const tag = await dbService.createTag(contextCode, code.trim(), name.trim(), description || null);
+      res.status(201).json({
+        success: true,
+        tag
+      });
+    } catch (error) {
+      if (error.code === 'DUPLICATE_TAG') {
+        return res.status(409).json({ success: false, error: error.message });
+      }
+      console.error('[API/TAGS] POST Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === GET /api/tags/:code - Получить тег по коду ===
+  router.get('/tags/:code', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const { code } = req.params;
+
+      const tag = await dbService.getTagByCode(contextCode, code);
+      if (!tag) {
+        return res.status(404).json({ 
+          success: false, 
+          error: `Tag not found: ${code}` 
+        });
+      }
+
+      res.json({
+        success: true,
+        tag
+      });
+    } catch (error) {
+      console.error('[API/TAGS] GET/:code Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === PUT /api/tags/:code - Обновить тег ===
+  router.put('/tags/:code', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const { code } = req.params;
+      const { name, description } = req.body;
+
+      if (name === undefined && description === undefined) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'At least one field (name or description) is required' 
+        });
+      }
+
+      const updates = {};
+      if (name !== undefined) updates.name = name;
+      if (description !== undefined) updates.description = description;
+
+      const tag = await dbService.updateTag(contextCode, code, updates);
+      if (!tag) {
+        return res.status(404).json({ 
+          success: false, 
+          error: `Tag not found: ${code}` 
+        });
+      }
+
+      res.json({
+        success: true,
+        tag
+      });
+    } catch (error) {
+      console.error('[API/TAGS] PUT Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === DELETE /api/tags/:code - Удалить тег ===
+  router.delete('/tags/:code', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const { code } = req.params;
+      const force = req.query.force === 'true';
+
+      const deleted = await dbService.deleteTag(contextCode, code, force);
+      if (!deleted) {
+        return res.status(404).json({ 
+          success: false, 
+          error: `Tag not found: ${code}` 
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Tag deleted successfully'
+      });
+    } catch (error) {
+      if (error.code === 'TAG_IN_USE') {
+        return res.status(409).json({ 
+          success: false, 
+          error: error.message,
+          usageCount: error.usageCount
+        });
+      }
+      console.error('[API/TAGS] DELETE Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === GET /api/tags/:code/items - Получить AI Items с указанным тегом ===
+  router.get('/tags/:code/items', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const { code } = req.params;
+
+      const result = await dbService.getAiItemsByTag(contextCode, code);
+      if (!result) {
+        return res.status(404).json({ 
+          success: false, 
+          error: `Tag not found: ${code}` 
+        });
+      }
+
+      res.json({
+        success: true,
+        tag: result.tag,
+        items: result.items
+      });
+    } catch (error) {
+      console.error('[API/TAGS] GET/:code/items Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
     }
   });
 

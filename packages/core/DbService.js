@@ -2663,6 +2663,412 @@ class DbService {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAGS — Управление тегами для AI Items
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Получить все теги для context-code
+   * @param {string} contextCode - Контекстный код
+   * @returns {Promise<Array>} Массив тегов
+   */
+  async getAllTags(contextCode) {
+    try {
+      const result = await this.pgClient.query(`
+        SELECT id, code, name, description, created_at, updated_at
+        FROM public.tag
+        WHERE context_code = $1
+        ORDER BY name ASC
+      `, [contextCode]);
+
+      return result.rows;
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка getAllTags("${contextCode}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Получить тег по коду
+   * @param {string} contextCode - Контекстный код
+   * @param {string} tagCode - Код тега
+   * @returns {Promise<Object|null>} Тег или null
+   */
+  async getTagByCode(contextCode, tagCode) {
+    try {
+      const result = await this.pgClient.query(`
+        SELECT id, code, name, description, created_at, updated_at
+        FROM public.tag
+        WHERE context_code = $1 AND code = $2
+      `, [contextCode, tagCode]);
+
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка getTagByCode("${contextCode}", "${tagCode}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Создать новый тег
+   * @param {string} contextCode - Контекстный код
+   * @param {string} code - Код тега
+   * @param {string} name - Название тега
+   * @param {string|null} description - Описание тега
+   * @returns {Promise<Object>} Созданный тег
+   */
+  async createTag(contextCode, code, name, description = null) {
+    try {
+      const result = await this.pgClient.query(`
+        INSERT INTO public.tag (context_code, code, name, description)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, code, name, description, created_at, updated_at
+      `, [contextCode, code, name, description]);
+
+      return result.rows[0];
+    } catch (error) {
+      if (error.code === '23505') { // unique_violation
+        const customError = new Error(`Tag with code '${code}' already exists`);
+        customError.code = 'DUPLICATE_TAG';
+        throw customError;
+      }
+      console.error(`[DB] ❌ Ошибка createTag("${contextCode}", "${code}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Обновить тег
+   * @param {string} contextCode - Контекстный код
+   * @param {string} tagCode - Код тега
+   * @param {Object} updates - Поля для обновления {name?, description?}
+   * @returns {Promise<Object|null>} Обновлённый тег или null
+   */
+  async updateTag(contextCode, tagCode, updates) {
+    try {
+      const setClauses = [];
+      const values = [];
+      let paramIndex = 1;
+
+      if (updates.name !== undefined) {
+        setClauses.push(`name = $${paramIndex++}`);
+        values.push(updates.name);
+      }
+      if (updates.description !== undefined) {
+        setClauses.push(`description = $${paramIndex++}`);
+        values.push(updates.description);
+      }
+
+      if (setClauses.length === 0) {
+        return await this.getTagByCode(contextCode, tagCode);
+      }
+
+      setClauses.push(`updated_at = CURRENT_TIMESTAMP`);
+      values.push(contextCode, tagCode);
+
+      const result = await this.pgClient.query(`
+        UPDATE public.tag
+        SET ${setClauses.join(', ')}
+        WHERE context_code = $${paramIndex++} AND code = $${paramIndex}
+        RETURNING id, code, name, description, created_at, updated_at
+      `, values);
+
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка updateTag("${contextCode}", "${tagCode}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Удалить тег
+   * @param {string} contextCode - Контекстный код
+   * @param {string} tagCode - Код тега
+   * @param {boolean} force - Принудительное удаление (удалить связи)
+   * @returns {Promise<boolean>} true если удалён, false если не найден
+   */
+  async deleteTag(contextCode, tagCode, force = false) {
+    try {
+      // Сначала получаем id тега
+      const tag = await this.getTagByCode(contextCode, tagCode);
+      if (!tag) {
+        return false;
+      }
+
+      // Проверяем, используется ли тег
+      const usageCheck = await this.pgClient.query(`
+        SELECT COUNT(*) as count
+        FROM public.ai_item_tag
+        WHERE tag_id = $1
+      `, [tag.id]);
+
+      const usageCount = parseInt(usageCheck.rows[0].count);
+
+      if (usageCount > 0 && !force) {
+        const error = new Error(`Tag is used by ${usageCount} AI Items. Use force=true to delete anyway`);
+        error.code = 'TAG_IN_USE';
+        error.usageCount = usageCount;
+        throw error;
+      }
+
+      // Удаляем связи (каскадно)
+      if (usageCount > 0) {
+        await this.pgClient.query(`
+          DELETE FROM public.ai_item_tag WHERE tag_id = $1
+        `, [tag.id]);
+      }
+
+      // Удаляем тег
+      await this.pgClient.query(`
+        DELETE FROM public.tag WHERE id = $1
+      `, [tag.id]);
+
+      return true;
+    } catch (error) {
+      if (error.code === 'TAG_IN_USE') throw error;
+      console.error(`[DB] ❌ Ошибка deleteTag("${contextCode}", "${tagCode}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Получить AI Items с указанным тегом
+   * @param {string} contextCode - Контекстный код
+   * @param {string} tagCode - Код тега
+   * @returns {Promise<{tag: Object, items: Array}>} Тег и массив AI Items
+   */
+  async getAiItemsByTag(contextCode, tagCode) {
+    try {
+      const tag = await this.getTagByCode(contextCode, tagCode);
+      if (!tag) {
+        return null;
+      }
+
+      const result = await this.pgClient.query(`
+        SELECT 
+          ai.full_name as id,
+          ai.type,
+          f.filename as "filePath",
+          COALESCE(
+            (SELECT cv.metadata->>'language' 
+             FROM public.chunk_vector cv 
+             WHERE cv.ai_item_id = ai.id 
+             LIMIT 1),
+            'unknown'
+          ) as language
+        FROM public.ai_item_tag ait
+        JOIN public.ai_item ai ON ai.full_name = ait.ai_item_full_name 
+          AND ai.context_code = ait.ai_item_context_code
+        LEFT JOIN public.files f ON f.id = ai.file_id
+        WHERE ait.tag_id = $1
+        ORDER BY ai.full_name ASC
+      `, [tag.id]);
+
+      return {
+        tag,
+        items: result.rows
+      };
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка getAiItemsByTag("${contextCode}", "${tagCode}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Получить теги AI Item
+   * @param {string} contextCode - Контекстный код
+   * @param {string} itemFullName - full_name AI Item
+   * @returns {Promise<Array>} Массив тегов
+   */
+  async getAiItemTags(contextCode, itemFullName) {
+    try {
+      const result = await this.pgClient.query(`
+        SELECT t.id, t.code, t.name, t.description, t.created_at, t.updated_at
+        FROM public.tag t
+        JOIN public.ai_item_tag ait ON ait.tag_id = t.id
+        WHERE ait.ai_item_full_name = $1 AND ait.ai_item_context_code = $2
+        ORDER BY t.name ASC
+      `, [itemFullName, contextCode]);
+
+      return result.rows;
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка getAiItemTags("${contextCode}", "${itemFullName}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Добавить теги к AI Item
+   * @param {string} contextCode - Контекстный код
+   * @param {string} itemFullName - full_name AI Item
+   * @param {Array<string>} tagCodes - Массив кодов тегов
+   * @returns {Promise<Array>} Обновлённый массив тегов
+   */
+  async addTagsToAiItem(contextCode, itemFullName, tagCodes) {
+    try {
+      // Проверяем существование AI Item
+      const aiItem = await this.pgClient.query(`
+        SELECT full_name FROM public.ai_item
+        WHERE full_name = $1 AND context_code = $2
+      `, [itemFullName, contextCode]);
+
+      if (aiItem.rows.length === 0) {
+        const error = new Error(`AI Item not found: ${itemFullName}`);
+        error.code = 'AI_ITEM_NOT_FOUND';
+        throw error;
+      }
+
+      // Получаем id тегов по кодам
+      const tagsResult = await this.pgClient.query(`
+        SELECT id, code FROM public.tag
+        WHERE context_code = $1 AND code = ANY($2)
+      `, [contextCode, tagCodes]);
+
+      const foundCodes = tagsResult.rows.map(r => r.code);
+      const notFoundCodes = tagCodes.filter(c => !foundCodes.includes(c));
+
+      if (notFoundCodes.length > 0) {
+        const error = new Error(`Tags not found: ${notFoundCodes.join(', ')}`);
+        error.code = 'TAGS_NOT_FOUND';
+        error.notFoundCodes = notFoundCodes;
+        throw error;
+      }
+
+      // Добавляем связи (ON CONFLICT DO NOTHING для idempotent)
+      for (const tag of tagsResult.rows) {
+        await this.pgClient.query(`
+          INSERT INTO public.ai_item_tag (ai_item_full_name, ai_item_context_code, tag_id)
+          VALUES ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        `, [itemFullName, contextCode, tag.id]);
+      }
+
+      return await this.getAiItemTags(contextCode, itemFullName);
+    } catch (error) {
+      if (error.code === 'AI_ITEM_NOT_FOUND' || error.code === 'TAGS_NOT_FOUND') throw error;
+      console.error(`[DB] ❌ Ошибка addTagsToAiItem("${contextCode}", "${itemFullName}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Удалить теги у AI Item
+   * @param {string} contextCode - Контекстный код
+   * @param {string} itemFullName - full_name AI Item
+   * @param {Array<string>} tagCodes - Массив кодов тегов
+   * @returns {Promise<Array>} Обновлённый массив тегов
+   */
+  async removeTagsFromAiItem(contextCode, itemFullName, tagCodes) {
+    try {
+      // Получаем id тегов по кодам
+      const tagsResult = await this.pgClient.query(`
+        SELECT id FROM public.tag
+        WHERE context_code = $1 AND code = ANY($2)
+      `, [contextCode, tagCodes]);
+
+      const tagIds = tagsResult.rows.map(r => r.id);
+
+      if (tagIds.length > 0) {
+        await this.pgClient.query(`
+          DELETE FROM public.ai_item_tag
+          WHERE ai_item_full_name = $1 
+            AND ai_item_context_code = $2 
+            AND tag_id = ANY($3)
+        `, [itemFullName, contextCode, tagIds]);
+      }
+
+      return await this.getAiItemTags(contextCode, itemFullName);
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка removeTagsFromAiItem("${contextCode}", "${itemFullName}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Синхронизировать теги AI Item (заменить все)
+   * @param {string} contextCode - Контекстный код
+   * @param {string} itemFullName - full_name AI Item
+   * @param {Array<string>} tagCodes - Массив кодов тегов
+   * @returns {Promise<Array>} Обновлённый массив тегов
+   */
+  async syncAiItemTags(contextCode, itemFullName, tagCodes) {
+    try {
+      // Проверяем существование AI Item
+      const aiItem = await this.pgClient.query(`
+        SELECT full_name FROM public.ai_item
+        WHERE full_name = $1 AND context_code = $2
+      `, [itemFullName, contextCode]);
+
+      if (aiItem.rows.length === 0) {
+        const error = new Error(`AI Item not found: ${itemFullName}`);
+        error.code = 'AI_ITEM_NOT_FOUND';
+        throw error;
+      }
+
+      // Удаляем все текущие связи
+      await this.pgClient.query(`
+        DELETE FROM public.ai_item_tag
+        WHERE ai_item_full_name = $1 AND ai_item_context_code = $2
+      `, [itemFullName, contextCode]);
+
+      // Если массив пуст — просто возвращаем пустой список
+      if (tagCodes.length === 0) {
+        return [];
+      }
+
+      // Получаем id тегов по кодам
+      const tagsResult = await this.pgClient.query(`
+        SELECT id, code FROM public.tag
+        WHERE context_code = $1 AND code = ANY($2)
+      `, [contextCode, tagCodes]);
+
+      const foundCodes = tagsResult.rows.map(r => r.code);
+      const notFoundCodes = tagCodes.filter(c => !foundCodes.includes(c));
+
+      if (notFoundCodes.length > 0) {
+        const error = new Error(`Tags not found: ${notFoundCodes.join(', ')}`);
+        error.code = 'TAGS_NOT_FOUND';
+        error.notFoundCodes = notFoundCodes;
+        throw error;
+      }
+
+      // Добавляем новые связи
+      for (const tag of tagsResult.rows) {
+        await this.pgClient.query(`
+          INSERT INTO public.ai_item_tag (ai_item_full_name, ai_item_context_code, tag_id)
+          VALUES ($1, $2, $3)
+        `, [itemFullName, contextCode, tag.id]);
+      }
+
+      return await this.getAiItemTags(contextCode, itemFullName);
+    } catch (error) {
+      if (error.code === 'AI_ITEM_NOT_FOUND' || error.code === 'TAGS_NOT_FOUND') throw error;
+      console.error(`[DB] ❌ Ошибка syncAiItemTags("${contextCode}", "${itemFullName}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Проверить существование AI Item
+   * @param {string} contextCode - Контекстный код
+   * @param {string} itemFullName - full_name AI Item
+   * @returns {Promise<boolean>} true если существует
+   */
+  async aiItemExists(contextCode, itemFullName) {
+    try {
+      const result = await this.pgClient.query(`
+        SELECT 1 FROM public.ai_item
+        WHERE full_name = $1 AND context_code = $2
+        LIMIT 1
+      `, [itemFullName, contextCode]);
+
+      return result.rows.length > 0;
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка aiItemExists("${contextCode}", "${itemFullName}"):`, error);
+      throw error;
+    }
+  }
+
 }
 
 module.exports = DbService; 
