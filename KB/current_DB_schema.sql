@@ -1,53 +1,4 @@
-create table public.documents
-(
-    id        bigserial
-        primary key,
-    content   text,
-    metadata  jsonb,
-    embedding vector(1536)
-);
-
-alter table public.documents
-    owner to postgres;
-
-grant select, update, usage on sequence public.documents_id_seq to anon;
-
-grant select, update, usage on sequence public.documents_id_seq to authenticated;
-
-grant select, update, usage on sequence public.documents_id_seq to service_role;
-
-grant delete, insert, references, select, trigger, truncate, update on public.documents to anon;
-
-grant delete, insert, references, select, trigger, truncate, update on public.documents to authenticated;
-
-grant delete, insert, references, select, trigger, truncate, update on public.documents to service_role;
-
-create table public.documents384
-(
-    id        bigserial
-        primary key,
-    file_name text,
-    content   text,
-    metadata  jsonb,
-    embedding vector(384)
-);
-
-alter table public.documents384
-    owner to postgres;
-
-grant select, update, usage on sequence public.documents384_id_seq to anon;
-
-grant select, update, usage on sequence public.documents384_id_seq to authenticated;
-
-grant select, update, usage on sequence public.documents384_id_seq to service_role;
-
-grant delete, insert, references, select, trigger, truncate, update on public.documents384 to anon;
-
-grant delete, insert, references, select, trigger, truncate, update on public.documents384 to authenticated;
-
-grant delete, insert, references, select, trigger, truncate, update on public.documents384 to service_role;
-
-create table public.file_info
+create table if not exists public.file_info
 (
     id           serial
         primary key,
@@ -74,7 +25,7 @@ grant delete, insert, references, select, trigger, truncate, update on public.fi
 
 grant delete, insert, references, select, trigger, truncate, update on public.file_info to service_role;
 
-create table public.files
+create table if not exists public.files
 (
     id           uuid      default gen_random_uuid() not null
         primary key,
@@ -89,7 +40,7 @@ create table public.files
 alter table public.files
     owner to postgres;
 
-create table public.ai_item
+create table if not exists public.ai_item
 (
     id           serial
         primary key,
@@ -124,10 +75,10 @@ grant select, update, usage on sequence public.ai_item_id_seq to authenticated;
 
 grant select, update, usage on sequence public.ai_item_id_seq to service_role;
 
-create index idx_ai_item_context_code
+create index if not exists idx_ai_item_context_code
     on public.ai_item (context_code);
 
-create index idx_ai_item_full_name
+create index if not exists idx_ai_item_full_name
     on public.ai_item (full_name);
 
 grant delete, insert, references, select, trigger, truncate, update on public.ai_item to anon;
@@ -136,7 +87,7 @@ grant delete, insert, references, select, trigger, truncate, update on public.ai
 
 grant delete, insert, references, select, trigger, truncate, update on public.ai_item to service_role;
 
-create table public.chunk_vector
+create table if not exists public.chunk_vector
 (
     id              uuid                     default gen_random_uuid() not null
         primary key,
@@ -172,7 +123,7 @@ comment on column public.chunk_vector.ai_item_id is 'Ссылка на элем�
 alter table public.chunk_vector
     owner to postgres;
 
-create table public.chunks_info
+create table if not exists public.chunks_info
 (
     id          uuid      default gen_random_uuid() not null
         primary key,
@@ -192,25 +143,25 @@ grant delete, insert, references, select, trigger, truncate, update on public.ch
 
 grant delete, insert, references, select, trigger, truncate, update on public.chunks_info to service_role;
 
-create index chunk_vector_created_at_index
+create index if not exists chunk_vector_created_at_index
     on public.chunk_vector (created_at desc);
 
-create index idx_chunk_vector_ai_item_id
+create index if not exists idx_chunk_vector_ai_item_id
     on public.chunk_vector (ai_item_id);
 
-create index idx_chunk_vector_embedding
+create index if not exists idx_chunk_vector_embedding
     on public.chunk_vector using ivfflat (embedding public.vector_cosine_ops);
 
-create index idx_chunk_vector_file_id
+create index if not exists idx_chunk_vector_file_id
     on public.chunk_vector (file_id);
 
-create index idx_chunk_vector_level
+create index if not exists idx_chunk_vector_level
     on public.chunk_vector (level);
 
-create index idx_chunk_vector_parent_chunk_id
+create index if not exists idx_chunk_vector_parent_chunk_id
     on public.chunk_vector (parent_chunk_id);
 
-create index idx_chunk_vector_type
+create index if not exists idx_chunk_vector_type
     on public.chunk_vector (type);
 
 grant delete, insert, references, select, trigger, truncate, update on public.chunk_vector to anon;
@@ -219,7 +170,7 @@ grant delete, insert, references, select, trigger, truncate, update on public.ch
 
 grant delete, insert, references, select, trigger, truncate, update on public.chunk_vector to service_role;
 
-create index idx_files_context_code
+create index if not exists idx_files_context_code
     on public.files (context_code);
 
 grant delete, insert, references, select, trigger, truncate, update on public.files to anon;
@@ -228,88 +179,7 @@ grant delete, insert, references, select, trigger, truncate, update on public.fi
 
 grant delete, insert, references, select, trigger, truncate, update on public.files to service_role;
 
-create table public.rag_documents
-(
-    id           serial
-        primary key,
-    filename     text                                             not null,
-    context_code text                     default 'UNKNOWN'::text not null,
-    created_at   timestamp with time zone default CURRENT_TIMESTAMP,
-    modified_at  timestamp with time zone default CURRENT_TIMESTAMP,
-    chunks_count integer                  default 0
-);
-
-alter table public.rag_documents
-    owner to postgres;
-
-grant select, update, usage on sequence public.rag_documents_id_seq to anon;
-
-grant select, update, usage on sequence public.rag_documents_id_seq to authenticated;
-
-grant select, update, usage on sequence public.rag_documents_id_seq to service_role;
-
-create table public.rag_chunks
-(
-    id            uuid default gen_random_uuid() not null
-        primary key,
-    document_id   integer
-        references public.rag_documents
-            on delete cascade,
-    chunk_content text                           not null,
-    chunk_index   integer                        not null,
-    embedding     vector(1536),
-    unique (document_id, chunk_index)
-);
-
-alter table public.rag_chunks
-    owner to postgres;
-
-grant delete, insert, references, select, trigger, truncate, update on public.rag_chunks to anon;
-
-grant delete, insert, references, select, trigger, truncate, update on public.rag_chunks to authenticated;
-
-grant delete, insert, references, select, trigger, truncate, update on public.rag_chunks to service_role;
-
-grant delete, insert, references, select, trigger, truncate, update on public.rag_documents to anon;
-
-grant delete, insert, references, select, trigger, truncate, update on public.rag_documents to authenticated;
-
-grant delete, insert, references, select, trigger, truncate, update on public.rag_documents to service_role;
-
-create table public.tasks
-(
-    id         serial
-        primary key,
-    title      varchar(255) not null,
-    status     boolean   default false,
-    user_id    uuid
-        references ??? (),
-    created_at timestamp default now()
-);
-
-alter table public.tasks
-    owner to postgres;
-
-grant select, update, usage on sequence public.tasks_id_seq to anon;
-
-grant select, update, usage on sequence public.tasks_id_seq to authenticated;
-
-grant select, update, usage on sequence public.tasks_id_seq to service_role;
-
-create policy "Users can manage their own tasks" on public.tasks
-    as permissive
-    for all
-    to authenticated
-    using (auth.uid() = user_id)
-    with check (auth.uid() = user_id);
-
-grant delete, insert, references, select, trigger, truncate, update on public.tasks to anon;
-
-grant delete, insert, references, select, trigger, truncate, update on public.tasks to authenticated;
-
-grant delete, insert, references, select, trigger, truncate, update on public.tasks to service_role;
-
-create table public.ai_comment
+create table if not exists public.ai_comment
 (
     id           serial
         primary key,
@@ -330,7 +200,7 @@ grant select, update, usage on sequence public.ai_comment_id_seq to authenticate
 
 grant select, update, usage on sequence public.ai_comment_id_seq to service_role;
 
-create index idx_ai_comment_context_full_name
+create index if not exists idx_ai_comment_context_full_name
     on public.ai_comment (context_code, full_name);
 
 grant delete, insert, references, select, trigger, truncate, update on public.ai_comment to anon;
@@ -339,7 +209,7 @@ grant delete, insert, references, select, trigger, truncate, update on public.ai
 
 grant delete, insert, references, select, trigger, truncate, update on public.ai_comment to service_role;
 
-create table public.link_type
+create table if not exists public.link_type
 (
     id          serial
         primary key,
@@ -373,7 +243,7 @@ grant delete, insert, references, select, trigger, truncate, update on public.li
 
 grant delete, insert, references, select, trigger, truncate, update on public.link_type to service_role;
 
-create table public.link
+create table if not exists public.link
 (
     id                serial
         primary key,
@@ -382,7 +252,7 @@ create table public.link
     target            text    not null,
     link_type_id      integer not null
         references public.link_type,
-    file_id           integer,
+    file_id           uuid,
     source_ai_item_id uuid,
     target_ai_item_id uuid,
     created_at        timestamp default CURRENT_TIMESTAMP,
@@ -398,19 +268,19 @@ grant select, update, usage on sequence public.link_id_seq to authenticated;
 
 grant select, update, usage on sequence public.link_id_seq to service_role;
 
-create index idx_link_context_source
+create index if not exists idx_link_context_source
     on public.link (context_code, source);
 
-create index idx_link_context_target
+create index if not exists idx_link_context_target
     on public.link (context_code, target);
 
-create index idx_link_context_type
+create index if not exists idx_link_context_type
     on public.link (context_code, link_type_id);
 
-create index idx_link_context_target_type
+create index if not exists idx_link_context_target_type
     on public.link (context_code, target, link_type_id);
 
-create unique index idx_link_unique
+create unique index if not exists idx_link_unique
     on public.link (context_code, source, target, link_type_id);
 
 create trigger trg_link_updated_at
@@ -425,40 +295,77 @@ grant delete, insert, references, select, trigger, truncate, update on public.li
 
 grant delete, insert, references, select, trigger, truncate, update on public.link to service_role;
 
-
--------------------------------------------------------------
---- AGENT-SCRIPT
--------------------------------------------------------------
-
-CREATE TABLE public.agent_script (
-    id serial PRIMARY KEY,
-    context_code text NOT NULL,
-    question text NOT NULL,
-    script text NOT NULL,
-    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-    usage_count int DEFAULT 0,
-    is_valid boolean DEFAULT false,
-    last_result jsonb DEFAULT NULL
+create table if not exists public.agent_script
+(
+    id           serial
+        primary key,
+    context_code text not null,
+    question     text not null,
+    script       text not null,
+    created_at   timestamp with time zone default CURRENT_TIMESTAMP,
+    updated_at   timestamp with time zone default CURRENT_TIMESTAMP,
+    usage_count  integer                  default 0,
+    is_valid     boolean                  default false
 );
 
-CREATE UNIQUE INDEX idx_agent_script_unique 
-    ON public.agent_script (context_code, question);
+alter table public.agent_script
+    owner to postgres;
 
-CREATE INDEX idx_agent_script_question_fts 
-    ON public.agent_script USING gin (to_tsvector('russian', question));
+grant select, update, usage on sequence public.agent_script_id_seq to anon;
 
--- Функция (если ещё нет в БД)
-CREATE OR REPLACE FUNCTION public.update_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+grant select, update, usage on sequence public.agent_script_id_seq to authenticated;
 
--- Триггер на agent_script
-CREATE TRIGGER trg_agent_script_updated_at
-    BEFORE UPDATE ON public.agent_script
-    FOR EACH ROW
-    EXECUTE PROCEDURE public.update_updated_at();
+grant select, update, usage on sequence public.agent_script_id_seq to service_role;
+
+create unique index if not exists idx_agent_script_unique
+    on public.agent_script (context_code, question);
+
+create index if not exists idx_agent_script_question_fts
+    on public.agent_script using gin (to_tsvector('russian'::regconfig, question));
+
+create trigger trg_agent_script_updated_at
+    before update
+    on public.agent_script
+    for each row
+execute procedure public.update_updated_at();
+
+grant delete, insert, references, select, trigger, truncate, update on public.agent_script to anon;
+
+grant delete, insert, references, select, trigger, truncate, update on public.agent_script to authenticated;
+
+grant delete, insert, references, select, trigger, truncate, update on public.agent_script to service_role;
+
+
+
+CREATE TABLE IF NOT EXISTS public.tag (
+    id           SERIAL PRIMARY KEY,
+    context_code TEXT NOT NULL DEFAULT 'DEFAULT',
+    code         TEXT NOT NULL,
+    name         TEXT NOT NULL,
+    description  TEXT,
+    created_at   TIMESTAMPTZ DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ DEFAULT NOW(),
+
+    CONSTRAINT tag_context_code_unique UNIQUE (context_code, code)
+);
+
+CREATE TRIGGER trg_tag_updated_at
+    BEFORE UPDATE ON public.tag
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+CREATE TABLE IF NOT EXISTS public.ai_item_tag (
+    ai_item_full_name    TEXT NOT NULL,
+    ai_item_context_code TEXT NOT NULL,
+    tag_id               INTEGER NOT NULL REFERENCES public.tag (id),
+
+    created_at           TIMESTAMPTZ DEFAULT NOW(),
+
+    PRIMARY KEY (ai_item_full_name, ai_item_context_code, tag_id),
+
+    CONSTRAINT fk_ai_item_tag_ai_item
+        FOREIGN KEY (ai_item_full_name, ai_item_context_code)
+            REFERENCES public.ai_item (full_name, context_code)
+);
+
+CREATE INDEX idx_ai_item_tag_ai_item_full_name_context ON public.ai_item_tag (ai_item_full_name, ai_item_context_code);
+CREATE INDEX idx_ai_item_tag_tag_id                    ON public.ai_item_tag (tag_id);

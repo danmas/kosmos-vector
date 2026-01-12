@@ -60,6 +60,10 @@ tags:
       Управление промптами для LLM.
       Промпты хранятся глобально в файле prompts.json и применяются ко всем контекстам.
       Изменения сохраняются в файловую систему и персистентны между перезапусками.
+  - name: Tags
+    description: |
+      Управление тегами для классификации и группировки AiItems.
+      Теги изолированы по context-code.
 
 components:
   schemas:
@@ -292,6 +296,140 @@ components:
           type: string
           description: Текст комментария
           example: "Этот метод обрабатывает HTTP запросы"
+
+    # ────────────────────────────────────── Tags
+    Tag:
+      type: object
+      required: [id, code, name, created_at]
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор тега
+          example: 1
+        code:
+          type: string
+          description: Уникальный код тега в рамках context-code
+          example: "deprecated"
+        name:
+          type: string
+          description: Название тега
+          example: "Устаревший код"
+        description:
+          type: string
+          nullable: true
+          description: Описание тега
+          example: "Код, который планируется удалить или переработать"
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания тега
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время последнего обновления тега
+
+    TagCreateRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Уникальный код тега (латиница, числа, дефисы, подчёркивания)
+          example: "deprecated"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Название тега
+          example: "Устаревший код"
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Описание тега
+          example: "Код, который планируется удалить или переработать"
+
+    TagUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Новое название тега
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Новое описание тега
+      minProperties: 1
+
+    TagListResponse:
+      type: object
+      required: [success, tags]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        tags:
+          type: array
+          items: { $ref: '#/components/schemas/Tag' }
+          description: Список всех тегов для указанного context-code
+
+    TagResponse:
+      type: object
+      required: [success, tag]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        tag:
+          $ref: '#/components/schemas/Tag'
+
+    TagItemsResponse:
+      type: object
+      required: [success, tag, items]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        tag:
+          $ref: '#/components/schemas/Tag'
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/AiItemSummary' }
+          description: Список AiItems с данным тегом
+
+    AiItemTagsResponse:
+      type: object
+      required: [success, itemId, tags]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        itemId:
+          type: string
+          description: ID AiItem (full_name)
+          example: "utils.fetchData"
+        tags:
+          type: array
+          items: { $ref: '#/components/schemas/Tag' }
+          description: Список тегов, связанных с AiItem
+
+    AiItemTagsRequest:
+      type: object
+      required: [tagCodes]
+      properties:
+        tagCodes:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: Массив кодов тегов для добавления/удаления
+          example: ["deprecated", "needs-review", "critical"]
 
     # ────────────────────────────────────── Статистика
     TypeStat:
@@ -1428,6 +1566,170 @@ paths:
                         example: "Comment deleted successfully for item: utils.fetchData"
         '404':
           description: Комментарий не найден для данного AiItem
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/items/{id}/tags:
+    get:
+      tags: [Tags]
+      summary: Получить теги для AiItem
+      description: |
+        Возвращает список всех тегов, связанных с указанным AiItem.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID AiItem (full_name)
+          schema: { type: string }
+          example: "utils.fetchData"
+      responses:
+        '200':
+          description: Список тегов найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AiItemTagsResponse' }
+        '404':
+          description: AiItem не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    post:
+      tags: [Tags]
+      summary: Добавить теги к AiItem (bulk)
+      description: |
+        Добавляет один или несколько тегов к указанному AiItem.
+        Если тег уже связан с AiItem, он будет проигнорирован (idempotent).
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID AiItem (full_name)
+          schema: { type: string }
+          example: "utils.fetchData"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AiItemTagsRequest' }
+            example:
+              tagCodes: ["deprecated", "needs-review"]
+      responses:
+        '200':
+          description: Теги успешно добавлены
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AiItemTagsResponse' }
+        '400':
+          description: Неверный запрос (пустой массив или некорректные коды тегов)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '404':
+          description: AiItem или один из тегов не найдены
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    delete:
+      tags: [Tags]
+      summary: Удалить теги у AiItem (bulk)
+      description: |
+        Удаляет один или несколько тегов у указанного AiItem.
+        Если тег не связан с AiItem, он будет проигнорирован (idempotent).
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID AiItem (full_name)
+          schema: { type: string }
+          example: "utils.fetchData"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AiItemTagsRequest' }
+            example:
+              tagCodes: ["deprecated", "needs-review"]
+      responses:
+        '200':
+          description: Теги успешно удалены
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AiItemTagsResponse' }
+        '400':
+          description: Неверный запрос (пустой массив)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '404':
+          description: AiItem не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    put:
+      tags: [Tags]
+      summary: Синхронизировать теги AiItem (заменить все)
+      description: |
+        Полностью заменяет все теги AiItem на указанный список.
+        Если массив пуст, все теги будут удалены.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID AiItem (full_name)
+          schema: { type: string }
+          example: "utils.fetchData"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AiItemTagsRequest' }
+            example:
+              tagCodes: ["critical", "reviewed"]
+      responses:
+        '200':
+          description: Теги успешно синхронизированы
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AiItemTagsResponse' }
+        '400':
+          description: Неверный запрос (некорректные коды тегов)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '404':
+          description: AiItem или один из тегов не найдены
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -2700,6 +3002,238 @@ paths:
                 $ref: '#/components/schemas/PromptsConfigResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
+
+  # ────────────────────────────────────── TAGS
+  /api/tags:
+    get:
+      tags: [Tags]
+      summary: Получить список всех тегов
+      description: |
+        Возвращает список всех тегов для указанного context-code.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      responses:
+        '200':
+          description: Список тегов
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TagListResponse' }
+        '400':
+          description: Отсутствует context-code
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    post:
+      tags: [Tags]
+      summary: Создать новый тег
+      description: |
+        Создает новый тег с указанным кодом, названием и опциональным описанием.
+        Код тега должен быть уникальным в рамках context-code.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TagCreateRequest' }
+            example:
+              code: "deprecated"
+              name: "Устаревший код"
+              description: "Код, который планируется удалить или переработать"
+      responses:
+        '201':
+          description: Тег успешно создан
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TagResponse' }
+        '400':
+          description: Неверные данные запроса
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '409':
+          description: Тег с таким кодом уже существует
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/tags/{code}:
+    get:
+      tags: [Tags]
+      summary: Получить тег по коду
+      description: |
+        Возвращает информацию о теге по его коду для указанного context-code.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: code
+          in: path
+          required: true
+          description: Код тега
+          schema:
+            type: string
+          example: "deprecated"
+      responses:
+        '200':
+          description: Тег найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TagResponse' }
+        '404':
+          description: Тег не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    put:
+      tags: [Tags]
+      summary: Обновить тег
+      description: |
+        Обновляет название и/или описание тега.
+        Код тега изменить нельзя.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: code
+          in: path
+          required: true
+          description: Код тега
+          schema:
+            type: string
+          example: "deprecated"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TagUpdateRequest' }
+            example:
+              name: "Устаревший код (переработать)"
+              description: "Код требует рефакторинга или удаления"
+      responses:
+        '200':
+          description: Тег успешно обновлен
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TagResponse' }
+        '400':
+          description: Неверные данные запроса
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '404':
+          description: Тег не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    delete:
+      tags: [Tags]
+      summary: Удалить тег
+      description: |
+        Удаляет тег и все его связи с AiItems.
+        Если тег используется AiItem-ами и параметр force=false (по умолчанию),
+        возвращает ошибку 409. Для принудительного удаления используйте force=true.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: code
+          in: path
+          required: true
+          description: Код тега
+          schema:
+            type: string
+          example: "deprecated"
+        - name: force
+          in: query
+          required: false
+          description: Принудительное удаление (даже если тег используется)
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Тег успешно удален
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Tag deleted successfully"
+        '404':
+          description: Тег не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '409':
+          description: Тег используется AiItem-ами, используйте force=true для принудительного удаления
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/tags/{code}/items:
+    get:
+      tags: [Tags]
+      summary: Получить AiItems с указанным тегом
+      description: |
+        Возвращает список всех AiItems, которые имеют указанный тег.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: code
+          in: path
+          required: true
+          description: Код тега
+          schema:
+            type: string
+          example: "deprecated"
+      responses:
+        '200':
+          description: Список AiItems с тегом
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TagItemsResponse' }
+        '404':
+          description: Тег не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
 
   # ────────────────────────────────────── DEPRECATED (обратная совместимость)
   /api/files:
