@@ -113,7 +113,12 @@ components:
         type: { $ref: '#/components/schemas/AiItemType' }
         language: { $ref: '#/components/schemas/Language' }
         filePath: { type: string, example: "./src/utils/api.ts" }
-
+        tags:
+          type: array
+          description: Список тегов, связанных с элементом (опционально)
+          items: { $ref: '#/components/schemas/TagSummary' }
+          default: []
+          
     # ────────────────────────────────────── Граф
     GraphNode:
       type: object
@@ -328,6 +333,21 @@ components:
           format: date-time
           nullable: true
           description: Время последнего обновления тега
+
+    TagSummary:
+      type: object
+      description: Упрощённая информация о теге для списков
+      required: [id, code, name]
+      properties:
+        id:
+          type: integer
+          example: 1
+        code:
+          type: string
+          example: "deprecated"
+        name:
+          type: string
+          example: "Устаревший код"
 
     TagCreateRequest:
       type: object

@@ -638,21 +638,34 @@ module.exports = (dbService, logBuffer) => {
   // === 4. Список метаданных всех AiItems (новый контракт) ===
   router.get('/items-list', async (req, res) => {
     try {
-      // Получаем список всех уникальных full_name из ai_item (с фильтром по контексту)
-      let query = `
-        SELECT DISTINCT 
+      // Получаем список всех уникальных full_name из ai_item с тегами (с фильтром по контексту)
+      const query = `
+        SELECT 
           ai.full_name,
           ai.type,
           ai.context_code,
           f.filename,
-          f.file_url
+          f.file_url,
+          COALESCE(
+            (
+              SELECT json_agg(tag_data ORDER BY tag_data->>'name')
+              FROM (
+                SELECT json_build_object('id', t.id, 'code', t.code, 'name', t.name) as tag_data
+                FROM public.ai_item_tag ait
+                JOIN public.tag t ON t.id = ait.tag_id
+                WHERE ait.ai_item_full_name = ai.full_name 
+                  AND ait.ai_item_context_code = ai.context_code
+              ) sub
+            ),
+            '[]'::json
+          ) as tags
         FROM public.ai_item ai
         JOIN public.files f ON ai.file_id = f.id
         WHERE ai.context_code = $1
+        GROUP BY ai.full_name, ai.type, ai.context_code, f.filename, f.file_url
+        ORDER BY ai.full_name
       `;
       const params = [req.contextCode];
-
-      query += ` ORDER BY ai.full_name`;
 
       const result = await dbService.pgClient.query(query, params);
 
@@ -664,7 +677,8 @@ module.exports = (dbService, logBuffer) => {
           id: row.full_name,                                      // строковый идентификатор по контракту
           type: row.type || 'unknown',
           language: language,
-          filePath: row.file_url || path.join(process.cwd(), 'docs', row.filename)
+          filePath: row.file_url || path.join(process.cwd(), 'docs', row.filename),
+          tags: row.tags || []                                    // теги элемента (TagSummary[])
         };
       });
 
