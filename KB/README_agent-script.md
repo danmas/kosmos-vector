@@ -15,6 +15,9 @@ flowchart TB
     subgraph Cache [Поиск в кэше]
         Exact[Точное совпадение question]
         ExactFound{Найден?}
+        Vector[Векторный поиск по эмбеддингам]
+        VectorFound{Найден?}
+        VectorHigh{similarity >= 0.95?}
         FTS[FTS поиск похожих вопросов]
         FTSFound{Найден?}
     end
@@ -22,6 +25,7 @@ flowchart TB
     subgraph Generate [Генерация скрипта]
         LLM[callLLM с системным промптом]
         Save[Сохранение в agent_script]
+        Embed[Векторизация вопроса]
     end
     
     subgraph Execute [Выполнение]
@@ -31,17 +35,24 @@ flowchart TB
     
     subgraph Output [Ответ]
         Response["{ human, raw, scriptId, cached }"]
+        Suggestions["{ suggestions, high_confidence }"]
     end
     
     Q --> Exact
     Exact --> ExactFound
     ExactFound -->|Да| Sandbox
-    ExactFound -->|Нет| FTS
+    ExactFound -->|Нет| Vector
+    Vector --> VectorFound
+    VectorFound -->|Да| VectorHigh
+    VectorHigh -->|Да| Suggestions
+    VectorHigh -->|Нет| Suggestions
+    VectorFound -->|Нет| FTS
     FTS --> FTSFound
     FTSFound -->|Да| Sandbox
     FTSFound -->|Нет| LLM
     LLM --> Save
-    Save --> Sandbox
+    Save --> Embed
+    Embed --> Sandbox
     Sandbox --> Humanize
     Humanize --> Response
 ```
@@ -176,6 +187,38 @@ ORDER BY rank DESC, usage_count DESC
 LIMIT 1
 ```
 
+#### 2.3. Векторный поиск по эмбеддингам (searchSimilarQuestions)
+
+Если точное совпадение не найдено, выполняется векторный поиск по эмбеддингам вопросов. Использует cosine similarity для поиска семантически похожих вопросов:
+
+```sql
+SELECT 
+  ase.script_id AS id,
+  as_script.question,
+  as_script.script,
+  as_script.usage_count,
+  as_script.is_valid,
+  as_script.last_result,
+  1 - (ase.question_embedding <=> $1::vector) AS similarity
+FROM public.agent_script_embedding ase
+JOIN public.agent_script as_script ON ase.script_id = as_script.id
+WHERE as_script.context_code = $2
+  AND as_script.is_valid = true
+  AND (1 - (ase.question_embedding <=> $1::vector)) >= $3
+ORDER BY similarity DESC
+LIMIT $4
+```
+
+**Логика работы:**
+- Если `similarity >= 0.95` → возвращается 1 suggestion с `high_confidence: true` (рекомендация к использованию)
+- Если `similarity >= threshold (0.8)` → возвращается список suggestions с `high_confidence: false` (пользователь выбирает)
+- Если векторный поиск не дал результатов → используется FTS поиск как fallback
+
+**Преимущества:**
+- Семантический поиск (понимает синонимы и перефразировки)
+- Использует IVFFlat индекс для быстрого поиска
+- Автоматическая векторизация при сохранении нового скрипта
+
 **Порог релевантности:** по умолчанию `threshold = 0.1`. Если ранг совпадения ниже порога, скрипт не используется.
 
 **Логика поиска:**
@@ -197,8 +240,11 @@ LIMIT 1
 |-------|----------|
 | `queryRaw(sql, params)` | Выполнение SELECT и WITH (CTE) запросов |
 | `getAgentScriptByExactQuestion(contextCode, question)` | Поиск скрипта по точному совпадению вопроса (используется первым для быстрого кэширования) |
-| `fuzzySearchScripts(contextCode, question, threshold)` | FTS-поиск похожих скриптов (используется если точное совпадение не найдено) |
-| `saveAgentScript(contextCode, question, script, isValid)` | Сохранение скрипта |
+| `searchSimilarQuestions(contextCode, embedding, limit, threshold)` | Векторный поиск похожих вопросов по эмбеддингам (cosine similarity) |
+| `saveQuestionEmbedding(scriptId, embedding)` | Сохранение эмбеддинга вопроса для векторного поиска |
+| `getQuestionEmbedding(scriptId)` | Получение эмбеддинга вопроса по script_id |
+| `fuzzySearchScripts(contextCode, question, threshold)` | FTS-поиск похожих скриптов (fallback если векторный поиск не дал результатов) |
+| `saveAgentScript(contextCode, question, script, isValid)` | Сохранение скрипта (автоматически векторизует вопрос) |
 | `incrementUsage(scriptId)` | Инкремент счётчика использования |
 
 ## Таблица agent_script
@@ -236,6 +282,111 @@ CREATE INDEX idx_agent_script_question_fts
 | `usage_count` | int | Счётчик использования скрипта (инкрементируется при каждом использовании из кэша) |
 | `is_valid` | boolean | Флаг валидности скрипта (false если скрипт привёл к ошибке при выполнении) |
 | `last_result` | jsonb | Последний результат выполнения скрипта в формате: `{ raw: [...], human: "...", executed_at: "..." }` |
+
+## Таблица agent_script_embedding
+
+Таблица для хранения эмбеддингов вопросов для векторного поиска:
+
+```sql
+CREATE TABLE public.agent_script_embedding (
+    id serial PRIMARY KEY,
+    script_id int NOT NULL REFERENCES public.agent_script(id) ON DELETE CASCADE,
+    question_embedding vector(1536) NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx_agent_script_embedding_script_id 
+    ON public.agent_script_embedding (script_id);
+
+CREATE INDEX idx_agent_script_embedding_vector 
+    ON public.agent_script_embedding 
+    USING ivfflat (question_embedding vector_cosine_ops)
+    WITH (lists = 100);
+```
+
+### Поля таблицы
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | serial | Уникальный идентификатор эмбеддинга |
+| `script_id` | int | Ссылка на скрипт в таблице agent_script |
+| `question_embedding` | vector(1536) | Вектор эмбеддинга вопроса (1536 измерений) |
+| `created_at` | timestamp | Дата и время создания эмбеддинга |
+
+**Примечание:** Эмбеддинг создаётся автоматически при сохранении нового скрипта через `saveAgentScript`.
+
+## Настройки
+
+Настройки векторного поиска находятся в `config.json`:
+
+```json
+{
+  "NATURAL_QUERY_SUGGEST_LIMIT": 5,
+  "NATURAL_QUERY_SIMILARITY_THRESHOLD": 0.8,
+  "NATURAL_QUERY_AUTO_USE_THRESHOLD": 0.95
+}
+```
+
+| Параметр | Описание | По умолчанию |
+|----------|----------|--------------|
+| `NATURAL_QUERY_SUGGEST_LIMIT` | Максимальное количество suggestions в ответе | 5 |
+| `NATURAL_QUERY_SIMILARITY_THRESHOLD` | Минимальный порог similarity для включения в результаты | 0.8 |
+| `NATURAL_QUERY_AUTO_USE_THRESHOLD` | Порог similarity для high_confidence (>= 0.95 возвращает 1 suggestion) | 0.95 |
+
+## Эндпоинт /api/v1/natural-query/suggest
+
+Отдельный эндпоинт для получения списка похожих вопросов без выполнения скрипта:
+
+**POST** `/api/v1/natural-query/suggest`
+
+**Request Body:**
+```json
+{
+  "question": "Какие функции вызывают другие функции?",
+  "contextCode": "CARL"
+}
+```
+
+**Query Parameters:**
+- `limit` (optional) - Максимальное количество результатов (по умолчанию из config.json)
+- `threshold` (optional) - Минимальный порог similarity (по умолчанию из config.json)
+
+**Response:**
+```json
+{
+  "success": true,
+  "high_confidence": true,
+  "suggestions": [
+    {
+      "id": 42,
+      "question": "Какие типы связей используются в проекте?",
+      "similarity": 0.97,
+      "usage_count": 15,
+      "is_valid": true,
+      "last_result": {
+        "raw": [{ "code": "calls", "label": "calls" }],
+        "human": "В проекте используются следующие типы связей...",
+        "executed_at": "2024-01-15T10:30:00.000Z"
+      }
+    }
+  ]
+}
+```
+
+## Миграция существующих вопросов
+
+Для векторизации существующих вопросов в таблице `agent_script` используйте скрипт миграции:
+
+```bash
+node tmp/migrate_question_embeddings.js
+```
+
+Скрипт:
+1. Находит все скрипты без эмбеддингов
+2. Векторизует каждый вопрос через `embeddings.embedQuery()`
+3. Сохраняет эмбеддинги в `agent_script_embedding`
+
+**Примечание:** Новые скрипты автоматически векторизуются при сохранении через `saveAgentScript`.
 
 **Примечание:** Поле `last_result` автоматически обновляется при каждом успешном выполнении скрипта и позволяет быстро получить последний результат без повторного выполнения.
 

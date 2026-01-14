@@ -2663,6 +2663,116 @@ class DbService {
     }
   }
 
+  /**
+   * Сохранение эмбеддинга вопроса для векторного поиска
+   * @param {number} scriptId - ID скрипта
+   * @param {Array<number>} embedding - Вектор эмбеддинга (1536 элементов)
+   * @returns {Promise<Object>} Сохранённая запись
+   */
+  async saveQuestionEmbedding(scriptId, embedding) {
+    try {
+      if (!Array.isArray(embedding) || embedding.length !== 1536) {
+        throw new Error(`Embedding must be an array of 1536 numbers, got: ${Array.isArray(embedding) ? embedding.length : typeof embedding}`);
+      }
+
+      const vectorString = `[${embedding.join(',')}]`;
+
+      const result = await this.pgClient.query(`
+        INSERT INTO public.agent_script_embedding (script_id, question_embedding)
+        VALUES ($1, $2)
+        ON CONFLICT (script_id) 
+        DO UPDATE SET question_embedding = $2, created_at = CURRENT_TIMESTAMP
+        RETURNING id, script_id, created_at
+      `, [scriptId, vectorString]);
+
+      return result.rows[0];
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка saveQuestionEmbedding(${scriptId}):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Векторный поиск похожих вопросов по cosine similarity
+   * @param {string} contextCode - Контекстный код
+   * @param {Array<number>} embedding - Вектор эмбеддинга вопроса пользователя
+   * @param {number} limit - Максимальное количество результатов
+   * @param {number} threshold - Минимальный порог similarity (0.0 - 1.0)
+   * @returns {Promise<Array>} Массив похожих скриптов с similarity
+   */
+  async searchSimilarQuestions(contextCode, embedding, limit = 5, threshold = 0.8) {
+    try {
+      if (!Array.isArray(embedding) || embedding.length !== 1536) {
+        throw new Error(`Embedding must be an array of 1536 numbers, got: ${Array.isArray(embedding) ? embedding.length : typeof embedding}`);
+      }
+
+      const vectorString = `[${embedding.join(',')}]`;
+
+      const result = await this.pgClient.query(`
+        SELECT 
+          ase.script_id AS id,
+          as_script.question,
+          as_script.script,
+          as_script.usage_count,
+          as_script.is_valid,
+          as_script.last_result,
+          1 - (ase.question_embedding <=> $1::vector) AS similarity
+        FROM public.agent_script_embedding ase
+        JOIN public.agent_script as_script ON ase.script_id = as_script.id
+        WHERE as_script.context_code = $2
+          AND as_script.is_valid = true
+          AND (1 - (ase.question_embedding <=> $1::vector)) >= $3
+        ORDER BY similarity DESC
+        LIMIT $4
+      `, [vectorString, contextCode, threshold, limit]);
+
+      return result.rows.map(row => ({
+        id: row.id,
+        question: row.question,
+        script: row.script,
+        usage_count: row.usage_count,
+        is_valid: row.is_valid,
+        last_result: row.last_result,
+        similarity: parseFloat(row.similarity)
+      }));
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка searchSimilarQuestions("${contextCode}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Получение эмбеддинга вопроса по script_id
+   * @param {number} scriptId - ID скрипта
+   * @returns {Promise<Array<number>|null>} Вектор эмбеддинга или null
+   */
+  async getQuestionEmbedding(scriptId) {
+    try {
+      const result = await this.pgClient.query(`
+        SELECT question_embedding
+        FROM public.agent_script_embedding
+        WHERE script_id = $1
+      `, [scriptId]);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      // PostgreSQL возвращает vector как строку в формате [1,2,3]
+      const vectorString = result.rows[0].question_embedding;
+      // Парсим строку в массив чисел
+      const embedding = vectorString
+        .replace(/[\[\]]/g, '')
+        .split(',')
+        .map(Number);
+
+      return embedding;
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка getQuestionEmbedding(${scriptId}):`, error);
+      throw error;
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // TAGS — Управление тегами для AI Items
   // ═══════════════════════════════════════════════════════════════════════════

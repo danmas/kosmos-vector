@@ -7,7 +7,18 @@ const { getScriptGenerationPrompt, getHumanizePrompt } = require('../packages/co
 
 const router = express.Router();
 
-module.exports = (dbService) => {
+// Загружаем конфигурацию
+const getConfig = () => {
+  const fs = require('fs');
+  const path = require('path');
+  const configPath = path.join(__dirname, '..', 'config.json');
+  if (fs.existsSync(configPath)) {
+    return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  }
+  return {};
+};
+
+module.exports = (dbService, embeddings) => {
   // Middleware для валидации context-code
   const validateContextCode = (req, res, next) => {
     const contextCode = req.query['context-code'] || req.query.contextCode || req.body.contextCode;
@@ -341,7 +352,64 @@ module.exports = (dbService) => {
         await dbService.incrementUsage(scriptId);
         console.log(`[NaturalQuery] Использован скрипт с точным совпадением #${scriptId}`);
       } else {
-        // Шаг 1.2: Поиск похожего скрипта в кэше через FTS
+        // Шаг 1.2: Векторный поиск похожих вопросов
+        const config = getConfig();
+        const suggestLimit = config.NATURAL_QUERY_SUGGEST_LIMIT || 5;
+        const similarityThreshold = config.NATURAL_QUERY_SIMILARITY_THRESHOLD || 0.8;
+        const autoUseThreshold = config.NATURAL_QUERY_AUTO_USE_THRESHOLD || 0.95;
+
+        try {
+          const questionVector = await embeddings.embedQuery(question);
+          const vectorResults = await dbService.searchSimilarQuestions(
+            contextCode, 
+            questionVector, 
+            suggestLimit, 
+            similarityThreshold
+          );
+
+          if (vectorResults.length > 0) {
+            const bestMatch = vectorResults[0];
+            
+            // Если similarity >= 0.95, возвращаем suggestion с high_confidence
+            if (bestMatch.similarity >= autoUseThreshold) {
+              console.log(`[NaturalQuery] Найден высокоуверенный match (similarity=${bestMatch.similarity.toFixed(3)}) для скрипта #${bestMatch.id}`);
+              
+              return res.json({
+                success: true,
+                high_confidence: true,
+                suggestions: [{
+                  id: bestMatch.id,
+                  question: bestMatch.question,
+                  similarity: bestMatch.similarity,
+                  usage_count: bestMatch.usage_count,
+                  is_valid: bestMatch.is_valid,
+                  last_result: bestMatch.last_result
+                }]
+              });
+            } else {
+              // Если similarity < 0.95, но >= threshold, возвращаем список suggestions
+              console.log(`[NaturalQuery] Найдено ${vectorResults.length} похожих вопросов (лучший similarity=${bestMatch.similarity.toFixed(3)})`);
+              
+              return res.json({
+                success: true,
+                high_confidence: false,
+                suggestions: vectorResults.map(r => ({
+                  id: r.id,
+                  question: r.question,
+                  similarity: r.similarity,
+                  usage_count: r.usage_count,
+                  is_valid: r.is_valid,
+                  last_result: r.last_result
+                }))
+              });
+            }
+          }
+        } catch (vectorError) {
+          // Если векторный поиск не удался, продолжаем с FTS
+          console.error(`[NaturalQuery] Ошибка векторного поиска:`, vectorError);
+        }
+
+        // Шаг 1.3: Поиск похожего скрипта в кэше через FTS (fallback)
         const cachedScript = await dbService.fuzzySearchScripts(contextCode, question);
         
         if (cachedScript) {
@@ -417,6 +485,16 @@ module.exports = (dbService) => {
           
           if (newlineCountBefore !== newlineCountAfter) {
             console.warn(`[NaturalQuery] ⚠️  Потеря переводов строк: было ${newlineCountBefore}, стало ${newlineCountAfter}`);
+          }
+
+          // Векторизуем вопрос и сохраняем эмбеддинг
+          try {
+            const questionVector = await embeddings.embedQuery(question);
+            await dbService.saveQuestionEmbedding(scriptId, questionVector);
+            console.log(`[NaturalQuery] Эмбеддинг вопроса сохранён для скрипта #${scriptId}`);
+          } catch (embedError) {
+            // Не прерываем выполнение, если векторизация не удалась
+            console.error(`[NaturalQuery] Ошибка векторизации вопроса для скрипта #${scriptId}:`, embedError);
           }
         }
       }
@@ -564,6 +642,84 @@ module.exports = (dbService) => {
       } else {
         // Если ответ уже отправлен, логируем ошибку
         console.error('[API/NATURAL-QUERY] Критическая ошибка после отправки ответа:', error);
+      }
+    }
+  });
+
+  // POST /api/v1/natural-query/suggest — получить список похожих вопросов
+  router.post('/v1/natural-query/suggest', async (req, res) => {
+    try {
+      // Проверяем, что body существует и это объект
+      if (!req.body || typeof req.body !== 'object') {
+        return res.status(400).json({
+          success: false,
+          error: 'Request body is required and must be a JSON object'
+        });
+      }
+
+      const { question, contextCode } = req.body;
+
+      if (!question || typeof question !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: 'Field "question" is required and must be a string'
+        });
+      }
+
+      if (!contextCode || typeof contextCode !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: 'Field "contextCode" is required and must be a string'
+        });
+      }
+
+      const config = getConfig();
+      const suggestLimit = parseInt(req.query.limit) || config.NATURAL_QUERY_SUGGEST_LIMIT || 5;
+      const similarityThreshold = parseFloat(req.query.threshold) || config.NATURAL_QUERY_SIMILARITY_THRESHOLD || 0.8;
+      const autoUseThreshold = config.NATURAL_QUERY_AUTO_USE_THRESHOLD || 0.95;
+
+      // Векторизуем вопрос пользователя
+      const questionVector = await embeddings.embedQuery(question);
+      
+      // Ищем похожие вопросы
+      const vectorResults = await dbService.searchSimilarQuestions(
+        contextCode,
+        questionVector,
+        suggestLimit,
+        similarityThreshold
+      );
+
+      if (vectorResults.length === 0) {
+        return res.json({
+          success: true,
+          high_confidence: false,
+          suggestions: []
+        });
+      }
+
+      const bestMatch = vectorResults[0];
+      const highConfidence = bestMatch.similarity >= autoUseThreshold;
+
+      res.json({
+        success: true,
+        high_confidence: highConfidence,
+        suggestions: vectorResults.map(r => ({
+          id: r.id,
+          question: r.question,
+          similarity: r.similarity,
+          usage_count: r.usage_count,
+          is_valid: r.is_valid,
+          last_result: r.last_result
+        }))
+      });
+
+    } catch (error) {
+      console.error('[API/NATURAL-QUERY/SUGGEST] Ошибка:', error);
+      if (!res.headersSent) {
+        res.status(500).json({
+          success: false,
+          error: error.message || 'Internal server error'
+        });
       }
     }
   });

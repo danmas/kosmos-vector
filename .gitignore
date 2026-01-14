@@ -20,6 +20,7 @@ yarn-error.log*
 # Директории сборки
 dist/
 build/
+tmp/
 
 # Кэш
 .npm

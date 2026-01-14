@@ -267,7 +267,7 @@ const vectorStore = new PostgresVectorStore(embeddings, dbService);
 // Подключаем роуты для Natural Query Engine (agent scripts) ПЕРЕД apiRouter
 // чтобы избежать конфликта с validateContextCode middleware
 const agentScriptRoutes = require('./routes/agentScript');
-app.use('/api', agentScriptRoutes(dbService));
+app.use('/api', agentScriptRoutes(dbService, embeddings));
 
 const apiRouter = require('./routes/api')(dbService, serverLogs);
 app.use('/api', apiRouter);

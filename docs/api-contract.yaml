@@ -692,6 +692,81 @@ components:
           description: true если скрипт был из кэша, false если был сгенерирован
           example: false
 
+    NaturalQuerySuggestion:
+      type: object
+      required: [id, question, similarity, usage_count, is_valid]
+      properties:
+        id:
+          type: integer
+          description: ID скрипта
+          example: 42
+        question:
+          type: string
+          description: Текст вопроса из кэша
+          example: "Какие типы связей используются в проекте?"
+        similarity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Коэффициент похожести (cosine similarity) между вопросом пользователя и сохранённым вопросом
+          example: 0.92
+        usage_count:
+          type: integer
+          description: Количество использований скрипта
+          example: 15
+        is_valid:
+          type: boolean
+          description: Валидность скрипта (false если скрипт вызывал ошибки)
+          example: true
+        last_result:
+          type: object
+          nullable: true
+          description: Последний сохранённый результат выполнения скрипта (если есть)
+          properties:
+            raw:
+              description: Сырые данные последнего выполнения
+              oneOf:
+                - type: array
+                  items: {}
+                - type: object
+            human:
+              type: string
+              description: Человекочитаемый текст последнего выполнения
+            executed_at:
+              type: string
+              format: date-time
+              description: Время последнего выполнения скрипта
+
+    NaturalQuerySuggestResponse:
+      type: object
+      required: [success, high_confidence, suggestions]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        high_confidence:
+          type: boolean
+          description: |
+            true если найден 1 результат с similarity >= 0.95 (рекомендация к использованию),
+            false если найдено несколько результатов с similarity < 0.95 (пользователь выбирает)
+          example: true
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/NaturalQuerySuggestion'
+          description: Список похожих вопросов из кэша
+          example:
+            - id: 42
+              question: "Какие типы связей используются в проекте?"
+              similarity: 0.97
+              usage_count: 15
+              is_valid: true
+              last_result:
+                raw: [{ code: "calls", label: "calls" }]
+                human: "В проекте используются следующие типы связей..."
+                executed_at: "2024-01-15T10:30:00.000Z"
+
     AgentScript:
       type: object
       required: [id, question, script, usage_count, is_valid, created_at, updated_at]
@@ -2059,15 +2134,18 @@ paths:
         Natural Query Engine — интеллектуальный слой для анализа кодовой базы.
         
         Пользователь задаёт вопрос на естественном языке, система:
-        1. Ищет похожий вопрос в кэше через FTS (Full Text Search)
-        2. Если не найден — генерирует новый async JS-скрипт через LLM
-        3. Выполняет скрипт в sandbox (только SELECT запросы к БД)
-        4. Превращает raw данные в человекочитаемый текст через LLM
-        5. Сохраняет скрипт в кэш для повторного использования
+        1. Проверяет точное совпадение вопроса в кэше
+        2. Если не найдено — выполняет векторный поиск по эмбеддингам вопросов
+           - Если similarity >= 0.95 — возвращает suggestion с high_confidence: true
+           - Если similarity >= threshold (0.8) — возвращает список suggestions
+        3. Если векторный поиск не дал результатов — использует FTS (Full Text Search)
+        4. Если не найден — генерирует новый async JS-скрипт через LLM
+        5. Выполняет скрипт в sandbox (только SELECT запросы к БД)
+        6. Превращает raw данные в человекочитаемый текст через LLM
+        7. Сохраняет скрипт в кэш и векторизует вопрос для будущего поиска
         
-        Скрипты кэшируются в таблице agent_script и могут быть переиспользованы
-        при похожих вопросах. Скрипты можно просматривать, редактировать и удалять
-        через CRUD эндпоинты /api/agent-scripts.
+        Скрипты кэшируются в таблице agent_script, вопросы векторизуются и сохраняются
+        в agent_script_embedding для быстрого поиска похожих вопросов.
       requestBody:
         required: true
         content:
@@ -2089,6 +2167,57 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/NaturalQueryErrorResponse' }
+
+  /api/v1/natural-query/suggest:
+    post:
+      tags: [Natural Query]
+      summary: Получить список похожих вопросов из кэша
+      description: |
+        Векторный поиск похожих вопросов по эмбеддингам. Возвращает список сохранённых
+        вопросов, отсортированных по similarity (cosine similarity).
+        
+        Используется для предложения пользователю готовых вопросов перед выполнением скрипта.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NaturalQueryRequest' }
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Максимальное количество результатов (по умолчанию из config.json)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 5
+        - name: threshold
+          in: query
+          required: false
+          description: Минимальный порог similarity (0.0 - 1.0, по умолчанию из config.json)
+          schema:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 1
+            default: 0.8
+      responses:
+        '200':
+          description: Список похожих вопросов
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NaturalQuerySuggestResponse' }
+        '400':
+          description: Неверный запрос (отсутствуют обязательные поля)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500':
+          description: Ошибка векторного поиска
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
 
   /api/agent-scripts:
     get:

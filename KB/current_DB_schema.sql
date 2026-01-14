@@ -369,3 +369,25 @@ CREATE TABLE IF NOT EXISTS public.ai_item_tag (
 
 CREATE INDEX idx_ai_item_tag_ai_item_full_name_context ON public.ai_item_tag (ai_item_full_name, ai_item_context_code);
 CREATE INDEX idx_ai_item_tag_tag_id                    ON public.ai_item_tag (tag_id);
+
+-- Таблица для хранения эмбеддингов вопросов
+CREATE TABLE IF NOT EXISTS public.agent_script_embedding (
+    id serial PRIMARY KEY,
+    script_id int NOT NULL REFERENCES public.agent_script(id) ON DELETE CASCADE,
+    question_embedding vector(1536) NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Индекс для быстрого поиска по script_id
+CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_script_embedding_script_id 
+    ON public.agent_script_embedding (script_id);
+
+-- Индекс для векторного поиска (IVFFlat для cosine similarity)
+CREATE INDEX IF NOT EXISTS idx_agent_script_embedding_vector 
+    ON public.agent_script_embedding 
+    USING ivfflat (question_embedding vector_cosine_ops)
+    WITH (lists = 100);
+
+COMMENT ON TABLE public.agent_script_embedding IS 'Эмбеддинги вопросов для векторного поиска в Natural Query Engine';
+
+
