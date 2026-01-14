@@ -297,15 +297,17 @@ grant delete, insert, references, select, trigger, truncate, update on public.li
 
 create table if not exists public.agent_script
 (
-    id           serial
+    id                  serial
         primary key,
-    context_code text not null,
-    question     text not null,
-    script       text not null,
-    created_at   timestamp with time zone default CURRENT_TIMESTAMP,
-    updated_at   timestamp with time zone default CURRENT_TIMESTAMP,
-    usage_count  integer                  default 0,
-    is_valid     boolean                  default false
+    context_code        text not null,
+    question            text not null,
+    script              text not null,
+    created_at          timestamp with time zone default CURRENT_TIMESTAMP,
+    updated_at          timestamp with time zone default CURRENT_TIMESTAMP,
+    usage_count         integer                  default 0,
+    is_valid            boolean                  default false,
+    last_result         jsonb                    default null,
+    question_embedding  vector(1536)             default null
 );
 
 alter table public.agent_script
@@ -370,24 +372,15 @@ CREATE TABLE IF NOT EXISTS public.ai_item_tag (
 CREATE INDEX idx_ai_item_tag_ai_item_full_name_context ON public.ai_item_tag (ai_item_full_name, ai_item_context_code);
 CREATE INDEX idx_ai_item_tag_tag_id                    ON public.ai_item_tag (tag_id);
 
--- Таблица для хранения эмбеддингов вопросов
-CREATE TABLE IF NOT EXISTS public.agent_script_embedding (
-    id serial PRIMARY KEY,
-    script_id int NOT NULL REFERENCES public.agent_script(id) ON DELETE CASCADE,
-    question_embedding vector(1536) NOT NULL,
-    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
-);
-
--- Индекс для быстрого поиска по script_id
-CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_script_embedding_script_id 
-    ON public.agent_script_embedding (script_id);
+-- Добавление колонки embedding в таблицу agent_script (если ещё нет)
+-- ALTER TABLE public.agent_script ADD COLUMN IF NOT EXISTS question_embedding vector(1536);
 
 -- Индекс для векторного поиска (IVFFlat для cosine similarity)
-CREATE INDEX IF NOT EXISTS idx_agent_script_embedding_vector 
-    ON public.agent_script_embedding 
+CREATE INDEX IF NOT EXISTS idx_agent_script_question_embedding 
+    ON public.agent_script 
     USING ivfflat (question_embedding vector_cosine_ops)
     WITH (lists = 100);
 
-COMMENT ON TABLE public.agent_script_embedding IS 'Эмбеддинги вопросов для векторного поиска в Natural Query Engine';
+COMMENT ON COLUMN public.agent_script.question_embedding IS 'Вектор эмбеддинга вопроса для семантического поиска (1536 измерений)';
 
 

@@ -193,18 +193,18 @@ LIMIT 1
 
 ```sql
 SELECT 
-  ase.script_id AS id,
-  as_script.question,
-  as_script.script,
-  as_script.usage_count,
-  as_script.is_valid,
-  as_script.last_result,
-  1 - (ase.question_embedding <=> $1::vector) AS similarity
-FROM public.agent_script_embedding ase
-JOIN public.agent_script as_script ON ase.script_id = as_script.id
-WHERE as_script.context_code = $2
-  AND as_script.is_valid = true
-  AND (1 - (ase.question_embedding <=> $1::vector)) >= $3
+  id,
+  question,
+  script,
+  usage_count,
+  is_valid,
+  last_result,
+  1 - (question_embedding <=> $1::vector) AS similarity
+FROM public.agent_script
+WHERE context_code = $2
+  AND is_valid = true
+  AND question_embedding IS NOT NULL
+  AND (1 - (question_embedding <=> $1::vector)) >= $3
 ORDER BY similarity DESC
 LIMIT $4
 ```
@@ -384,7 +384,7 @@ node tmp/migrate_question_embeddings.js
 Скрипт:
 1. Находит все скрипты без эмбеддингов
 2. Векторизует каждый вопрос через `embeddings.embedQuery()`
-3. Сохраняет эмбеддинги в `agent_script_embedding`
+3. Сохраняет эмбеддинги в колонку `question_embedding` таблицы `agent_script`
 
 **Примечание:** Новые скрипты автоматически векторизуются при сохранении через `saveAgentScript`.
 

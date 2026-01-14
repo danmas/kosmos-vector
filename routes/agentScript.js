@@ -157,6 +157,50 @@ module.exports = (dbService, embeddings) => {
     }
   });
 
+  // POST /api/agent-scripts/:id/embed — векторизовать вопрос существующего скрипта
+  router.post('/agent-scripts/:id/embed', validateContextCode, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const scriptId = parseInt(id, 10);
+
+      if (isNaN(scriptId)) {
+        return res.status(400).json({ success: false, error: 'Invalid script ID' });
+      }
+
+      // Получаем скрипт из БД
+      const result = await dbService.pgClient.query(`
+        SELECT id, question, question_embedding
+        FROM public.agent_script
+        WHERE id = $1 AND context_code = $2
+      `, [scriptId, req.contextCode]);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Script not found' });
+      }
+
+      const scriptData = result.rows[0];
+      const hasEmbedding = scriptData.question_embedding !== null;
+
+      console.log(`[API/AGENT-SCRIPTS/:ID/EMBED] Векторизация скрипта #${scriptId}: "${scriptData.question.substring(0, 50)}..."`);
+
+      // Векторизуем вопрос
+      const questionVector = await embeddings.embedQuery(scriptData.question);
+      await dbService.saveQuestionEmbedding(scriptId, questionVector);
+
+      res.json({
+        success: true,
+        message: hasEmbedding ? 'Embedding updated' : 'Embedding created',
+        scriptId: scriptId,
+        question: scriptData.question,
+        embedding_length: questionVector.length
+      });
+
+    } catch (error) {
+      console.error('[API/AGENT-SCRIPTS/:ID/EMBED] Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // POST /api/agent-scripts/:id/execute — выполнить существующий скрипт
   router.post('/agent-scripts/:id/execute', validateContextCode, async (req, res) => {
     try {

@@ -2,9 +2,12 @@ openapi: 3.0.3
 info:
   title: AiItem RAG Architect API
   info:
-    version: 2.4.0
+    version: 2.4.1
     description: |
       RESTful API для системы RAG-анализа кодовой базы.
+
+      Версия 2.4.1:
+      • Добавлен Chunks API: POST /api/files/vectorize-chunk/{chunkId} для векторизации конкретного чанка
 
       Версия 2.4.0:
       • Добавлен Prompts API: полный CRUD для управления промптами LLM
@@ -64,6 +67,9 @@ tags:
     description: |
       Управление тегами для классификации и группировки AiItems.
       Теги изолированы по context-code.
+  - name: Chunks
+    description: |
+      Управление чанками (chunk_vector): векторизация, обновление метаданных.
 
 components:
   schemas:
@@ -2144,8 +2150,8 @@ paths:
         6. Превращает raw данные в человекочитаемый текст через LLM
         7. Сохраняет скрипт в кэш и векторизует вопрос для будущего поиска
         
-        Скрипты кэшируются в таблице agent_script, вопросы векторизуются и сохраняются
-        в agent_script_embedding для быстрого поиска похожих вопросов.
+        Скрипты кэшируются в таблице agent_script с колонкой question_embedding 
+        для быстрого векторного поиска похожих вопросов.
       requestBody:
         required: true
         content:
@@ -2386,6 +2392,68 @@ paths:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
         '400':
           description: Отсутствует context-code
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/agent-scripts/{id}/embed:
+    post:
+      tags: [Natural Query]
+      summary: Векторизовать вопрос скрипта
+      description: |
+        Создаёт или обновляет эмбеддинг вопроса для указанного скрипта.
+        Используется для добавления векторного поиска к существующим скриптам.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID скрипта для векторизации
+          schema:
+            type: integer
+            example: 17
+      responses:
+        '200':
+          description: Эмбеддинг успешно создан/обновлён
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, message, scriptId, question, embedding_length]
+                properties:
+                  success:
+                    type: boolean
+                    enum: [true]
+                  message:
+                    type: string
+                    enum: ["Embedding created", "Embedding updated"]
+                  scriptId:
+                    type: integer
+                    example: 17
+                  question:
+                    type: string
+                    example: "Какие функции вызывают carl_auct._createNewAuction"
+                  embedding_length:
+                    type: integer
+                    example: 1536
+        '404':
+          description: Скрипт не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '400':
+          description: Неверный ID скрипта или отсутствует context-code
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500':
+          description: Ошибка векторизации
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -3380,6 +3448,78 @@ paths:
               schema: { $ref: '#/components/schemas/TagItemsResponse' }
         '404':
           description: Тег не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  # ────────────────────────────────────── CHUNKS
+  /api/files/vectorize-chunk/{chunkId}:
+    post:
+      tags: [Chunks]
+      summary: Векторизация конкретного чанка по ID
+      description: |
+        Создает embedding для указанного чанка.
+        Если чанк уже имеет embedding, пропускает обработку (используйте force=true для перезаписи).
+      operationId: vectorizeChunk
+      parameters:
+        - name: chunkId
+          in: path
+          required: true
+          description: ID чанка в таблице chunk_vector
+          schema:
+            type: integer
+            example: 123
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                force:
+                  type: boolean
+                  default: false
+                  description: Перезаписать существующий embedding
+      responses:
+        '200':
+          description: Чанк успешно векторизован или пропущен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  chunkId:
+                    type: integer
+                    example: 123
+                  vectorDimension:
+                    type: integer
+                    example: 1536
+                    description: Размерность вектора (отсутствует если skipped=true)
+                  textLength:
+                    type: integer
+                    example: 456
+                    description: Длина текста чанка (отсутствует если skipped=true)
+                  skipped:
+                    type: boolean
+                    description: true если чанк уже был векторизован
+                  message:
+                    type: string
+                    description: Сообщение при skipped=true
+        '400':
+          description: Чанк имеет пустой контент
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '404':
+          description: Чанк не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500':
+          description: Ошибка сервера
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }

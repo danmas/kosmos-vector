@@ -577,6 +577,68 @@ module.exports = (dbService, embeddings) => {
         }
     });
 
+    // Векторизация конкретного чанка по ID
+    router.post('/vectorize-chunk/:chunkId', async (req, res) => {
+        try {
+            const { chunkId } = req.params;
+            const { force = false } = req.body; // force=true перезапишет существующий embedding
+            
+            // 1. Получаем чанк и извлекаем текст из chunk_content (JSONB)
+            const chunkResult = await dbService.pgClient.query(
+                `SELECT id, 
+                       COALESCE(chunk_content->>'text', chunk_content::text) as text_content,
+                       embedding 
+                FROM public.chunk_vector WHERE id = $1`,
+                [chunkId]
+            );
+            
+            if (chunkResult.rows.length === 0) {
+                return res.status(404).json({ error: `Чанк #${chunkId} не найден` });
+            }
+            
+            const chunk = chunkResult.rows[0];
+            
+            // 2. Проверяем, нужна ли векторизация
+            if (chunk.embedding && !force) {
+                return res.json({ 
+                    success: true, 
+                    skipped: true, 
+                    message: `Чанк #${chunkId} уже имеет embedding. Используйте force=true для перезаписи` 
+                });
+            }
+            
+            // 3. Проверяем наличие текста
+            if (!chunk.text_content || chunk.text_content.trim() === '') {
+                return res.status(400).json({ error: `Чанк #${chunkId} имеет пустой контент` });
+            }
+            
+            const text = chunk.text_content;
+            
+            // 4. Создаем embedding
+            const [embedding] = await embeddings.embedDocuments([text]);
+            const vectorString = `[${embedding.join(',')}]`;
+            
+            // 5. Обновляем запись
+            await dbService.pgClient.query(
+                `UPDATE public.chunk_vector SET embedding = $1 WHERE id = $2`,
+                [vectorString, chunkId]
+            );
+            
+            console.log(`[VECTORIZE-CHUNK] Чанк #${chunkId} векторизован`);
+            
+            res.json({ 
+                success: true, 
+                chunkId: parseInt(chunkId),
+                vectorDimension: embedding.length,
+                textLength: text.length
+            });
+            
+        } catch (error) {
+            console.error(`[VECTORIZE-CHUNK] Ошибка:`, error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
     // Сохранение чанка уровня 1 или 2
     router.post('/save-level-chunk-db', async (req, res) => {
         try {

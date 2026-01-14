@@ -2678,12 +2678,15 @@ class DbService {
       const vectorString = `[${embedding.join(',')}]`;
 
       const result = await this.pgClient.query(`
-        INSERT INTO public.agent_script_embedding (script_id, question_embedding)
-        VALUES ($1, $2)
-        ON CONFLICT (script_id) 
-        DO UPDATE SET question_embedding = $2, created_at = CURRENT_TIMESTAMP
-        RETURNING id, script_id, created_at
+        UPDATE public.agent_script
+        SET question_embedding = $2, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+        RETURNING id, question, updated_at
       `, [scriptId, vectorString]);
+
+      if (result.rows.length === 0) {
+        throw new Error(`Script with id ${scriptId} not found`);
+      }
 
       return result.rows[0];
     } catch (error) {
@@ -2710,18 +2713,18 @@ class DbService {
 
       const result = await this.pgClient.query(`
         SELECT 
-          ase.script_id AS id,
-          as_script.question,
-          as_script.script,
-          as_script.usage_count,
-          as_script.is_valid,
-          as_script.last_result,
-          1 - (ase.question_embedding <=> $1::vector) AS similarity
-        FROM public.agent_script_embedding ase
-        JOIN public.agent_script as_script ON ase.script_id = as_script.id
-        WHERE as_script.context_code = $2
-          AND as_script.is_valid = true
-          AND (1 - (ase.question_embedding <=> $1::vector)) >= $3
+          id,
+          question,
+          script,
+          usage_count,
+          is_valid,
+          last_result,
+          1 - (question_embedding <=> $1::vector) AS similarity
+        FROM public.agent_script
+        WHERE context_code = $2
+          AND is_valid = true
+          AND question_embedding IS NOT NULL
+          AND (1 - (question_embedding <=> $1::vector)) >= $3
         ORDER BY similarity DESC
         LIMIT $4
       `, [vectorString, contextCode, threshold, limit]);
@@ -2750,11 +2753,11 @@ class DbService {
     try {
       const result = await this.pgClient.query(`
         SELECT question_embedding
-        FROM public.agent_script_embedding
-        WHERE script_id = $1
+        FROM public.agent_script
+        WHERE id = $1
       `, [scriptId]);
 
-      if (result.rows.length === 0) {
+      if (result.rows.length === 0 || !result.rows[0].question_embedding) {
         return null;
       }
 
