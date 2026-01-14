@@ -1854,6 +1854,111 @@ module.exports = (dbService, logBuffer) => {
     }
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BULK TAGS — Массовые операции с тегами
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // === POST /api/ai-items/bulk/tags/add - Массовое добавление тегов ===
+  router.post('/ai-items/bulk/tags/add', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const { itemIds, tagCodes } = req.body;
+
+      // Валидация
+      if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'itemIds is required and must be a non-empty array' 
+        });
+      }
+
+      if (!tagCodes || !Array.isArray(tagCodes) || tagCodes.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'tagCodes is required and must be a non-empty array' 
+        });
+      }
+
+      // Лимиты
+      if (itemIds.length > 100) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'itemIds array exceeds maximum allowed size (100)' 
+        });
+      }
+
+      if (tagCodes.length > 50) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'tagCodes array exceeds maximum allowed size (50)' 
+        });
+      }
+
+      const result = await dbService.bulkAddTags(contextCode, itemIds, tagCodes);
+      
+      res.json({
+        success: true,
+        processedItems: result.processedItems,
+        ...(result.failedItems.length > 0 && { failedItems: result.failedItems })
+      });
+    } catch (error) {
+      if (error.code === 'TAGS_NOT_FOUND') {
+        return res.status(404).json({ success: false, error: error.message });
+      }
+      console.error('[API/BULK/TAGS/ADD] Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === POST /api/ai-items/bulk/tags/remove - Массовое удаление тегов ===
+  router.post('/ai-items/bulk/tags/remove', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const { itemIds, tagCodes } = req.body;
+
+      // Валидация
+      if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'itemIds is required and must be a non-empty array' 
+        });
+      }
+
+      if (!tagCodes || !Array.isArray(tagCodes) || tagCodes.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'tagCodes is required and must be a non-empty array' 
+        });
+      }
+
+      // Лимиты
+      if (itemIds.length > 100) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'itemIds array exceeds maximum allowed size (100)' 
+        });
+      }
+
+      if (tagCodes.length > 50) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'tagCodes array exceeds maximum allowed size (50)' 
+        });
+      }
+
+      const result = await dbService.bulkRemoveTags(contextCode, itemIds, tagCodes);
+      
+      res.json({
+        success: true,
+        processedItems: result.processedItems,
+        ...(result.failedItems.length > 0 && { failedItems: result.failedItems })
+      });
+    } catch (error) {
+      console.error('[API/BULK/TAGS/REMOVE] Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // === DELETE /api/vector-db - Очистить векторную базу данных для context-code ===
   router.delete('/vector-db', async (req, res) => {
     try {

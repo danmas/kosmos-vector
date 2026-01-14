@@ -2,9 +2,13 @@ openapi: 3.0.3
 info:
   title: AiItem RAG Architect API
   info:
-    version: 2.4.1
+    version: 2.5.1
     description: |
       RESTful API для системы RAG-анализа кодовой базы.
+
+      Версия 2.5.1:
+      • Добавлены API для массовых операций с тегами: POST /api/ai-items/bulk/tags/add и POST /api/ai-items/bulk/tags/remove
+      • Поддержка bulk операций для эффективного управления тегами множества AiItems
 
       Версия 2.4.1:
       • Добавлен Chunks API: POST /api/files/vectorize-chunk/{chunkId} для векторизации конкретного чанка
@@ -456,6 +460,53 @@ components:
           minItems: 1
           description: Массив кодов тегов для добавления/удаления
           example: ["deprecated", "needs-review", "critical"]
+
+    BulkTagsRequest:
+      type: object
+      required: [itemIds, tagCodes]
+      properties:
+        itemIds:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: Массив ID элементов для массовой операции с тегами
+          example: ["utils.fetchData", "api.createUser", "db.saveRecord"]
+        tagCodes:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: Массив кодов тегов для добавления/удаления
+          example: ["deprecated", "needs-review"]
+
+    BulkTagsResponse:
+      type: object
+      required: [success, processedItems]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        processedItems:
+          type: integer
+          minimum: 0
+          description: Количество успешно обработанных элементов
+          example: 15
+        failedItems:
+          type: array
+          items:
+            type: object
+            required: [itemId, error]
+            properties:
+              itemId:
+                type: string
+                description: ID элемента, при обработке которого возникла ошибка
+                example: "utils.fetchData"
+              error:
+                type: string
+                description: Описание ошибки
+                example: "Item not found"
+          description: Список элементов с ошибками (присутствует только при наличии ошибок)
 
     # ────────────────────────────────────── Статистика
     TypeStat:
@@ -3448,6 +3499,111 @@ paths:
               schema: { $ref: '#/components/schemas/TagItemsResponse' }
         '404':
           description: Тег не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  # ────────────────────────────────────── BULK TAGS OPERATIONS
+  /api/ai-items/bulk/tags/add:
+    post:
+      tags: [Tags]
+      summary: Массовое добавление тегов к AiItems
+      description: |
+        Добавляет указанные теги ко всем указанным AiItems одной операцией.
+        Если тег уже связан с AiItem, он будет проигнорирован (idempotent).
+        Операция продолжается даже если некоторые элементы не найдены.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BulkTagsRequest' }
+            example:
+              itemIds: ["utils.fetchData", "api.createUser", "db.saveRecord"]
+              tagCodes: ["deprecated", "needs-review"]
+      responses:
+        '200':
+          description: Массовая операция выполнена
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BulkTagsResponse' }
+              example:
+                success: true
+                processedItems: 15
+                failedItems:
+                  - itemId: "nonexistent.function"
+                    error: "Item not found"
+        '400':
+          description: Неверный запрос (пустые массивы или некорректные данные)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '404':
+          description: Один или несколько тегов не найдены
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/ai-items/bulk/tags/remove:
+    post:
+      tags: [Tags]
+      summary: Массовое удаление тегов у AiItems
+      description: |
+        Удаляет указанные теги у всех указанных AiItems одной операцией.
+        Если тег не связан с AiItem, он будет проигнорирован (idempotent).
+        Операция продолжается даже если некоторые элементы не найдены.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BulkTagsRequest' }
+            example:
+              itemIds: ["utils.fetchData", "api.createUser", "db.saveRecord"]
+              tagCodes: ["deprecated", "needs-review"]
+      responses:
+        '200':
+          description: Массовая операция выполнена
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BulkTagsResponse' }
+              example:
+                success: true
+                processedItems: 15
+                failedItems:
+                  - itemId: "nonexistent.function"
+                    error: "Item not found"
+        '400':
+          description: Неверный запрос (пустые массивы или некорректные данные)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '404':
+          description: Один или несколько тегов не найдены
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500':
+          description: Внутренняя ошибка сервера
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }

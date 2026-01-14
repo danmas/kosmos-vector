@@ -3182,6 +3182,119 @@ class DbService {
     }
   }
 
+  /**
+   * Массовое добавление тегов к множеству AI Items
+   * @param {string} contextCode - Контекстный код
+   * @param {Array<string>} itemIds - Массив full_name AI Items
+   * @param {Array<string>} tagCodes - Массив кодов тегов
+   * @returns {Promise<{processedItems: number, failedItems: Array}>}
+   */
+  async bulkAddTags(contextCode, itemIds, tagCodes) {
+    try {
+      // Получаем все теги по кодам
+      const tagsResult = await this.pgClient.query(`
+        SELECT id, code FROM public.tag
+        WHERE context_code = $1 AND code = ANY($2)
+      `, [contextCode, tagCodes]);
+
+      const tagMap = new Map(tagsResult.rows.map(t => [t.code, t.id]));
+      
+      // Проверяем, что все теги существуют
+      const missingTags = tagCodes.filter(code => !tagMap.has(code));
+      if (missingTags.length > 0) {
+        const error = new Error(`Tags not found: ${missingTags.join(', ')}`);
+        error.code = 'TAGS_NOT_FOUND';
+        error.missingTags = missingTags;
+        throw error;
+      }
+
+      // Получаем все существующие AI Items
+      const itemsResult = await this.pgClient.query(`
+        SELECT full_name FROM public.ai_item
+        WHERE context_code = $1 AND full_name = ANY($2)
+      `, [contextCode, itemIds]);
+
+      const existingItems = new Set(itemsResult.rows.map(r => r.full_name));
+      
+      let processedItems = 0;
+      const failedItems = [];
+
+      for (const itemId of itemIds) {
+        if (!existingItems.has(itemId)) {
+          failedItems.push({ itemId, error: 'Item not found' });
+          continue;
+        }
+
+        try {
+          // Добавляем все теги для этого item (ON CONFLICT DO NOTHING для idempotency)
+          for (const tagCode of tagCodes) {
+            const tagId = tagMap.get(tagCode);
+            await this.pgClient.query(`
+              INSERT INTO public.ai_item_tag (ai_item_full_name, ai_item_context_code, tag_id)
+              VALUES ($1, $2, $3)
+              ON CONFLICT DO NOTHING
+            `, [itemId, contextCode, tagId]);
+          }
+          processedItems++;
+        } catch (err) {
+          failedItems.push({ itemId, error: err.message });
+        }
+      }
+
+      return { processedItems, failedItems };
+    } catch (error) {
+      if (error.code === 'TAGS_NOT_FOUND') throw error;
+      console.error(`[DB] ❌ Ошибка bulkAddTags:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Массовое удаление тегов у множества AI Items
+   * @param {string} contextCode - Контекстный код
+   * @param {Array<string>} itemIds - Массив full_name AI Items
+   * @param {Array<string>} tagCodes - Массив кодов тегов
+   * @returns {Promise<{processedItems: number, failedItems: Array}>}
+   */
+  async bulkRemoveTags(contextCode, itemIds, tagCodes) {
+    try {
+      // Получаем id тегов по кодам
+      const tagsResult = await this.pgClient.query(`
+        SELECT id, code FROM public.tag
+        WHERE context_code = $1 AND code = ANY($2)
+      `, [contextCode, tagCodes]);
+
+      const tagIds = tagsResult.rows.map(t => t.id);
+      
+      // Если теги не найдены — просто ничего не удаляем (idempotent)
+      if (tagIds.length === 0) {
+        return { processedItems: itemIds.length, failedItems: [] };
+      }
+
+      let processedItems = 0;
+      const failedItems = [];
+
+      for (const itemId of itemIds) {
+        try {
+          await this.pgClient.query(`
+            DELETE FROM public.ai_item_tag
+            WHERE ai_item_full_name = $1 
+              AND ai_item_context_code = $2 
+              AND tag_id = ANY($3)
+          `, [itemId, contextCode, tagIds]);
+          processedItems++;
+        } catch (err) {
+          failedItems.push({ itemId, error: err.message });
+        }
+      }
+
+      return { processedItems, failedItems };
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка bulkRemoveTags:`, error);
+      throw error;
+    }
+  }
+
 }
 
 module.exports = DbService; 
