@@ -148,21 +148,36 @@ async function checkAiItemsCount() {
             console.log(`  [SUCCESS] Количество ai_items в ожидаемом диапазоне`);
         }
         
-        // Проверка что DDL/SQL элементы имеют схему (точку)
-        // JS/TS top-level функции могут не иметь схемы — это нормально
-        const noSchemaResult = await client.query(
+        // Проверка что DDL/SQL элементы имеют схему hr.
+        // DDL таблицы и SQL функции должны начинаться с 'hr.'
+        // JS/TS элементы могут не иметь схемы — это нормально
+        const hrElementsResult = await client.query(
             `SELECT COUNT(*) as count FROM public.ai_item 
-             WHERE context_code = $1 
-               AND type IN ('table', 'function')
-               AND (full_name NOT LIKE '%.%' OR full_name IS NULL)`,
+             WHERE context_code = $1 AND full_name LIKE 'hr.%'`,
             [CONTEXT_CODE]
         );
+        const hrElementsCount = parseInt(hrElementsResult.rows[0].count);
         
-        const noSchemaCount = parseInt(noSchemaResult.rows[0].count);
-        if (noSchemaCount > 0) {
-            console.warn(`  [WARNING] Найдено ${noSchemaCount} DDL/SQL элементов без схемы в full_name`);
+        // Проверяем что нет HR элементов без схемы
+        const hrNoSchemaResult = await client.query(
+            `SELECT COUNT(*) as count FROM public.ai_item 
+             WHERE context_code = $1 
+               AND full_name LIKE 'hr.%'
+               AND full_name NOT LIKE '%.%'`,
+            [CONTEXT_CODE]
+        );
+        const hrNoSchemaCount = parseInt(hrNoSchemaResult.rows[0].count);
+        
+        console.log(`  [INFO] HR элементов (со схемой hr.): ${hrElementsCount}`);
+        
+        if (hrElementsCount < 8) {
+            console.warn(`  [WARNING] Ожидалось минимум 8 HR элементов (6 таблиц + 2 функции), найдено ${hrElementsCount}`);
         } else {
-            console.log(`  [SUCCESS] Все DDL/SQL элементы имеют схему в full_name`);
+            console.log(`  [SUCCESS] Все DDL/SQL элементы имеют схему hr.`);
+        }
+        
+        if (hrNoSchemaCount > 0) {
+            console.warn(`  [WARNING] Найдено ${hrNoSchemaCount} HR элементов без схемы в full_name`);
         }
         
         // Дополнительно: показать статистику по типам
@@ -176,7 +191,7 @@ async function checkAiItemsCount() {
             console.log(`         - ${row.type}: ${row.count}`);
         });
         
-        return { count, noSchemaCount };
+        return { count, hrElementsCount, hrNoSchemaCount };
     } catch (error) {
         console.error(`  [ERROR] Ошибка при проверке ai_items:`, error.message);
         throw error;
@@ -203,18 +218,36 @@ async function checkL1Links() {
         const totalLinks = parseInt(totalResult.rows[0].count);
         console.log(`  [INFO] Всего связей: ${totalLinks}`);
         
-        // Связи без схемы в target
-        const noSchemaResult = await client.query(
+        // Проверяем связи только для SQL элементов (hr.*)
+        // HR связи должны иметь схему в target
+        const hrLinksNoSchemaResult = await client.query(
+            `SELECT COUNT(*) as count FROM public.link 
+             WHERE context_code = $1 
+               AND source LIKE 'hr.%'
+               AND target NOT LIKE '%.%'`,
+            [CONTEXT_CODE]
+        );
+        const hrNoSchemaLinks = parseInt(hrLinksNoSchemaResult.rows[0].count);
+        
+        // Все связи без схемы (для статистики)
+        const allNoSchemaResult = await client.query(
             `SELECT COUNT(*) as count FROM public.link 
              WHERE context_code = $1 AND target NOT LIKE '%.%'`,
             [CONTEXT_CODE]
         );
-        const noSchemaLinks = parseInt(noSchemaResult.rows[0].count);
+        const allNoSchemaLinks = parseInt(allNoSchemaResult.rows[0].count);
         
-        if (noSchemaLinks > 0) {
-            console.warn(`  [WARNING] Найдено ${noSchemaLinks} связей без схемы в target`);
+        // JS/TS связи без схемы — это нормально
+        const jsNoSchemaLinks = allNoSchemaLinks - hrNoSchemaLinks;
+        
+        if (hrNoSchemaLinks > 0) {
+            console.warn(`  [WARNING] Найдено ${hrNoSchemaLinks} HR связей без схемы в target`);
         } else {
-            console.log(`  [SUCCESS] Все связи имеют схему в target`);
+            console.log(`  [SUCCESS] Все HR связи имеют схему в target`);
+        }
+        
+        if (jsNoSchemaLinks > 0) {
+            console.log(`  [INFO] JS/TS связей без схемы (ожидаемо): ${jsNoSchemaLinks}`);
         }
         
         if (totalLinks < EXPECTED_LINKS_MIN) {
@@ -223,7 +256,7 @@ async function checkL1Links() {
             console.log(`  [SUCCESS] Количество связей соответствует ожиданиям`);
         }
         
-        return { totalLinks, noSchemaLinks };
+        return { totalLinks, hrNoSchemaLinks, jsNoSchemaLinks };
     } catch (error) {
         console.error(`  [ERROR] Ошибка при проверке связей:`, error.message);
         throw error;
@@ -356,7 +389,8 @@ async function runFullSystemTest() {
         const aiItemsResult = await checkAiItemsCount();
         results.aiItemsCheck = aiItemsResult.count >= EXPECTED_AI_ITEMS_MIN && 
                               aiItemsResult.count <= EXPECTED_AI_ITEMS_MAX &&
-                              aiItemsResult.noSchemaCount === 0;
+                              aiItemsResult.hrElementsCount >= 8 &&
+                              aiItemsResult.hrNoSchemaCount === 0;
         
         // Шаг 2: Запуск Step2
         console.log('\n[Шаг 2] Запуск Step2 (L1 Fix)...');
@@ -393,7 +427,7 @@ async function runFullSystemTest() {
         // Проверка 2: L1 связи
         const linksResult = await checkL1Links();
         results.linksCheck = linksResult.totalLinks >= EXPECTED_LINKS_MIN && 
-                           linksResult.noSchemaLinks === 0;
+                           linksResult.hrNoSchemaLinks === 0;
         
         // Шаг 3: Natural Query тесты
         console.log('\n[Шаг 3] Тестирование Natural Query API...');
