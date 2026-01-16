@@ -1,14 +1,14 @@
 {
-  "rootPath": "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api",
-  "includeMask": "**/api*.sql",
+  "rootPath": "C:\\ERV\\projects-ex\\kosmos-vector\\tests\\hr_test_project",
+  "includeMask": "**/*",
   "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
   "fileSelection": [],
-  "lastUpdated": "2026-01-15T07:00:30.000Z",
+  "lastUpdated": "2026-01-16T07:22:48.638Z",
   "metadata": {
-    "projectName": "New Project",
-    "description": "RAG knowledge base",
+    "projectName": "HR Test Project",
+    "description": "Full system test for HR management system",
     "tags": [],
-    "custom_settings": "functions_loading:\n  enabled: true\ntable_loading:\n  enabled: false\n  schema: carl_data\n  include_patterns:\n    - \"%%\"\n  exclude_patterns:\n    - \"\\\\_%\"\n  exclude_names:\n    - \"a\"\n    - \"auction_b20210519\"\n    - \"test_table\""
+    "custom_settings": "js_loading:\n  enabled: true\nts_loading:\n  enabled: true\nfunctions_loading:\n  enabled: true\nddl_loading:\n  enabled: true\n  files:\n    - ./schema/hr_schema.sql\ntable_loading:\n  enabled: false"
   },
   "pipelineConfig": {
     "parsing": {},
@@ -24,7 +24,7 @@
     {
       "id": 1,
       "name": "parsing",
-      "label": "+Polyglot Parsing (L0)",
+      "label": "Polyglot Parsing (L0)",
       "description": "Parsing AST for .py, .ts, .go, .java files...",
       "configurationSchema": {
         "type": "object",

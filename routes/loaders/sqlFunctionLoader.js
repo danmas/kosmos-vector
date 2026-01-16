@@ -19,11 +19,11 @@ async function parsePlpgsqlFunctionL1(code) {
     // 2. Нормализация только для поиска тела (много пробелов → один)
     cleaned = cleaned.replace(/\s+/g, ' ');
 
-    // 3. Извлечение имени функции (регистронезависимо)
-    const createRegex = /CREATE\s+OR\s+REPLACE\s+FUNCTION\s+([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+|[a-zA-Z0-9_]+)\s*\(/i;
+    // 3. Извлечение имени функции (регистронезависимо, OR REPLACE опционально)
+    const createRegex = /CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+|[a-zA-Z0-9_]+)\s*\(/i;
     const match = originalForName.match(createRegex);
     if (!match) {
-        throw new Error("Не удалось найти CREATE OR REPLACE FUNCTION");
+        throw new Error("Не удалось найти CREATE FUNCTION");
     }
     const functionName = match[1].trim();
 

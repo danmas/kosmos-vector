@@ -10,6 +10,7 @@ const { createMatchers, normalizeRelativePath, isIgnored: checkIgnored, isInclud
 const { loadSqlFunctionsFromFile } = require('../loaders/sqlFunctionLoader');
 const { loadJsFunctionsFromFile } = require('../loaders/jsFunctionLoader');
 const { loadTsFunctionsFromFile } = require('../loaders/tsFunctionLoader');
+const { loadDdlFromFile } = require('../loaders/ddlSchemaLoader');
 const { getFilteredTableNames, loadTableSchema } = require('../loaders/tableSchemaLoader');
 const { createStepLogger } = require('./stepLogger');
 
@@ -184,6 +185,45 @@ function parseTsLoadingConfig(customSettingsYaml) {
 }
 
 /**
+ * Парсинг настроек загрузки DDL схем из YAML строки custom_settings
+ * @param {string|null} customSettingsYaml - YAML строка из metadata.custom_settings
+ * @returns {object} Объект с настройками { enabled, files } (по умолчанию enabled: false)
+ */
+function parseDdlLoadingConfig(customSettingsYaml) {
+  if (!customSettingsYaml || typeof customSettingsYaml !== 'string' || customSettingsYaml.trim() === '') {
+    return { enabled: false, files: [] };
+  }
+
+  try {
+    const parsed = yaml.load(customSettingsYaml);
+    
+    if (!parsed || typeof parsed !== 'object') {
+      return { enabled: false, files: [] };
+    }
+
+    const ddlLoading = parsed.ddl_loading;
+    
+    if (!ddlLoading || typeof ddlLoading !== 'object') {
+      return { enabled: false, files: [] };
+    }
+
+    if (typeof ddlLoading.enabled !== 'boolean') {
+      return { enabled: false, files: [] };
+    }
+
+    // files - массив путей к DDL файлам
+    const files = Array.isArray(ddlLoading.files) 
+      ? ddlLoading.files.filter(f => typeof f === 'string')
+      : [];
+
+    return { enabled: ddlLoading.enabled, files: files };
+  } catch (error) {
+    console.error(`[Step1] Ошибка парсинга YAML из custom_settings для ddl_loading: ${error.message}`);
+    return { enabled: false, files: [] };
+  }
+}
+
+/**
  * Запуск шага 1 pipeline: загрузка SQL-функций и схем таблиц
  * Теперь полностью использует KnowledgeBaseConfig (rootPath, masks, fileSelection)
  *
@@ -227,6 +267,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
   const functionsLoadingConfig = parseFunctionsLoadingConfig(customSettings);
   const jsLoadingConfig = parseJsLoadingConfig(customSettings);
   const tsLoadingConfig = parseTsLoadingConfig(customSettings);
+  const ddlLoadingConfig = parseDdlLoadingConfig(customSettings);
 
   // Подготовка матчеров (используем общие функции для синхронизации с /api/project/tree)
   const { includeMatcher, ignoreMatchers } = createMatchers(includeMask, ignorePatterns);
@@ -445,6 +486,43 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     logger.log('Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)');
   }
 
+  // === Сканирование DDL-файлов (если включено) ===
+  let ddlFilePaths = [];
+  
+  if (ddlLoadingConfig.enabled) {
+    logger.log('Загрузка DDL схем включена');
+    
+    // DDL файлы указываются явно в конфигурации
+    if (ddlLoadingConfig.files.length > 0) {
+      for (const relPath of ddlLoadingConfig.files) {
+        const cleanRel = relPath.startsWith('./') ? relPath.slice(2) : relPath;
+        const absPath = path.join(rootPath, cleanRel);
+
+        if (!fs.existsSync(absPath)) {
+          logger.warn(`DDL файл не найден: ${relPath}`);
+          continue;
+        }
+        if (!absPath.toLowerCase().endsWith('.sql')) {
+          logger.warn(`Пропущен не-SQL DDL файл: ${relPath}`);
+          continue;
+        }
+
+        ddlFilePaths.push(absPath);
+      }
+    }
+
+    logger.log(`Найдено ${ddlFilePaths.length} DDL-файлов для обработки`);
+    for (const filePath of ddlFilePaths) {
+      tasks.push({
+        type: 'ddl',
+        path: filePath,
+        name: path.basename(filePath)
+      });
+    }
+  } else {
+    logger.log('Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)');
+  }
+
   // === Обработка таблиц из custom_settings (YAML) ===
   let allTables = [];
   
@@ -497,7 +575,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
   }
 
   logger.log(`=====================`);
-  logger.log(`Всего задач: ${tasks.length} (${sqlFilePaths.length} SQL + ${jsFilePaths.length} JS + ${tsFilePaths.length} TS + ${allTables.length} таблиц)`);
+  logger.log(`Всего задач: ${tasks.length} (${sqlFilePaths.length} SQL + ${jsFilePaths.length} JS + ${tsFilePaths.length} TS + ${ddlFilePaths.length} DDL + ${allTables.length} таблиц)`);
   logger.log(`=====================`);
 
   // === Инициализация отчета ===
@@ -515,6 +593,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
       sqlFiles: [],
       jsFiles: [],
       tsFiles: [],
+      ddlFiles: [],
       tables: [],
       errors: []
     }
@@ -615,6 +694,38 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
             if (func.errors?.length > 0) {
               report.summary.errors += func.errors.length;
               func.errors.forEach(err => report.details.errors.push({ type: 'ts', name: `${fileReport.filename}:${func.full_name}`, message: err }));
+            }
+          });
+        } else {
+          report.summary.skipped++;
+        }
+      } else if (task.type === 'ddl') {
+        const fileReport = await loadDdlFromFile(task.path, contextCode, dbService, pipelineState);
+
+        if (fileReport) {
+          report.details.ddlFiles.push(fileReport);
+
+          if (fileReport.fileId) {
+            report.summary.totalFiles++;
+            report.summary.totalTables += fileReport.tablesProcessed || 0;
+
+            fileReport.tables.forEach(table => {
+              if (table.aiItemId) report.summary.totalAiItems++;
+              if (table.chunkL0Id || table.chunkL1Id) report.summary.totalChunks++;
+            });
+          } else {
+            report.summary.skipped++;
+          }
+
+          // Ошибки из файла и таблиц
+          if (fileReport.errors?.length > 0) {
+            report.summary.errors += fileReport.errors.length;
+            fileReport.errors.forEach(err => report.details.errors.push({ type: 'ddl', name: fileReport.filename, message: err }));
+          }
+          fileReport.tables.forEach(table => {
+            if (table.errors?.length > 0) {
+              report.summary.errors += table.errors.length;
+              table.errors.forEach(err => report.details.errors.push({ type: 'ddl', name: `${fileReport.filename}:${table.full_name}`, message: err }));
             }
           });
         } else {
