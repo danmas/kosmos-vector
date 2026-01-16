@@ -420,6 +420,29 @@ async function loadJsFunctionsFromFile(filePath, contextCode, dbService, pipelin
         return report;
     }
 
+    // === Кэшируем id типов связей один раз на весь файл ===
+    const linkTypeMap = {
+        called_functions: 'calls',
+        imports: 'imports',
+        dependencies: 'depends_on'
+    };
+    const linkTypeIds = {};
+    for (const code of Object.values(linkTypeMap)) {
+        try {
+            const res = await dbService.pgClient.query(
+                'SELECT id FROM public.link_type WHERE code = $1',
+                [code]
+            );
+            if (res.rows.length > 0) {
+                linkTypeIds[code] = res.rows[0].id;
+            } else {
+                console.warn(`[JS-Loader] Тип связи '${code}' не найден в link_type`);
+            }
+        } catch (err) {
+            console.error(`[JS-Loader] Ошибка при получении link_type '${code}':`, err.message);
+        }
+    }
+
     // Загрузка каждой сущности
     for (const entity of entities) {
         console.log(`[JS-Loader] → Сущность: ${entity.full_name} (${entity.sname}, тип: ${entity.type})`);
@@ -526,6 +549,42 @@ async function loadJsFunctionsFromFile(filePath, contextCode, dbService, pipelin
                         'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                         [entityReport.aiItemId, chunkIdL1]
                     );
+
+                    // === Дублирование связей в таблицу link ===
+                    if (l1Result && entityReport.aiItemId) {
+                        let linksCount = 0;
+
+                        for (const [key, code] of Object.entries(linkTypeMap)) {
+                            const typeId = linkTypeIds[code];
+                            if (!typeId) {
+                                continue;
+                            }
+
+                            const targets = (l1Result[key] || [])
+                                .filter(t => typeof t === 'string' && t.trim().length > 0);
+
+                            for (const target of targets) {
+                                try {
+                                    await dbService.pgClient.query(
+                                        `INSERT INTO public.link 
+                                         (context_code, source, target, link_type_id, file_id)
+                                         VALUES ($1, $2, $3, $4, $5)
+                                         ON CONFLICT (context_code, source, target, link_type_id) DO NOTHING`,
+                                        [contextCode, entity.full_name, target, typeId, report.fileId || null]
+                                    );
+                                    linksCount++;
+                                } catch (err) {
+                                    console.error(`[JS-Loader] Ошибка link ${entity.full_name} -> ${target} (${code}):`, err.message);
+                                    entityReport.errors.push(`Link error: ${code} -> ${target}`);
+                                }
+                            }
+                        }
+
+                        if (linksCount > 0) {
+                            console.log(`[JS-Loader] Сохранено ${linksCount} связей для ${entity.full_name}`);
+                        }
+                    }
+                    // === КОНЕЦ дублирования связей ===
 
                     console.log(`[JS-Loader] Чанк 1 (связи) сохранён: chunkId = ${chunkIdL1}`);
                 } catch (err) {
