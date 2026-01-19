@@ -1361,16 +1361,19 @@ module.exports = (dbService, logBuffer) => {
   });
 
   // === Project File Tree (новая модель v2.1.1) ===
-  // GET /project/tree — возвращает МАССИВ детей корневой директории
+  // GET /project/tree — возвращает МАССИВ корневых узлов (поддержка нескольких rootPath)
   router.get('/project/tree', async (req, res) => {
     try {
       const config = await kbConfigService.getConfig(req.contextCode);
-      const rootPath = config.rootPath;
-
-      if (!rootPath || !fs.existsSync(rootPath)) {
+      const { parseRootPaths } = require('../packages/core/kbConfigService');
+      
+      // Парсим rootPath в массив путей
+      const rootPaths = parseRootPaths(config.rootPath);
+      
+      if (rootPaths.length === 0) {
         return res.status(400).json({
           success: false,
-          error: `Root path does not exist: ${rootPath}`
+          error: 'No root paths configured'
         });
       }
 
@@ -1394,11 +1397,10 @@ module.exports = (dbService, logBuffer) => {
         '.tsx': 'typescript',
         '.java': 'java',
         '.go': 'go',
-        '.sql': 'sql',          // ← вернули!
-        '.md': 'markdown',      // опционально, если хочешь
+        '.sql': 'sql',
+        '.md': 'markdown',
         '.yaml': 'yaml',
         '.json': 'json'
-        // ... добавляй любые
       };
 
       function getLanguageFromPath(filePath) {
@@ -1406,8 +1408,8 @@ module.exports = (dbService, logBuffer) => {
         return extToLanguage[ext] || null;
       }
 
-      // Рекурсивная функция построения узла (возвращает null, если узел не проходит фильтры)
-      async function buildNode(currentAbsPath, currentRelPath = './', depth = 0) {
+      // Рекурсивная функция построения узла для конкретного rootPath
+      async function buildNode(currentAbsPath, currentRootPath, currentRelPath = './', depth = 0) {
         if (depth > 20) return null;
 
         let stats;
@@ -1415,7 +1417,7 @@ module.exports = (dbService, logBuffer) => {
           stats = fs.statSync(currentAbsPath);
         } catch (err) {
           return {
-            path: currentRelPath,
+            path: currentRootPath + path.sep + currentRelPath.replace(/^\.\//, ''),
             name: path.basename(currentAbsPath),
             type: 'unknown',
             size: 0,
@@ -1438,7 +1440,7 @@ module.exports = (dbService, logBuffer) => {
             entries = fs.readdirSync(currentAbsPath);
           } catch (err) {
             return {
-              path: currentRelPath,
+              path: currentRootPath + path.sep + currentRelPath.replace(/^\.\//, ''),
               name: path.basename(currentAbsPath),
               type: 'directory',
               size: 0,
@@ -1453,8 +1455,8 @@ module.exports = (dbService, logBuffer) => {
           const children = [];
           for (const entry of entries) {
             const absChild = path.join(currentAbsPath, entry);
-            const relChild = './' + path.relative(rootPath, absChild).replace(/\\/g, '/');
-            const childNode = await buildNode(absChild, relChild, depth + 1);
+            const relChild = './' + path.relative(currentRootPath, absChild).replace(/\\/g, '/');
+            const childNode = await buildNode(absChild, currentRootPath, relChild, depth + 1);
             if (childNode) {
               children.push(childNode);
             }
@@ -1469,7 +1471,7 @@ module.exports = (dbService, logBuffer) => {
           const hasSelectedChild = children.some(c => c.selected);
 
           return {
-            path: currentRelPath,
+            path: currentRootPath + path.sep + currentRelPath.replace(/^\.\//, ''),
             name: path.basename(currentAbsPath),
             type: 'directory',
             size: 0,
@@ -1485,9 +1487,10 @@ module.exports = (dbService, logBuffer) => {
           }
 
           const selected = isIncluded(relativePath);
+          const fullPath = currentRootPath + path.sep + relativePath.replace(/^\.\//, '');
 
           return {
-            path: relativePath,
+            path: fullPath,
             name: path.basename(currentAbsPath),
             type: 'file',
             size: stats.size,
@@ -1500,32 +1503,55 @@ module.exports = (dbService, logBuffer) => {
         return null;
       }
 
-      // Читаем содержимое rootPath и строим массив детей
-      let entries;
-      try {
-        entries = fs.readdirSync(rootPath);
-      } catch (err) {
-        return res.status(500).json({
-          success: false,
-          error: `Cannot read root directory: ${err.message}`
+      // Обрабатываем каждый rootPath
+      const treeNodes = [];
+      for (const rootPath of rootPaths) {
+        if (!fs.existsSync(rootPath)) {
+          console.warn(`[API/PROJECT/TREE] Root path does not exist, skipping: ${rootPath}`);
+          continue;
+        }
+
+        let entries;
+        try {
+          entries = fs.readdirSync(rootPath);
+        } catch (err) {
+          console.error(`[API/PROJECT/TREE] Cannot read root directory ${rootPath}:`, err.message);
+          continue;
+        }
+
+        const rootChildren = [];
+        for (const entry of entries) {
+          const absPath = path.join(rootPath, entry);
+          const relPath = './' + entry;
+          const node = await buildNode(absPath, rootPath, relPath, 1);
+          if (node) {
+            rootChildren.push(node);
+          }
+        }
+
+        // Сортировка детей корневого узла
+        rootChildren.sort((a, b) => {
+          if (a.type === b.type) return a.name.localeCompare(b.name);
+          return a.type === 'directory' ? -1 : 1;
+        });
+
+        const hasSelectedChild = rootChildren.some(c => c.selected);
+        const rootName = path.basename(rootPath) || rootPath;
+
+        treeNodes.push({
+          path: rootPath,
+          name: rootName,
+          type: 'root',
+          size: 0,
+          selected: hasSelectedChild,
+          children: rootChildren,
+          language: null,
+          error: false
         });
       }
 
-      const treeNodes = [];
-      for (const entry of entries) {
-        const absPath = path.join(rootPath, entry);
-        const relPath = './' + entry; // корневые элементы начинаются с ./
-        const node = await buildNode(absPath, relPath, 1); // depth=1, т.к. корень не включаем
-        if (node) {
-          treeNodes.push(node);
-        }
-      }
-
       // Финальная сортировка корневых узлов
-      treeNodes.sort((a, b) => {
-        if (a.type === b.type) return a.name.localeCompare(b.name);
-        return a.type === 'directory' ? -1 : 1;
-      });
+      treeNodes.sort((a, b) => a.name.localeCompare(b.name));
 
       res.json(treeNodes);
 
@@ -1551,19 +1577,52 @@ module.exports = (dbService, logBuffer) => {
         });
       }
 
-      // Нормализуем пути (на всякий случай)
+      // Получаем текущую конфигурацию для определения rootPath
+      const currentConfig = await kbConfigService.getConfig(req.contextCode);
+      const { parseRootPaths } = require('../packages/core/kbConfigService');
+      const rootPaths = parseRootPaths(currentConfig.rootPath);
+
+      // Нормализуем пути в формате {rootPath}\./relative/path
       const normalizedFiles = files
         .map(p => String(p).trim())
-        .filter(p => p.startsWith('./') || p.startsWith('/'))
-        .map(p => (p.startsWith('/') ? `.${p}` : p)) // гарантируем ./ в начале
-        .filter(Boolean);
+        .filter(Boolean)
+        .map(filePath => {
+          // Если путь уже содержит rootPath (формат {rootPath}\./relative), оставляем как есть
+          if (filePath.includes(path.sep + './') || filePath.includes('/./')) {
+            return filePath;
+          }
+          
+          // Если путь относительный (начинается с ./), определяем к какому rootPath он относится
+          if (filePath.startsWith('./') || filePath.startsWith('/')) {
+            const relPath = filePath.startsWith('/') ? `.${filePath}` : filePath;
+            
+            // Пытаемся найти соответствующий rootPath
+            // Для обратной совместимости используем первый rootPath, если не удалось определить
+            if (rootPaths.length > 0) {
+              return rootPaths[0] + path.sep + relPath.replace(/^\.\//, '');
+            }
+            return relPath;
+          }
+          
+          // Если путь абсолютный, пытаемся найти соответствующий rootPath
+          for (const rootPath of rootPaths) {
+            if (filePath.startsWith(rootPath)) {
+              const relPath = './' + path.relative(rootPath, filePath).replace(/\\/g, '/');
+              return rootPath + path.sep + relPath.replace(/^\.\//, '');
+            }
+          }
+          
+          // Если не удалось определить, используем первый rootPath
+          if (rootPaths.length > 0) {
+            return rootPaths[0] + path.sep + filePath.replace(/^\.\//, '');
+          }
+          
+          return filePath;
+        });
 
       // Обновляем только поле fileSelection в конфиге
-      const currentConfig = await kbConfigService.getConfig(req.contextCode);
-
       const updatedConfig = await kbConfigService.saveConfig(req.contextCode, {
         fileSelection: normalizedFiles
-        // rootPath можно обновить, если пришлёт, но по контракту не обязателен
       });
 
       console.log(`[API/PROJECT/SELECTION] Сохранён выбор файлов для ${req.contextCode}: ${normalizedFiles.length} файлов`);

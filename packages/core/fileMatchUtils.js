@@ -84,4 +84,15 @@ function isIncluded(relativePath, includeMatcher) {
   return includeMatcher.match(normalized);
 }
 
-module.exports = { createMatchers, normalizeRelativePath, normalizeRelativePathForUI, isIgnored, isIncluded };
+/**
+ * Extracts relative path from fileSelection format
+ * @param {string} filePath - Path in format "C:\root\./file.sql" or "C:/root/./file.sql"
+ * @returns {string} Relative path like "./file.sql" or original if format doesn't match
+ */
+function extractRelativeFromFileSelection(filePath) {
+  // Match pattern: {rootPath}\./{relative} or {rootPath}/./{relative}
+  const match = filePath.match(/^.+?(\\|\/)(\.\/.+)$/);
+  return match ? match[2] : filePath;
+}
+
+module.exports = { createMatchers, normalizeRelativePath, normalizeRelativePathForUI, isIgnored, isIncluded, extractRelativeFromFileSelection };

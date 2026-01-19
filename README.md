@@ -72,10 +72,9 @@ bun run start:v2
 ## Документация
 
 - REST API: см. `KB/README_REST.md`
-- UI: см. `KB/README_UI.md`
 - Тесты: см. `tests/README_TESTS.md`
 - Технические детали/архитектура: см. `KB/README_TECH.md`
-- Knowledge Base Configuration: см. раздел в `KB/README_UI.md` и `docs/README_Contract_changes.md` (раздел 6)
+- Knowledge Base Configuration (multi-root): см. раздел в `KB/README_TECH.md`
 
 ## Ключевые возможности
 
@@ -88,6 +87,7 @@ bun run start:v2
 - RAG-ответы через внешний AI-сервер (`REQ_SERVER_URL`)
 - UI для вопросов, обзора документов, векторизации, AI Item и экспорта чанков в файлы
 - **Система комментариев для AI Items** — автоматическое сохранение комментариев из L0 чанков и управление через REST API
+- **Multi-root проекты (v2.2.0)** — поддержка нескольких корневых путей в `rootPath` через запятую
 
 ## Поддерживаемые языки (File Loaders)
 

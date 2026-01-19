@@ -277,6 +277,122 @@
 **GET** `/api/config`  
 **GET** `/api/available-models`
 
+### 6.1. Knowledge Base Configuration
+
+**GET** `/api/kb-config?context-code=...`  
+Получить конфигурацию Knowledge Base для указанного контекста.
+
+**Ответ (успех):**
+```json
+{
+  "rootPath": "C:\\project\\backend,C:\\project\\frontend",
+  "includeMask": "**/*.{sql,js,ts}",
+  "ignorePatterns": "**/node_modules/**,**/dist/**",
+  "fileSelection": [],
+  "lastUpdated": "2025-01-19T10:00:00.000Z",
+  "metadata": {
+    "projectName": "My Project",
+    "description": "RAG knowledge base",
+    "tags": [],
+    "custom_settings": "..."
+  }
+}
+```
+
+**POST** `/api/kb-config?context-code=...`  
+Обновить конфигурацию (частичный патч).
+
+**Тело запроса:**
+```json
+{
+  "rootPath": "C:\\new\\path",
+  "includeMask": "**/*.php"
+}
+```
+
+### 6.2. Project File Tree (v2.2.0)
+
+**GET** `/api/project/tree?context-code=...`  
+Получить дерево файлов проекта. Поддерживает несколько `rootPath`.
+
+**Ответ (успех) — массив корневых узлов:**
+```json
+[
+  {
+    "path": "C:\\project\\backend",
+    "name": "backend",
+    "type": "root",
+    "size": 0,
+    "selected": true,
+    "children": [
+      {
+        "path": "C:\\project\\backend\\src/app.js",
+        "name": "app.js",
+        "type": "file",
+        "size": 2048,
+        "selected": true,
+        "language": "javascript"
+      }
+    ]
+  },
+  {
+    "path": "C:\\project\\frontend",
+    "name": "frontend",
+    "type": "root",
+    "size": 0,
+    "selected": false,
+    "children": [...]
+  }
+]
+```
+
+**Поля узла:**
+- `path` — полный путь (для root) или `{rootPath}\./relative` (для файлов/директорий)
+- `name` — имя файла/директории
+- `type` — `root`, `directory`, `file`, `unknown`
+- `size` — размер в байтах (для файлов)
+- `selected` — соответствует ли файл `includeMask`
+- `children` — дочерние узлы (для директорий/root)
+- `language` — язык программирования (для файлов)
+- `error` — флаг ошибки доступа
+- `errorMessage` — сообщение об ошибке
+
+**Фильтрация:**
+- Файлы/директории из `ignorePatterns` полностью скрываются
+- `selected` определяется по `includeMask`
+
+### 6.3. Project File Selection
+
+**POST** `/api/project/selection?context-code=...`  
+Сохранить точный список выбранных файлов.
+
+**Тело запроса:**
+```json
+{
+  "files": [
+    "C:\\project\\backend\\src/app.js",
+    "C:\\project\\frontend\\index.html"
+  ]
+}
+```
+
+**Ответ (успех):**
+```json
+{
+  "success": true,
+  "config": {
+    "rootPath": "...",
+    "fileSelection": [
+      "C:\\project\\backend\\src/app.js",
+      "C:\\project\\frontend\\index.html"
+    ],
+    ...
+  }
+}
+```
+
+**Примечание:** Пути сохраняются в формате `{rootPath}\./relative/path`. Для обратной совместимости старые пути `./relative` автоматически преобразуются с использованием первого rootPath.
+
 ## 7. Аналитика JS чанков (AI)
 
 **POST** `/analyze-js-level1`  

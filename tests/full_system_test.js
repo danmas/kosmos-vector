@@ -126,6 +126,54 @@ async function cleanupData() {
 }
 
 /**
+ * Проверка multi-root (файлы из разных rootPath)
+ */
+async function checkMultiRoot() {
+    console.log('\n[Проверка 0] Multi-root структура...');
+    
+    const client = new Client(dbConfig);
+    try {
+        await client.connect();
+        
+        // Проверяем что файлы загружены из обоих rootPath
+        const filesResult = await client.query(
+            `SELECT filename, file_url FROM public.files WHERE context_code = $1 ORDER BY filename`,
+            [CONTEXT_CODE]
+        );
+        
+        const files = filesResult.rows;
+        console.log(`  [INFO] Всего файлов: ${files.length}`);
+        
+        // Проверяем наличие файлов из hr_test_project
+        const mainProjectFiles = files.filter(f => f.file_url && f.file_url.includes('hr_test_project') && !f.file_url.includes('hr_test_project_php'));
+        // Проверяем наличие файлов из hr_test_project_php
+        const phpProjectFiles = files.filter(f => f.file_url && f.file_url.includes('hr_test_project_php'));
+        
+        console.log(`  [INFO] Файлов из hr_test_project: ${mainProjectFiles.length}`);
+        console.log(`  [INFO] Файлов из hr_test_project_php: ${phpProjectFiles.length}`);
+        
+        if (mainProjectFiles.length === 0) {
+            console.warn(`  [WARNING] Нет файлов из основного проекта hr_test_project`);
+        }
+        if (phpProjectFiles.length === 0) {
+            console.warn(`  [WARNING] Нет файлов из PHP проекта hr_test_project_php`);
+        }
+        
+        const multiRootOk = mainProjectFiles.length > 0 && phpProjectFiles.length > 0;
+        if (multiRootOk) {
+            console.log(`  [SUCCESS] Multi-root: файлы загружены из обоих проектов`);
+        }
+        
+        return { totalFiles: files.length, mainProjectFiles: mainProjectFiles.length, phpProjectFiles: phpProjectFiles.length, multiRootOk };
+    } catch (error) {
+        console.error(`  [ERROR] Ошибка при проверке multi-root:`, error.message);
+        throw error;
+    } finally {
+        await client.end();
+    }
+}
+
+/**
  * Проверка количества ai_items
  */
 async function checkAiItemsCount() {
@@ -386,6 +434,10 @@ async function runFullSystemTest() {
             throw error;
         }
         
+        // Проверка 0: Multi-root
+        const multiRootResult = await checkMultiRoot();
+        results.multiRootCheck = multiRootResult.multiRootOk;
+        
         // Проверка 1: ai_items
         const aiItemsResult = await checkAiItemsCount();
         results.aiItemsCheck = aiItemsResult.count >= EXPECTED_AI_ITEMS_MIN && 
@@ -448,6 +500,7 @@ async function runFullSystemTest() {
         console.log(`Очистка данных: ${results.cleanup ? '✅' : '❌'}`);
         console.log(`Step1 (Parsing): ${results.step1 ? '✅' : '❌'}`);
         console.log(`Step2 (L1 Fix): ${results.step2 ? '✅' : '❌'}`);
+        console.log(`Multi-root: ${results.multiRootCheck ? '✅' : '❌'}`);
         console.log(`Проверка ai_items: ${results.aiItemsCheck ? '✅' : '❌'}`);
         console.log(`Проверка L1 связей: ${results.linksCheck ? '✅' : '❌'}`);
         console.log(`Natural Query тесты:`);
@@ -459,7 +512,7 @@ async function runFullSystemTest() {
         });
         
         const allPassed = results.cleanup && results.step1 && results.step2 && 
-                         results.aiItemsCheck && results.linksCheck &&
+                         results.multiRootCheck && results.aiItemsCheck && results.linksCheck &&
                          results.naturalQueryTests.every(t => t.success);
         
         console.log('\n' + '='.repeat(80));

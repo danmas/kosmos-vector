@@ -26,102 +26,60 @@
 Конфигурация Knowledge Base хранится в `./kb-configs/{context-code}.json` и управляется через `packages/core/kbConfigService.js`.
 
 **Структура конфигурации:**
-- `rootPath` — абсолютный путь к проекту
+- `rootPath` — абсолютный путь к проекту или несколько путей через запятую (например, `C:\project1,D:\project2`)
 - `includeMask` — glob-паттерн для фильтрации файлов (например, `**/*.sql`)
-- `ignorePatterns` — паттерны игнорирования (через запятую)
-- `fileSelection` — точный список выбранных файлов (массив относительных путей с `./`)
+- `ignorePatterns` — паттерны игнорирования (через запятую, например, `**/node_modules/**,**/dist/**`)
+- `fileSelection` — точный список выбранных файлов (формат: `{rootPath}\./relative/path`)
 - `metadata` — метаданные проекта (включая `custom_settings` в YAML формате)
 
-**Логика работы:**
+### Поддержка нескольких rootPath (v2.2.0)
+
+Начиная с версии 2.2.0 поле `rootPath` поддерживает составной формат:
+
+```json
+{
+  "rootPath": "C:\\project\\backend,C:\\project\\frontend,D:\\shared\\libs"
+}
+```
+
+**Особенности:**
+- Каждый путь отображается как отдельный корневой узел в дереве файлов (`type: 'root'`)
+- Пути разделяются запятой (с опциональными пробелами)
+- Несуществующие пути пропускаются с предупреждением в логах
+- `fileSelection` хранит полный путь в формате `{rootPath}\./relative/file.ext`
+
+**Обратная совместимость:**
+- Старые конфигурации с одним `rootPath` работают без изменений
+- Старые `fileSelection` в формате `./relative/path` интерпретируются относительно первого rootPath
+
+### Логика работы
 
 1. **Дерево файлов (`GET /api/project/tree`):**
+   - Возвращает массив корневых узлов (по одному на каждый `rootPath`)
    - Использует `includeMask` для определения флага `selected` у файлов
-   - Файлы, соответствующие маске → `selected: true`
-   - Остальные → `selected: false`
+   - Файлы/директории, попадающие под `ignorePatterns`, полностью скрываются
+   - Формат путей: `{rootPath}\./relative/path`
 
 2. **Pipeline обработка (`step1Runner.js`):**
    - Если `fileSelection.length > 0` → используется только список из `fileSelection` (приоритет)
-   - Если `fileSelection` пуст → сканирование по `includeMask` с учетом `ignorePatterns`
+   - Если `fileSelection` пуст → сканирование всех `rootPath` по `includeMask` с учетом `ignorePatterns`
+   - Пути файлов парсятся через `parseFileSelectionPath()` для извлечения корня
 
-## File Loaders (Загрузчики файлов)
+### Вспомогательные функции (kbConfigService.js)
 
-Система поддерживает специализированные загрузчики для разных языков программирования. Каждый загрузчик:
-- Парсит файлы и извлекает сущности (функции, классы, методы и т.д.)
-- Создаёт AI Items для каждой сущности
-- Сохраняет L0 чанки (исходный код) и L1 чанки (связи/зависимости)
-- Записывает связи в таблицу `link`
+```javascript
+// Парсит rootPath в массив путей
+parseRootPaths("C:\\a,D:\\b") → ["C:\\a", "D:\\b"]
 
-**Доступные загрузчики:**
-
-| Загрузчик | Файл | Расширения | Сущности |
-|-----------|------|------------|----------|
-| SQL | `sqlFunctionLoader.js` | `.sql` | PL/pgSQL функции |
-| JavaScript | `jsFunctionLoader.js` | `.js` | Классы, функции, arrow functions, методы |
-| TypeScript | `tsFunctionLoader.js` | `.ts`, `.tsx` | Интерфейсы, типы, enum, классы, функции, методы |
-| PHP | `phpFunctionLoader.js` | `.php` | Классы, traits, интерфейсы, функции, методы |
-| DDL | `ddlSchemaLoader.js` | `.sql` | CREATE TABLE схемы |
-| Table Schema | `tableSchemaLoader.js` | — | Схемы таблиц из БД (через MCP) |
-
-**Конфигурация загрузчиков в `custom_settings` (YAML):**
-
-```yaml
-# SQL функции (PL/pgSQL)
-functions_loading:
-  enabled: true
-
-# JavaScript файлы
-js_loading:
-  enabled: true
-
-# TypeScript файлы
-ts_loading:
-  enabled: true
-
-# PHP файлы
-php_loading:
-  enabled: true
-
-# DDL схемы из файлов
-ddl_loading:
-  enabled: true
-  files:
-    - ./migrations/schema.sql
-
-# Загрузка схем таблиц из БД
-table_loading:
-  enabled: true
-  schema: public
-  include_patterns:
-    - "%"
-  exclude_patterns:
-    - "pg_%"
-```
-
-**Структура L1 связей для PHP:**
-
-```json
-{
-  "called_functions": ["functionName", "ClassName::staticMethod"],
-  "use_statements": ["App\\Models\\User", "Illuminate\\Support\\Collection"],
-  "require_include": ["./config.php", "../bootstrap.php"],
-  "instantiations": ["User", "Collection"]
-}
-```
-
-**Структура L1 связей для JS/TS:**
-
-```json
-{
-  "called_functions": ["functionName", "obj.method"],
-  "imports": ["./utils", "@langchain/core"],
-  "requires": ["path", "fs"]
-}
+// Извлекает rootPath и относительный путь из fileSelection
+parseFileSelectionPath("C:\\project\\./src/file.js") 
+  → { rootPath: "C:\\project", relativePath: "./src/file.js" }
 ```
 
 **API endpoints:**
 - `GET /api/kb-config?context-code=...` — получить конфигурацию
 - `POST /api/kb-config?context-code=...` — обновить конфигурацию (частичный патч)
-- `GET /api/project/tree?context-code=...` — дерево файлов с учетом `includeMask`
+- `GET /api/project/tree?context-code=...` — дерево файлов (массив корневых узлов)
 - `POST /api/project/selection?context-code=...` — сохранить выбор файлов в `fileSelection`
 
 ## Схема БД (создаётся в рантайме)

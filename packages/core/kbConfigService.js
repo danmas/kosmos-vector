@@ -141,10 +141,39 @@ async function getAllContextCodes() {
   }
 }
 
+/**
+ * Парсит rootPath в массив путей
+ * @param {string} rootPath - Один путь или несколько через запятую
+ * @returns {string[]} Массив путей
+ */
+function parseRootPaths(rootPath) {
+  if (!rootPath) return [];
+  return rootPath
+    .split(',')
+    .map(p => p.trim())
+    .filter(p => p.length > 0);
+}
+
+/**
+ * Извлекает корневой путь из fileSelection элемента
+ * @param {string} filePath - Путь вида "C:\root\./relative/file.sql"
+ * @returns {{ rootPath: string, relativePath: string } | null}
+ */
+function parseFileSelectionPath(filePath) {
+  const match = filePath.match(/^(.+?)(\\|\/)\.\/(.+)$/);
+  if (!match) return null;
+  return {
+    rootPath: match[1],
+    relativePath: './' + match[3]
+  };
+}
+
 module.exports = {
   getConfig,
   saveConfig,
   getConfigFilePath,
   getAllContextCodes,
+  parseRootPaths,
+  parseFileSelectionPath,
   CONFIG_DIR
 };

@@ -280,17 +280,32 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     throw new Error(`Не удалось загрузить конфигурацию для контекста ${contextCode}: ${err.message}`);
   }
 
-  const rootPath = kbConfig.rootPath;
+  const { parseRootPaths, parseFileSelectionPath } = kbConfigService;
+  const rootPaths = parseRootPaths(kbConfig.rootPath);
   const includeMask = (kbConfig.includeMask || '').trim() || '**/*.sql';
   const ignorePatterns = (kbConfig.ignorePatterns || '').trim();
   const fileSelection = kbConfig.fileSelection || [];
 
-  if (!fs.existsSync(rootPath)) {
-    throw new Error(`Root path не существует или недоступен: ${rootPath}`);
+  if (rootPaths.length === 0) {
+    throw new Error(`No root paths configured for context ${contextCode}`);
+  }
+
+  // Проверяем существование путей и логируем предупреждения для несуществующих
+  const validRootPaths = [];
+  for (const rootPath of rootPaths) {
+    if (fs.existsSync(rootPath)) {
+      validRootPaths.push(rootPath);
+    } else {
+      logger.warn(`Root path не существует или недоступен, пропускаем: ${rootPath}`);
+    }
+  }
+
+  if (validRootPaths.length === 0) {
+    throw new Error(`None of the configured root paths exist: ${rootPaths.join(', ')}`);
   }
 
   logger.log(`Запуск для контекста "${contextCode}"`);
-  logger.log(`rootPath: ${rootPath}`);
+  logger.log(`rootPaths: ${validRootPaths.join(', ')}`);
   logger.log(`includeMask: "${includeMask}"`);
   logger.log(`ignorePatterns: "${ignorePatterns}"`);
   logger.log(`fileSelection: ${fileSelection.length} файлов`);
@@ -320,23 +335,43 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     if (fileSelection.length > 0) {
       logger.log(`Режим: точный выбор файлов (${fileSelection.length} шт.)`);
 
-      for (const relPath of fileSelection) {
-        // relPath уже с ./ в начале (по контракту)
-        const cleanRel = relPath.startsWith('./') ? relPath.slice(2) : relPath;
-        const absPath = path.join(rootPath, cleanRel);
+      for (const filePath of fileSelection) {
+        // Парсим путь из fileSelection (формат: {rootPath}\./relative или старый формат ./relative)
+        const parsed = parseFileSelectionPath(filePath);
+        let targetRootPath;
+        let relativePath;
+
+        if (parsed) {
+          // Новый формат с корнем
+          targetRootPath = parsed.rootPath;
+          relativePath = parsed.relativePath;
+          
+          // Проверяем, что rootPath существует в конфигурации
+          if (!validRootPaths.includes(targetRootPath)) {
+            logger.warn(`Root path из fileSelection не найден в конфигурации, пропускаем: ${filePath}`);
+            continue;
+          }
+        } else {
+          // Старый формат без корня - используем первый rootPath для обратной совместимости
+          targetRootPath = validRootPaths[0];
+          relativePath = filePath.startsWith('./') ? filePath : './' + filePath;
+        }
+
+        const cleanRel = relativePath.startsWith('./') ? relativePath.slice(2) : relativePath;
+        const absPath = path.join(targetRootPath, cleanRel);
 
         if (!fs.existsSync(absPath)) {
-          logger.warn(`Файл из fileSelection не найден: ${relPath}`);
+          logger.warn(`Файл из fileSelection не найден: ${filePath}`);
           continue;
         }
 
         if (!absPath.toLowerCase().endsWith('.sql')) {
-          logger.warn(`Пропущен не-SQL файл из fileSelection: ${relPath}`);
+          logger.warn(`Пропущен не-SQL файл из fileSelection: ${filePath}`);
           continue;
         }
 
-        if (isIgnored(relPath)) {
-          logger.warn(`Файл из fileSelection игнорируется по ignorePatterns: ${relPath}`);
+        if (isIgnored(relativePath)) {
+          logger.warn(`Файл из fileSelection игнорируется по ignorePatterns: ${filePath}`);
           continue;
         }
 
@@ -347,7 +382,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     else {
       logger.log(`Режим: сканирование по glob-маскам`);
 
-      function scanDirectory(currentDir, baseRelPath = '.') {
+      function scanDirectory(currentDir, currentRootPath, baseRelPath = '.') {
         if (!fs.existsSync(currentDir)) return;
 
         const entries = fs.readdirSync(currentDir);
@@ -361,7 +396,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
 
             if (stats.isDirectory()) {
               if (!isIgnored(fullRelPath)) {
-                scanDirectory(absPath, relPath);
+                scanDirectory(absPath, currentRootPath, relPath);
               }
             } else if (stats.isFile() && absPath.toLowerCase().endsWith('.sql')) {
               if (isIgnored(fullRelPath)) {
@@ -377,7 +412,10 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
         }
       }
 
-      scanDirectory(rootPath, '.');
+      // Сканируем каждый корневой путь
+      for (const rootPath of validRootPaths) {
+        scanDirectory(rootPath, rootPath, '.');
+      }
     }
 
     // Добавляем найденные SQL-файлы в задачи
@@ -401,20 +439,33 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     
     // === Режим 1: Точный выбор файлов ===
     if (fileSelection.length > 0) {
-      for (const relPath of fileSelection) {
-        const cleanRel = relPath.startsWith('./') ? relPath.slice(2) : relPath;
-        const absPath = path.join(rootPath, cleanRel);
+      for (const filePath of fileSelection) {
+        const parsed = parseFileSelectionPath(filePath);
+        let targetRootPath;
+        let relativePath;
+
+        if (parsed) {
+          targetRootPath = parsed.rootPath;
+          relativePath = parsed.relativePath;
+          if (!validRootPaths.includes(targetRootPath)) continue;
+        } else {
+          targetRootPath = validRootPaths[0];
+          relativePath = filePath.startsWith('./') ? filePath : './' + filePath;
+        }
+
+        const cleanRel = relativePath.startsWith('./') ? relativePath.slice(2) : relativePath;
+        const absPath = path.join(targetRootPath, cleanRel);
 
         if (!fs.existsSync(absPath)) continue;
         if (!absPath.toLowerCase().endsWith('.js')) continue;
-        if (isIgnored(relPath)) continue;
+        if (isIgnored(relativePath)) continue;
 
         jsFilePaths.push(absPath);
       }
     } 
     // === Режим 2: Glob-маски ===
     else {
-      function scanDirectoryForJs(currentDir, baseRelPath = '.') {
+      function scanDirectoryForJs(currentDir, currentRootPath, baseRelPath = '.') {
         if (!fs.existsSync(currentDir)) return;
 
         const entries = fs.readdirSync(currentDir);
@@ -428,7 +479,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
 
             if (stats.isDirectory()) {
               if (!isIgnored(fullRelPath)) {
-                scanDirectoryForJs(absPath, relPath);
+                scanDirectoryForJs(absPath, currentRootPath, relPath);
               }
             } else if (stats.isFile() && absPath.toLowerCase().endsWith('.js')) {
               if (isIgnored(fullRelPath)) continue;
@@ -440,7 +491,9 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
         }
       }
 
-      scanDirectoryForJs(rootPath, '.');
+      for (const rootPath of validRootPaths) {
+        scanDirectoryForJs(rootPath, rootPath, '.');
+      }
     }
 
     logger.log(`Найдено ${jsFilePaths.length} JS-файлов для обработки`);
@@ -463,22 +516,35 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     
     // === Режим 1: Точный выбор файлов ===
     if (fileSelection.length > 0) {
-      for (const relPath of fileSelection) {
-        const cleanRel = relPath.startsWith('./') ? relPath.slice(2) : relPath;
-        const absPath = path.join(rootPath, cleanRel);
+      for (const filePath of fileSelection) {
+        const parsed = parseFileSelectionPath(filePath);
+        let targetRootPath;
+        let relativePath;
+
+        if (parsed) {
+          targetRootPath = parsed.rootPath;
+          relativePath = parsed.relativePath;
+          if (!validRootPaths.includes(targetRootPath)) continue;
+        } else {
+          targetRootPath = validRootPaths[0];
+          relativePath = filePath.startsWith('./') ? filePath : './' + filePath;
+        }
+
+        const cleanRel = relativePath.startsWith('./') ? relativePath.slice(2) : relativePath;
+        const absPath = path.join(targetRootPath, cleanRel);
 
         if (!fs.existsSync(absPath)) continue;
         const lower = absPath.toLowerCase();
         if (!lower.endsWith('.ts') && !lower.endsWith('.tsx')) continue;
         if (lower.endsWith('.d.ts')) continue; // Пропускаем declaration файлы
-        if (isIgnored(relPath)) continue;
+        if (isIgnored(relativePath)) continue;
 
         tsFilePaths.push(absPath);
       }
     } 
     // === Режим 2: Glob-маски ===
     else {
-      function scanDirectoryForTs(currentDir, baseRelPath = '.') {
+      function scanDirectoryForTs(currentDir, currentRootPath, baseRelPath = '.') {
         if (!fs.existsSync(currentDir)) return;
 
         const entries = fs.readdirSync(currentDir);
@@ -492,7 +558,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
 
             if (stats.isDirectory()) {
               if (!isIgnored(fullRelPath)) {
-                scanDirectoryForTs(absPath, relPath);
+                scanDirectoryForTs(absPath, currentRootPath, relPath);
               }
             } else if (stats.isFile()) {
               const lower = absPath.toLowerCase();
@@ -507,7 +573,9 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
         }
       }
 
-      scanDirectoryForTs(rootPath, '.');
+      for (const rootPath of validRootPaths) {
+        scanDirectoryForTs(rootPath, rootPath, '.');
+      }
     }
 
     logger.log(`Найдено ${tsFilePaths.length} TS-файлов для обработки`);
@@ -530,20 +598,33 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     
     // === Режим 1: Точный выбор файлов ===
     if (fileSelection.length > 0) {
-      for (const relPath of fileSelection) {
-        const cleanRel = relPath.startsWith('./') ? relPath.slice(2) : relPath;
-        const absPath = path.join(rootPath, cleanRel);
+      for (const filePath of fileSelection) {
+        const parsed = parseFileSelectionPath(filePath);
+        let targetRootPath;
+        let relativePath;
+
+        if (parsed) {
+          targetRootPath = parsed.rootPath;
+          relativePath = parsed.relativePath;
+          if (!validRootPaths.includes(targetRootPath)) continue;
+        } else {
+          targetRootPath = validRootPaths[0];
+          relativePath = filePath.startsWith('./') ? filePath : './' + filePath;
+        }
+
+        const cleanRel = relativePath.startsWith('./') ? relativePath.slice(2) : relativePath;
+        const absPath = path.join(targetRootPath, cleanRel);
 
         if (!fs.existsSync(absPath)) continue;
         if (!absPath.toLowerCase().endsWith('.php')) continue;
-        if (isIgnored(relPath)) continue;
+        if (isIgnored(relativePath)) continue;
 
         phpFilePaths.push(absPath);
       }
     } 
     // === Режим 2: Glob-маски ===
     else {
-      function scanDirectoryForPhp(currentDir, baseRelPath = '.') {
+      function scanDirectoryForPhp(currentDir, currentRootPath, baseRelPath = '.') {
         if (!fs.existsSync(currentDir)) return;
 
         const entries = fs.readdirSync(currentDir);
@@ -557,7 +638,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
 
             if (stats.isDirectory()) {
               if (!isIgnored(fullRelPath)) {
-                scanDirectoryForPhp(absPath, relPath);
+                scanDirectoryForPhp(absPath, currentRootPath, relPath);
               }
             } else if (stats.isFile() && absPath.toLowerCase().endsWith('.php')) {
               if (isIgnored(fullRelPath)) continue;
@@ -569,7 +650,9 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
         }
       }
 
-      scanDirectoryForPhp(rootPath, '.');
+      for (const rootPath of validRootPaths) {
+        scanDirectoryForPhp(rootPath, rootPath, '.');
+      }
     }
 
     logger.log(`Найдено ${phpFilePaths.length} PHP-файлов для обработки`);
@@ -592,16 +675,33 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     
     // DDL файлы указываются явно в конфигурации
     if (ddlLoadingConfig.files.length > 0) {
-      for (const relPath of ddlLoadingConfig.files) {
-        const cleanRel = relPath.startsWith('./') ? relPath.slice(2) : relPath;
-        const absPath = path.join(rootPath, cleanRel);
+      for (const filePath of ddlLoadingConfig.files) {
+        const parsed = parseFileSelectionPath(filePath);
+        let targetRootPath;
+        let relativePath;
+
+        if (parsed) {
+          targetRootPath = parsed.rootPath;
+          relativePath = parsed.relativePath;
+          if (!validRootPaths.includes(targetRootPath)) {
+            logger.warn(`Root path из DDL конфигурации не найден, пропускаем: ${filePath}`);
+            continue;
+          }
+        } else {
+          // Старый формат - используем первый rootPath
+          targetRootPath = validRootPaths[0];
+          relativePath = filePath.startsWith('./') ? filePath : './' + filePath;
+        }
+
+        const cleanRel = relativePath.startsWith('./') ? relativePath.slice(2) : relativePath;
+        const absPath = path.join(targetRootPath, cleanRel);
 
         if (!fs.existsSync(absPath)) {
-          logger.warn(`DDL файл не найден: ${relPath}`);
+          logger.warn(`DDL файл не найден: ${filePath}`);
           continue;
         }
         if (!absPath.toLowerCase().endsWith('.sql')) {
-          logger.warn(`Пропущен не-SQL DDL файл: ${relPath}`);
+          logger.warn(`Пропущен не-SQL DDL файл: ${filePath}`);
           continue;
         }
 

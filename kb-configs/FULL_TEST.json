@@ -1,12 +1,12 @@
 {
-  "rootPath": "C:\\ERV\\projects-ex\\kosmos-vector\\tests\\hr_test_project",
+  "rootPath": "C:\\ERV\\projects-ex\\kosmos-vector\\tests\\hr_test_project,C:\\ERV\\projects-ex\\kosmos-vector\\tests\\hr_test_project_php",
   "includeMask": "**/*",
   "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
   "fileSelection": [],
-  "lastUpdated": "2026-01-16T09:13:56.730Z",
+  "lastUpdated": "2026-01-19T15:40:30.951Z",
   "metadata": {
-    "projectName": "HR Test Project",
-    "description": "Full system test for HR management system",
+    "projectName": "HR Test Project (Multi-root)",
+    "description": "Full system test for HR management system with multi-root support",
     "tags": [],
     "custom_settings": "js_loading:\n  enabled: true\nts_loading:\n  enabled: true\nphp_loading:\n  enabled: true\nfunctions_loading:\n  enabled: true\nddl_loading:\n  enabled: true\n  files:\n    - ./schema/hr_schema.sql\ntable_loading:\n  enabled: false"
   },
