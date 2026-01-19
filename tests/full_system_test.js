@@ -24,13 +24,14 @@ const dbConfig = process.env.DATABASE_URL
     };
 
 // Ожидаемые значения для проверок
-// Реально создаётся ~32 ai_items:
+// Реально создаётся ~40+ ai_items:
 // - 6 DDL таблиц (hr.*)
 // - 2 SQL функции (hr.*)
-// - ~8 методов классов (Class.method)
+// - ~8 методов классов JS/TS (Class.method)
 // - ~16 top-level JS/TS функций (без схемы — это нормально для текущих парсеров)
-const EXPECTED_AI_ITEMS_MIN = 28;
-const EXPECTED_AI_ITEMS_MAX = 36;
+// - ~10 PHP сущностей (класс, интерфейс, trait, методы, функции)
+const EXPECTED_AI_ITEMS_MIN = 35;
+const EXPECTED_AI_ITEMS_MAX = 50;
 // Связи создаются всеми загрузчиками (SQL, JS, TS)
 const EXPECTED_LINKS_MIN = 5;
 

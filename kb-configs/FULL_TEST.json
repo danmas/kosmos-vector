@@ -8,7 +8,7 @@
     "projectName": "HR Test Project",
     "description": "Full system test for HR management system",
     "tags": [],
-    "custom_settings": "js_loading:\n  enabled: true\nts_loading:\n  enabled: true\nfunctions_loading:\n  enabled: true\nddl_loading:\n  enabled: true\n  files:\n    - ./schema/hr_schema.sql\ntable_loading:\n  enabled: false"
+    "custom_settings": "js_loading:\n  enabled: true\nts_loading:\n  enabled: true\nphp_loading:\n  enabled: true\nfunctions_loading:\n  enabled: true\nddl_loading:\n  enabled: true\n  files:\n    - ./schema/hr_schema.sql\ntable_loading:\n  enabled: false"
   },
   "pipelineConfig": {
     "parsing": {},

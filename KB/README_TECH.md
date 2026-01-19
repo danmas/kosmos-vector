@@ -43,6 +43,81 @@
    - Если `fileSelection.length > 0` → используется только список из `fileSelection` (приоритет)
    - Если `fileSelection` пуст → сканирование по `includeMask` с учетом `ignorePatterns`
 
+## File Loaders (Загрузчики файлов)
+
+Система поддерживает специализированные загрузчики для разных языков программирования. Каждый загрузчик:
+- Парсит файлы и извлекает сущности (функции, классы, методы и т.д.)
+- Создаёт AI Items для каждой сущности
+- Сохраняет L0 чанки (исходный код) и L1 чанки (связи/зависимости)
+- Записывает связи в таблицу `link`
+
+**Доступные загрузчики:**
+
+| Загрузчик | Файл | Расширения | Сущности |
+|-----------|------|------------|----------|
+| SQL | `sqlFunctionLoader.js` | `.sql` | PL/pgSQL функции |
+| JavaScript | `jsFunctionLoader.js` | `.js` | Классы, функции, arrow functions, методы |
+| TypeScript | `tsFunctionLoader.js` | `.ts`, `.tsx` | Интерфейсы, типы, enum, классы, функции, методы |
+| PHP | `phpFunctionLoader.js` | `.php` | Классы, traits, интерфейсы, функции, методы |
+| DDL | `ddlSchemaLoader.js` | `.sql` | CREATE TABLE схемы |
+| Table Schema | `tableSchemaLoader.js` | — | Схемы таблиц из БД (через MCP) |
+
+**Конфигурация загрузчиков в `custom_settings` (YAML):**
+
+```yaml
+# SQL функции (PL/pgSQL)
+functions_loading:
+  enabled: true
+
+# JavaScript файлы
+js_loading:
+  enabled: true
+
+# TypeScript файлы
+ts_loading:
+  enabled: true
+
+# PHP файлы
+php_loading:
+  enabled: true
+
+# DDL схемы из файлов
+ddl_loading:
+  enabled: true
+  files:
+    - ./migrations/schema.sql
+
+# Загрузка схем таблиц из БД
+table_loading:
+  enabled: true
+  schema: public
+  include_patterns:
+    - "%"
+  exclude_patterns:
+    - "pg_%"
+```
+
+**Структура L1 связей для PHP:**
+
+```json
+{
+  "called_functions": ["functionName", "ClassName::staticMethod"],
+  "use_statements": ["App\\Models\\User", "Illuminate\\Support\\Collection"],
+  "require_include": ["./config.php", "../bootstrap.php"],
+  "instantiations": ["User", "Collection"]
+}
+```
+
+**Структура L1 связей для JS/TS:**
+
+```json
+{
+  "called_functions": ["functionName", "obj.method"],
+  "imports": ["./utils", "@langchain/core"],
+  "requires": ["path", "fs"]
+}
+```
+
 **API endpoints:**
 - `GET /api/kb-config?context-code=...` — получить конфигурацию
 - `POST /api/kb-config?context-code=...` — обновить конфигурацию (частичный патч)

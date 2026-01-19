@@ -3,7 +3,7 @@
   "includeMask": "**/api*.sql",
   "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
   "fileSelection": [],
-  "lastUpdated": "2026-01-15T07:00:30.000Z",
+  "lastUpdated": "2026-01-19T15:09:36.709Z",
   "metadata": {
     "projectName": "New Project",
     "description": "RAG knowledge base",
