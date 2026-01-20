@@ -2074,6 +2074,45 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
 
+  /api/items/{id}/analyze-logic:
+    post:
+      tags: [Core]
+      summary: Анализ логики функции через серверный LLM
+      description: |
+        Сервер загружает l0_code из БД по full_name (id),
+        вызывает LLM для анализа и возвращает { logic, graph }.
+        Результат НЕ сохраняется автоматически (для сохранения используйте POST /api/items/{id}/logic-graph).
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных (произвольная строка)
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID AiItem (full_name)
+          schema: { type: string }
+          example: "utils.fetchData"
+      responses:
+        '200':
+          description: Анализ логики успешно выполнен
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LogicAnalysisResponse' }
+        '404':
+          description: AiItem не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500':
+          description: Ошибка анализа (LLM недоступен или ошибка обработки)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
   /api/stats:
     get:
       tags: [Core]

@@ -10,7 +10,7 @@ const configPath = join(process.cwd(), 'config.json');
 /**
  * Чтение конфигурации из config.json (динамически, каждый раз)
  * Приоритет: config.json > process.env > значения по умолчанию
- * @returns {Object} { LLM_BASE_URL, LLM_API_KEY, LLM_MODEL }
+ * @returns {Object} { LLM_BASE_URL, LLM_API_KEY, LLM_MODEL, LLM_LOGIC_ARHITECT_MODEL }
  */
 function getConfig() {
   let config = {};
@@ -27,7 +27,8 @@ function getConfig() {
   return {
     LLM_BASE_URL: config.LLM_BASE_URL || process.env.LLM_BASE_URL || "http://localhost:3002/v1",
     LLM_API_KEY: process.env.LLM_API_KEY || "",
-    LLM_MODEL: config.LLM_MODEL || process.env.LLM_MODEL || "FAST"
+    LLM_MODEL: config.LLM_MODEL || process.env.LLM_MODEL || "FAST",
+    LLM_LOGIC_ARHITECT_MODEL: config.LLM_LOGIC_ARHITECT_MODEL || process.env.LLM_LOGIC_ARHITECT_MODEL || null
   };
 }
 
@@ -52,9 +53,13 @@ function getLLM_MODEL() {
  * Вызов LLM API для генерации ответа
  * @param {Message[]} messages - Массив сообщений (system, user, assistant)
  * @param {string} model - Имя модели (по умолчанию из конфига)
+ * @param {Object} options - Дополнительные опции
+ * @param {boolean} options.jsonMode - Включить JSON mode (response_format: { type: 'json_object' })
  * @returns {Promise<string>} Текстовый ответ от модели
  */
-async function callLLM(messages, model = null) {
+async function callLLM(messages, model = null, options = {}) {
+  const { jsonMode = false } = options;
+  
   // Читаем конфиг каждый раз
   const config = getConfig();
   const actualModel = model || config.LLM_MODEL;
@@ -72,18 +77,24 @@ async function callLLM(messages, model = null) {
     console.log('Headers:', headers);
     console.log('Messages:', messages);
     console.log('Model:', actualModel);
-    console.log('Temperature:', 0.3);
-    console.log('Max Tokens:', 4096);
+    console.log('Temperature:', 0.0);
+    console.log('JSON Mode:', jsonMode);
+    
+    const requestBody = {
+      model: actualModel,
+      messages,
+      temperature: 0.0 // Настройте температуру под задачи (0.1 - код, 0.7 - креатив)
+    };
+    
+    // Добавляем response_format для JSON mode
+    if (jsonMode) {
+      requestBody.response_format = { type: 'json_object' };
+    }
     
     const res = await fetch(`${config.LLM_BASE_URL}/chat/completions`, {
       method: "POST",
       headers,
-      body: JSON.stringify({
-        model: actualModel,
-        messages,
-        temperature: 0.0 // Настройте температуру под задачи (0.1 - код, 0.7 - креатив)
-        // max_tokens: 4096, // Опционально
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!res.ok) {

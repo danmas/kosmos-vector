@@ -315,6 +315,167 @@ async function checkL1Links() {
 }
 
 /**
+ * Проверка Logic Architect API
+ */
+async function checkLogicArchitect() {
+    console.log('\n[Проверка 3] Logic Architect API...');
+    
+    const testItems = [
+        { id: 'hr.get_employee_skills', type: 'SQL', description: 'SQL функция с JOIN и ORDER BY' },
+        { id: 'validateEmployee', type: 'JS', description: 'JS функция с 3 ветвлениями и throw' },
+        { id: 'SkillService.addSkillToEmployee', type: 'PHP', description: 'PHP метод с trait и составным условием' }
+    ];
+    
+    const results = [];
+    let allPassed = true;
+    
+    for (const item of testItems) {
+        console.log(`\n  [Тест] ${item.type}: ${item.id}`);
+        console.log(`         ${item.description}`);
+        
+        try {
+            // 1. POST /analyze-logic
+            const analyzeUrl = `${BASE_URL}/api/items/${encodeURIComponent(item.id)}/analyze-logic?context-code=${CONTEXT_CODE}`;
+            const analyzeResponse = await fetch(analyzeUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (!analyzeResponse.ok) {
+                const errorText = await analyzeResponse.text();
+                throw new Error(`Статус: ${analyzeResponse.status}, Тело: ${errorText}`);
+            }
+            
+            const analyzeResult = await analyzeResponse.json();
+            
+            // 2. Проверка структуры ответа
+            if (!analyzeResult.logic || typeof analyzeResult.logic !== 'string' || analyzeResult.logic.trim().length === 0) {
+                throw new Error('Отсутствует или пустое поле "logic"');
+            }
+            
+            if (!analyzeResult.graph || !Array.isArray(analyzeResult.graph.nodes) || !Array.isArray(analyzeResult.graph.edges)) {
+                throw new Error('Отсутствует или некорректная структура "graph"');
+            }
+            
+            if (analyzeResult.graph.nodes.length < 2) {
+                throw new Error(`Недостаточно узлов в графе: ${analyzeResult.graph.nodes.length} (ожидается минимум 2: start + end)`);
+            }
+            
+            if (analyzeResult.graph.edges.length < 1) {
+                throw new Error(`Недостаточно связей в графе: ${analyzeResult.graph.edges.length} (ожидается минимум 1)`);
+            }
+            
+            // Проверка структуры узлов
+            for (const node of analyzeResult.graph.nodes) {
+                if (!node.id || !node.type || !node.label) {
+                    throw new Error(`Узел без обязательных полей: ${JSON.stringify(node)}`);
+                }
+                if (!['start', 'end', 'decision', 'process', 'db_call', 'exception'].includes(node.type)) {
+                    throw new Error(`Неизвестный тип узла: ${node.type}`);
+                }
+            }
+            
+            // Проверка структуры связей
+            for (const edge of analyzeResult.graph.edges) {
+                if (!edge.id || !edge.from || !edge.to) {
+                    throw new Error(`Связь без обязательных полей: ${JSON.stringify(edge)}`);
+                }
+            }
+            
+            console.log(`    [SUCCESS] Анализ получен: ${analyzeResult.graph.nodes.length} узлов, ${analyzeResult.graph.edges.length} связей`);
+            
+            // 3. POST /logic-graph (сохранение)
+            const saveUrl = `${BASE_URL}/api/items/${encodeURIComponent(item.id)}/logic-graph?context-code=${CONTEXT_CODE}`;
+            const saveResponse = await fetch(saveUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    logic: analyzeResult.logic,
+                    graph: analyzeResult.graph
+                })
+            });
+            
+            if (!saveResponse.ok) {
+                const errorText = await saveResponse.text();
+                throw new Error(`Ошибка сохранения: Статус ${saveResponse.status}, Тело: ${errorText}`);
+            }
+            
+            const saveResult = await saveResponse.json();
+            if (!saveResult.success) {
+                throw new Error(`Сохранение не удалось: ${saveResult.error || 'Неизвестная ошибка'}`);
+            }
+            
+            console.log(`    [SUCCESS] Результат сохранён`);
+            
+            // 4. GET /logic-graph (получение сохранённого)
+            const getUrl = `${BASE_URL}/api/items/${encodeURIComponent(item.id)}/logic-graph?context-code=${CONTEXT_CODE}`;
+            const getResponse = await fetch(getUrl, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (!getResponse.ok) {
+                const errorText = await getResponse.text();
+                throw new Error(`Ошибка получения: Статус ${getResponse.status}, Тело: ${errorText}`);
+            }
+            
+            const getResult = await getResponse.json();
+            if (!getResult.success || !getResult.logicGraph) {
+                throw new Error(`Получение не удалось: ${getResult.error || 'Неизвестная ошибка'}`);
+            }
+            
+            // 5. Сравнение данных
+            const savedLogic = getResult.logicGraph.logic;
+            const savedGraph = getResult.logicGraph.graph;
+            
+            if (savedLogic !== analyzeResult.logic) {
+                throw new Error('Сохранённая логика не совпадает с оригиналом');
+            }
+            
+            if (JSON.stringify(savedGraph.nodes) !== JSON.stringify(analyzeResult.graph.nodes)) {
+                throw new Error('Сохранённые узлы не совпадают с оригиналом');
+            }
+            
+            if (JSON.stringify(savedGraph.edges) !== JSON.stringify(analyzeResult.graph.edges)) {
+                throw new Error('Сохранённые связи не совпадают с оригиналом');
+            }
+            
+            console.log(`    [SUCCESS] Данные совпадают с сохранёнными`);
+            
+            results.push({
+                id: item.id,
+                type: item.type,
+                success: true,
+                nodesCount: analyzeResult.graph.nodes.length,
+                edgesCount: analyzeResult.graph.edges.length
+            });
+            
+        } catch (error) {
+            console.error(`    [ERROR] Ошибка при тестировании ${item.id}:`, error.message);
+            results.push({
+                id: item.id,
+                type: item.type,
+                success: false,
+                error: error.message
+            });
+            allPassed = false;
+        }
+    }
+    
+    // Итоги проверки
+    const successCount = results.filter(r => r.success).length;
+    console.log(`\n  [ИТОГО] Успешно: ${successCount}/${results.length}`);
+    
+    if (allPassed) {
+        console.log(`  [SUCCESS] Все тесты Logic Architect пройдены`);
+    } else {
+        console.warn(`  [WARNING] Некоторые тесты Logic Architect не пройдены`);
+    }
+    
+    return { results, allPassed, successCount, totalCount: results.length };
+}
+
+/**
  * Тест Natural Query
  */
 async function testNaturalQuery(question, expectedKeywords) {
@@ -392,8 +553,10 @@ async function runFullSystemTest() {
         cleanup: false,
         step1: false,
         step2: false,
+        multiRootCheck: false,
         aiItemsCheck: false,
         linksCheck: false,
+        logicArchitectCheck: false,
         naturalQueryTests: []
     };
     
@@ -482,6 +645,11 @@ async function runFullSystemTest() {
         results.linksCheck = linksResult.totalLinks >= EXPECTED_LINKS_MIN && 
                            linksResult.hrNoSchemaLinks === 0;
         
+        // Проверка 3: Logic Architect
+        const logicArchitectResult = await checkLogicArchitect();
+        results.logicArchitectCheck = logicArchitectResult.allPassed;
+        results.logicArchitectResults = logicArchitectResult.results;
+        
         // Шаг 3: Natural Query тесты
         console.log('\n[Шаг 3] Тестирование Natural Query API...');
         for (const test of NATURAL_QUERY_TESTS) {
@@ -503,6 +671,17 @@ async function runFullSystemTest() {
         console.log(`Multi-root: ${results.multiRootCheck ? '✅' : '❌'}`);
         console.log(`Проверка ai_items: ${results.aiItemsCheck ? '✅' : '❌'}`);
         console.log(`Проверка L1 связей: ${results.linksCheck ? '✅' : '❌'}`);
+        console.log(`Logic Architect: ${results.logicArchitectCheck ? '✅' : '❌'}`);
+        if (results.logicArchitectCheck) {
+            const logicResults = results.logicArchitectResults || [];
+            logicResults.forEach((r, idx) => {
+                if (r.success) {
+                    console.log(`  ${idx + 1}. ✅ ${r.type}: ${r.id} (${r.nodesCount} узлов, ${r.edgesCount} связей)`);
+                } else {
+                    console.log(`  ${idx + 1}. ❌ ${r.type}: ${r.id} - ${r.error}`);
+                }
+            });
+        }
         console.log(`Natural Query тесты:`);
         results.naturalQueryTests.forEach((test, idx) => {
             console.log(`  ${idx + 1}. ${test.success ? '✅' : '❌'} "${test.question.substring(0, 50)}..."`);
@@ -513,6 +692,7 @@ async function runFullSystemTest() {
         
         const allPassed = results.cleanup && results.step1 && results.step2 && 
                          results.multiRootCheck && results.aiItemsCheck && results.linksCheck &&
+                         results.logicArchitectCheck &&
                          results.naturalQueryTests.every(t => t.success);
         
         console.log('\n' + '='.repeat(80));

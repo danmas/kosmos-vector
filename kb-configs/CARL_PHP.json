@@ -1,0 +1,13 @@
+{
+  "rootPath": "C:\\ERV\\CARLINK\\carlinkweb\\web",
+  "includeMask": "**/*.php",
+  "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
+  "fileSelection": [],
+  "lastUpdated": "2026-01-20T10:43:53.368Z",
+  "metadata": {
+    "projectName": "New Project",
+    "description": "RAG knowledge base",
+    "tags": [],
+    "custom_settings": "php_loading:\n  enabled: true\ntable_loading:\n  enabled: false"
+  }
+}

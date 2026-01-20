@@ -635,6 +635,164 @@ module.exports = (dbService, logBuffer) => {
     }
   });
 
+  // === Функция для построения промпта анализа логики ===
+  /**
+   * Формирует промпт для анализа логики функции
+   * @param {string} body - Исходный код функции (l0_code)
+   * @param {Object} metadata - Метаданные функции
+   * @param {string} metadata.s_name - Краткое имя функции
+   * @param {Array} metadata.called_functions - Список вызываемых функций (l1_deps)
+   * @param {string} metadata.comment - Описание функции (l2_desc)
+   * @returns {string} Промпт для LLM
+   */
+  function buildLogicAnalysisPrompt(body, metadata) {
+    return `Проанализируй следующий исходный код функции и предоставь структурированный ответ в формате JSON.
+
+ИСХОДНЫЙ КОД:
+${body}
+
+МЕТАДАННЫЕ:
+${JSON.stringify({
+  signature: metadata.signature || null,
+  called_functions: metadata.called_functions || [],
+  tables: metadata.select_from || null,
+  function_name: metadata.s_name || null,
+  description: metadata.comment || null
+}, null, 2)}
+
+ТВОЯ ЗАДАЧА СОСТОИТ ИЗ ДВУХ ЧАСТЕЙ:
+
+1. РАЗДЕЛ "logic" (Текстовое описание):
+- Опиши логику работы функции на РУССКОМ ЯЗЫКЕ.
+- Перечисли все вызываемые функции (используй полные имена, если они известны).
+- Укажи, какие таблицы читаются (SELECT) и в какие записываются данные (INSERT/UPDATE/DELETE).
+- Опиши все ветвления (if/else, switch) и циклы.
+- Описание должно быть формальным и точным.
+- Отформатируй текст чтобы было красиво и понятно.
+
+2. РАЗДЕЛ "graph" (Граф потока управления):
+Соблюдай строгие правила связей:
+- 'start': Начало функции. Ровно ОДНА исходящая связь.
+- 'decision': Развилка/условие. Минимум ДВЕ исходящие связи (например, "Да"/"Нет").
+- 'process': Обычное действие или вычисление. Один вход, один выход.
+- 'db_call': Операция с БД. Один вход, один выход (трактуется как процесс).
+- 'end' или 'exception': Точки выхода. Минимум один вход, НОЛЬ исходящих связей.
+
+Используй краткие и понятные метки (labels) для узлов и связей.
+
+ВАЖНО: Ответ должен быть валидным JSON объектом со следующей структурой:
+{
+  "logic": "текстовое описание логики на русском языке",
+  "graph": {
+    "nodes": [
+      { "id": "start_1", "type": "start", "label": "Начало" },
+      { "id": "decision_1", "type": "decision", "label": "Проверка условия", "details": "..." },
+      { "id": "process_1", "type": "process", "label": "Обработка данных" },
+      { "id": "end_1", "type": "end", "label": "Конец" }
+    ],
+    "edges": [
+      { "id": "e1", "from": "start_1", "to": "decision_1" },
+      { "id": "e2", "from": "decision_1", "to": "process_1", "label": "Да" },
+      { "id": "e3", "from": "process_1", "to": "end_1" }
+    ]
+  }
+}`;
+  }
+
+  // === POST /api/items/:id/analyze-logic — Анализ логики через LLM ===
+  router.post('/items/:id/analyze-logic', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const decodedId = decodeURIComponent(id);
+      const contextCode = req.contextCode;
+
+      console.log(`[API] Analyzing logic for item: ${decodedId}`);
+
+      // 1. Получаем AiItem из БД
+      const item = await dbService.getFullAiItemByFullName(decodedId, contextCode || null);
+      if (!item) {
+        return res.status(404).json({ 
+          success: false,
+          error: `AiItem with id '${decodedId}' not found` 
+        });
+      }
+
+      // 2. Формируем метаданные
+      const metadata = {
+        s_name: item.id,
+        called_functions: item.l1_deps || [],
+        comment: item.l2_desc || null,
+        signature: null,
+        select_from: null
+      };
+
+      // 3. Формируем промпт
+      const prompt = buildLogicAnalysisPrompt(item.l0_code || '', metadata);
+
+      // 4. Вызываем LLM с JSON mode
+      const { callLLM, getConfig } = require('../packages/core/llmClient');
+      const config = getConfig();
+      const model = config.LLM_LOGIC_ARHITECT_MODEL || config.LLM_MODEL;
+
+      console.log(`[API] Calling LLM with model: ${model}`);
+
+      const response = await callLLM(
+        [{ role: 'user', content: prompt }],
+        model,
+        { jsonMode: true }
+      );
+
+      // 5. Парсим JSON ответ
+      let result;
+      try {
+        result = JSON.parse(response);
+      } catch (parseError) {
+        console.error('[API] Failed to parse LLM response as JSON:', parseError);
+        // Пытаемся извлечь JSON из текста (если есть markdown блоки)
+        const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          result = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+        } else {
+          throw new Error('LLM response is not valid JSON');
+        }
+      }
+
+      // 6. Валидация структуры ответа
+      if (!result.logic || !result.graph) {
+        return res.status(500).json({
+          success: false,
+          error: 'Invalid LLM response structure: missing "logic" or "graph" field'
+        });
+      }
+
+      if (!result.graph.nodes || !result.graph.edges) {
+        return res.status(500).json({
+          success: false,
+          error: 'Invalid LLM response structure: missing "nodes" or "edges" in graph'
+        });
+      }
+
+      // 7. Возвращаем результат
+      console.log(`[API] Logic analysis completed for: ${decodedId}`);
+      res.json(result);
+
+    } catch (error) {
+      console.error('[API] Error analyzing logic:', error);
+      
+      if (error.message.includes('not found')) {
+        return res.status(404).json({
+          success: false,
+          error: error.message
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        error: 'Failed to analyze logic: ' + error.message
+      });
+    }
+  });
+
   // === 4. Список метаданных всех AiItems (новый контракт) ===
   router.get('/items-list', async (req, res) => {
     try {
