@@ -381,169 +381,75 @@ module.exports = (dbService, embeddings) => {
 
       let scriptId = null;
       let scriptCode = null;
-      let cached = false;
 
-      // Шаг 1: Сначала проверяем точное совпадение вопроса
-      const exactScript = await dbService.getAgentScriptByExactQuestion(contextCode, question);
+      // Генерируем новый скрипт через LLM
+      console.log(`[NaturalQuery] Генерация скрипта для вопроса: "${question}"`);
       
-      if (exactScript) {
-        // Точное совпадение найдено — используем его без FTS и без LLM
-        scriptId = exactScript.id;
-        scriptCode = exactScript.script;
-        cached = true;
+      const prompt = getScriptGenerationPrompt(question);
+      const messages = [
+        { role: 'system', content: 'Ты генератор async JS-скриптов для анализа кодовой базы. Возвращай только код функции execute, без лишних комментариев и объяснений.' },
+        { role: 'user', content: prompt }
+      ];
+
+      scriptCode = await callLLM(messages);
+      
+      // Логируем что пришло от LLM
+      const initialNewlines = (scriptCode.match(/\n/g) || []).length;
+      console.log(`[NaturalQuery] Ответ от LLM: длина=${scriptCode.length}, переводов строк=${initialNewlines}`);
+      
+      // Очищаем ответ от markdown code blocks, если есть
+      const trimmedCheck = scriptCode.trim();
+      const hasMarkdown = trimmedCheck.startsWith('```');
+      console.log(`[NaturalQuery] Markdown блоков: ${hasMarkdown}`);
+      
+      if (hasMarkdown) {
+        scriptCode = scriptCode.replace(/^[\s]*```(?:javascript|js)?[\s]*\n?/, '').replace(/\n?[\s]*```[\s]*$/, '');
+        scriptCode = scriptCode.replace(/^\n+/, '').replace(/\n+$/, '');
         
-        // Инкрементируем счётчик использования
-        await dbService.incrementUsage(scriptId);
-        console.log(`[NaturalQuery] Использован скрипт с точным совпадением #${scriptId}`);
+        const afterMarkdownNewlines = (scriptCode.match(/\n/g) || []).length;
+        console.log(`[NaturalQuery] После удаления markdown: переводов строк=${afterMarkdownNewlines}`);
       } else {
-        // Шаг 1.2: Векторный поиск похожих вопросов
-        const config = getConfig();
-        const suggestLimit = config.NATURAL_QUERY_SUGGEST_LIMIT || 5;
-        const similarityThreshold = config.NATURAL_QUERY_SIMILARITY_THRESHOLD || 0.8;
-        const autoUseThreshold = config.NATURAL_QUERY_AUTO_USE_THRESHOLD || 0.95;
-
-        try {
-          const questionVector = await embeddings.embedQuery(question);
-          const vectorResults = await dbService.searchSimilarQuestions(
-            contextCode, 
-            questionVector, 
-            suggestLimit, 
-            similarityThreshold
-          );
-
-          if (vectorResults.length > 0) {
-            const bestMatch = vectorResults[0];
-            
-            // Если similarity >= 0.95, возвращаем suggestion с high_confidence
-            if (bestMatch.similarity >= autoUseThreshold) {
-              console.log(`[NaturalQuery] Найден высокоуверенный match (similarity=${bestMatch.similarity.toFixed(3)}) для скрипта #${bestMatch.id}`);
-              
-              return res.json({
-                success: true,
-                high_confidence: true,
-                suggestions: [{
-                  id: bestMatch.id,
-                  question: bestMatch.question,
-                  similarity: bestMatch.similarity,
-                  usage_count: bestMatch.usage_count,
-                  is_valid: bestMatch.is_valid,
-                  last_result: bestMatch.last_result
-                }]
-              });
-            } else {
-              // Если similarity < 0.95, но >= threshold, возвращаем список suggestions
-              console.log(`[NaturalQuery] Найдено ${vectorResults.length} похожих вопросов (лучший similarity=${bestMatch.similarity.toFixed(3)})`);
-              
-              return res.json({
-                success: true,
-                high_confidence: false,
-                suggestions: vectorResults.map(r => ({
-                  id: r.id,
-                  question: r.question,
-                  similarity: r.similarity,
-                  usage_count: r.usage_count,
-                  is_valid: r.is_valid,
-                  last_result: r.last_result
-                }))
-              });
-            }
-          }
-        } catch (vectorError) {
-          // Если векторный поиск не удался, продолжаем с FTS
-          console.error(`[NaturalQuery] Ошибка векторного поиска:`, vectorError);
-        }
-
-        // Шаг 1.3: Поиск похожего скрипта в кэше через FTS (fallback)
-        const cachedScript = await dbService.fuzzySearchScripts(contextCode, question);
-        
-        if (cachedScript) {
-          // Нашли похожий скрипт — используем его
-          scriptId = cachedScript.id;
-          scriptCode = cachedScript.script;
-          cached = true;
-          
-          // Инкрементируем счётчик использования
-          await dbService.incrementUsage(scriptId);
-          console.log(`[NaturalQuery] Использован кэшированный скрипт #${scriptId} (rank: ${cachedScript.rank.toFixed(3)})`);
-        } else {
-          // Шаг 2: Генерируем новый скрипт через LLM
-          console.log(`[NaturalQuery] Генерация нового скрипта для вопроса: "${question}"`);
-          
-          const prompt = getScriptGenerationPrompt(question);
-          const messages = [
-            { role: 'system', content: 'Ты генератор async JS-скриптов для анализа кодовой базы. Возвращай только код функции execute, без лишних комментариев и объяснений.' },
-            { role: 'user', content: prompt }
-          ];
-
-          scriptCode = await callLLM(messages);
-          
-          // Логируем что пришло от LLM
-          const initialNewlines = (scriptCode.match(/\n/g) || []).length;
-          console.log(`[NaturalQuery] Ответ от LLM: длина=${scriptCode.length}, переводов строк=${initialNewlines}`);
-          
-          // Очищаем ответ от markdown code blocks, если есть
-          // ВАЖНО: сохраняем переводы строк внутри скрипта!
-          // Проверяем наличие markdown блоков
-          const trimmedCheck = scriptCode.trim();
-          const hasMarkdown = trimmedCheck.startsWith('```');
-          console.log(`[NaturalQuery] Markdown блоков: ${hasMarkdown}`);
-          
-          if (hasMarkdown) {
-            // Убираем markdown code blocks с начала и конца, но сохраняем переводы строк в коде
-            scriptCode = scriptCode.replace(/^[\s]*```(?:javascript|js)?[\s]*\n?/, '').replace(/\n?[\s]*```[\s]*$/, '');
-            // Убираем только пустые строки в самом начале и конце, но сохраняем структуру кода
-            scriptCode = scriptCode.replace(/^\n+/, '').replace(/\n+$/, '');
-            
-            const afterMarkdownNewlines = (scriptCode.match(/\n/g) || []).length;
-            console.log(`[NaturalQuery] После удаления markdown: переводов строк=${afterMarkdownNewlines}`);
-          } else {
-            // Убираем только ведущие/замыкающие пробелы и табы (но НЕ переводы строк \n)
-            scriptCode = scriptCode.replace(/^[ \t\r]+/, '').replace(/[ \t\r]+$/, '');
-          }
-
-          // Валидация сгенерированного скрипта
-          const validation = validateScript(scriptCode);
-          if (!validation.valid) {
-            console.error(`[NaturalQuery] Сгенерированный скрипт невалиден: ${validation.error}`);
-            return res.status(500).json({
-              success: false,
-              error: `Generated script is invalid: ${validation.error}`,
-              human: `Сгенерированный скрипт невалиден: ${validation.error}. Попробуйте переформулировать вопрос или обратитесь к администратору.`,
-              script: scriptCode,
-              scriptId: null,
-              cached: false
-            });
-          }
-
-          // Сохраняем скрипт в БД (is_valid = false, т.к. ещё не проверен на практике)
-          // Логируем количество переводов строк перед сохранением
-          const newlineCountBefore = (scriptCode.match(/\n/g) || []).length;
-          console.log(`[NaturalQuery] Сохранение скрипта: ${newlineCountBefore} переводов строк в исходном коде`);
-          
-          const savedScript = await dbService.saveAgentScript(contextCode, question, scriptCode, false);
-          scriptId = savedScript.id;
-          
-          // Проверяем, что вернулось из БД
-          const newlineCountAfter = (savedScript.script.match(/\n/g) || []).length;
-          console.log(`[NaturalQuery] Сохранён новый скрипт #${scriptId}: ${newlineCountAfter} переводов строк после сохранения`);
-          
-          if (newlineCountBefore !== newlineCountAfter) {
-            console.warn(`[NaturalQuery] ⚠️  Потеря переводов строк: было ${newlineCountBefore}, стало ${newlineCountAfter}`);
-          }
-
-          // Векторизуем вопрос и сохраняем эмбеддинг
-          try {
-            const questionVector = await embeddings.embedQuery(question);
-            await dbService.saveQuestionEmbedding(scriptId, questionVector);
-            console.log(`[NaturalQuery] Эмбеддинг вопроса сохранён для скрипта #${scriptId}`);
-          } catch (embedError) {
-            // Не прерываем выполнение, если векторизация не удалась
-            console.error(`[NaturalQuery] Ошибка векторизации вопроса для скрипта #${scriptId}:`, embedError);
-          }
-        }
+        scriptCode = scriptCode.replace(/^[ \t\r]+/, '').replace(/[ \t\r]+$/, '');
       }
 
-      // Шаг 3: Выполняем скрипт в sandbox
+      // Валидация сгенерированного скрипта
+      const validation = validateScript(scriptCode);
+      if (!validation.valid) {
+        console.error(`[NaturalQuery] Сгенерированный скрипт невалиден: ${validation.error}`);
+        return res.status(500).json({
+          success: false,
+          error: `Generated script is invalid: ${validation.error}`,
+          human: `Сгенерированный скрипт невалиден: ${validation.error}. Попробуйте переформулировать вопрос или обратитесь к администратору.`,
+          script: scriptCode,
+          scriptId: null,
+          cached: false
+        });
+      }
+
+      // Сохраняем скрипт в БД
+      const newlineCountBefore = (scriptCode.match(/\n/g) || []).length;
+      console.log(`[NaturalQuery] Сохранение скрипта: ${newlineCountBefore} переводов строк`);
+      
+      const savedScript = await dbService.saveAgentScript(contextCode, question, scriptCode, false);
+      scriptId = savedScript.id;
+      
+      const newlineCountAfter = (savedScript.script.match(/\n/g) || []).length;
+      console.log(`[NaturalQuery] Сохранён скрипт #${scriptId}: ${newlineCountAfter} переводов строк`);
+      
+      if (newlineCountBefore !== newlineCountAfter) {
+        console.warn(`[NaturalQuery] ⚠️  Потеря переводов строк: было ${newlineCountBefore}, стало ${newlineCountAfter}`);
+      }
+
+      // Векторизуем вопрос и сохраняем эмбеддинг
+      try {
+        const questionVector = await embeddings.embedQuery(question);
+        await dbService.saveQuestionEmbedding(scriptId, questionVector);
+        console.log(`[NaturalQuery] Эмбеддинг вопроса сохранён для скрипта #${scriptId}`);
+      } catch (embedError) {
+        console.error(`[NaturalQuery] Ошибка векторизации:`, embedError);
+      }
+
+      // Выполняем скрипт в sandbox
       let rawData = null;
       let executionError = null;
 
@@ -557,13 +463,12 @@ module.exports = (dbService, embeddings) => {
             human: rawData.message || 'Требуется уточнение вопроса',
             raw: [],
             scriptId: scriptId,
-            cached: cached,
             clarify: true
           });
         }
 
-        // Если скрипт выполнился успешно и это новый скрипт — помечаем как валидный
-        if (!cached && scriptId) {
+        // Помечаем скрипт как валидный
+        if (scriptId) {
           await dbService.pgClient.query(`
             UPDATE public.agent_script
             SET is_valid = true
@@ -604,8 +509,7 @@ module.exports = (dbService, embeddings) => {
           error: `Script execution failed: ${errorMessage}`,
           human: humanError,
           scriptId: scriptId,
-          script: scriptCode || null,
-          cached: cached
+          script: scriptCode || null
         });
       }
 
@@ -647,31 +551,14 @@ module.exports = (dbService, embeddings) => {
           // Не прерываем выполнение, если сохранение результата не удалось
           console.error(`[NaturalQuery] Ошибка сохранения результата для скрипта #${scriptId}:`, saveError);
         }
-      } else if (scriptId && cached) {
-        // Для кэшированных скриптов получаем last_result из БД, если есть
-        try {
-          const result = await dbService.pgClient.query(`
-            SELECT last_result
-            FROM public.agent_script
-            WHERE id = $1
-          `, [scriptId]);
-          
-          if (result.rows.length > 0 && result.rows[0].last_result) {
-            lastResult = result.rows[0].last_result;
-          }
-        } catch (error) {
-          // Игнорируем ошибку получения last_result
-          console.error(`[NaturalQuery] Ошибка получения last_result для скрипта #${scriptId}:`, error);
-        }
       }
 
-      // Шаг 6: Возвращаем результат
+      // Возвращаем результат
       res.json({
         success: true,
         human: humanText,
         raw: rawData,
         scriptId: scriptId,
-        cached: cached,
         last_result: lastResult
       });
 

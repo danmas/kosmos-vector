@@ -1,4 +1,5 @@
 const fileMatchUtils = require('./fileMatchUtils');
+const logger = require('./logger');
 
 module.exports = {
   DbService: require('./DbService'),
@@ -10,4 +11,5 @@ module.exports = {
   SimpleEmbeddings: require('./SimpleEmbeddings'),
   llmClient: require('./llmClient'),
   ...fileMatchUtils,
+  ...logger,
 };

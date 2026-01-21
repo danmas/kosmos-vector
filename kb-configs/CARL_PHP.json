@@ -3,7 +3,7 @@
   "includeMask": "**/*.php",
   "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
   "fileSelection": [],
-  "lastUpdated": "2026-01-20T10:43:53.368Z",
+  "lastUpdated": "2026-01-21T07:53:06.577Z",
   "metadata": {
     "projectName": "New Project",
     "description": "RAG knowledge base",

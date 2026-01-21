@@ -1,6 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
+const { writeToFile } = require('./packages/core/logger');
 
 // === SSE LOGGING SYSTEM WITH SESSION SUPPORT ===
 // Глобальный буфер логов (в памяти)
@@ -77,12 +78,17 @@ function addLog(level, message, sessionId = null, ...args) {
     typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
   ).join(' ');
 
+  const fullMessage = message + (formattedArgs ? ' ' + formattedArgs : '');
+
+  // Записываем в файл logs/combined-YYYY-MM-DD.log (и error.log для ERROR)
+  writeToFile(level, 'SERVER', fullMessage);
+
   // Сохраняем структурированный объект с уникальным id и опциональным sessionId
   const logEntry = {
     id: Date.now().toString() + Math.random().toString().slice(2),
     timestamp: timestamp,
     level: level,
-    message: message + (formattedArgs ? ' ' + formattedArgs : ''),
+    message: fullMessage,
     sessionId: sessionId || null
   };
 
@@ -235,6 +241,31 @@ app.use(cors()); // Разрешает всё (удобно для разраб�
 app.use(express.static('public'));
 
 app.use(express.json()); // Для парсинга JSON в теле запроса
+
+// Middleware для логирования HTTP запросов
+app.use((req, res, next) => {
+  // Пропускаем SSE endpoints и статику
+  if (req.path === '/api/logs/stream' || req.path === '/server-info' || !req.path.startsWith('/api')) {
+    return next();
+  }
+  
+  const start = Date.now();
+  const method = req.method;
+  const url = req.originalUrl;
+  
+  // Логируем входящий запрос
+  console.log(`[API] → ${method} ${url}`);
+  
+  // Перехватываем завершение ответа
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const status = res.statusCode;
+    const statusIcon = status < 400 ? '✓' : '✗';
+    console.log(`[API] ← ${method} ${url} ${statusIcon} ${status} (${duration}ms)`);
+  });
+  
+  next();
+});
 
 // Обработчик ошибок для некорректного JSON
 app.use((err, req, res, next) => {

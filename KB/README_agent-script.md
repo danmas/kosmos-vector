@@ -8,54 +8,36 @@ Natural Query Engine — интеллектуальный слой для ана
 
 ```mermaid
 flowchart TB
-    subgraph Input [Входящий запрос]
-        Q[POST /api/v1/natural-query]
-    end
-    
-    subgraph Cache [Поиск в кэше]
-        Exact[Точное совпадение question]
-        ExactFound{Найден?}
-        Vector[Векторный поиск по эмбеддингам]
-        VectorFound{Найден?}
-        VectorHigh{similarity >= 0.95?}
-        FTS[FTS поиск похожих вопросов]
-        FTSFound{Найден?}
-    end
-    
-    subgraph Generate [Генерация скрипта]
-        LLM[callLLM с системным промптом]
+    subgraph NaturalQuery [POST /api/v1/natural-query]
+        LLM[LLM генерирует скрипт]
         Save[Сохранение в agent_script]
         Embed[Векторизация вопроса]
+        Sandbox[Выполнение в sandbox]
+        Humanize[LLM humanize результат]
+        Response["{ human, raw, scriptId, last_result }"]
     end
     
-    subgraph Execute [Выполнение]
-        Sandbox[new Function + safeDbService]
-        Humanize[callLLM humanize]
-    end
-    
-    subgraph Output [Ответ]
-        Response["{ human, raw, scriptId, cached }"]
+    subgraph Suggest [POST /api/v1/natural-query/suggest]
+        EmbedQ[Векторизация вопроса]
+        Search[Поиск похожих]
         Suggestions["{ suggestions, high_confidence }"]
     end
     
-    Q --> Exact
-    Exact --> ExactFound
-    ExactFound -->|Да| Sandbox
-    ExactFound -->|Нет| Vector
-    Vector --> VectorFound
-    VectorFound -->|Да| VectorHigh
-    VectorHigh -->|Да| Suggestions
-    VectorHigh -->|Нет| Suggestions
-    VectorFound -->|Нет| FTS
-    FTS --> FTSFound
-    FTSFound -->|Да| Sandbox
-    FTSFound -->|Нет| LLM
-    LLM --> Save
-    Save --> Embed
-    Embed --> Sandbox
-    Sandbox --> Humanize
-    Humanize --> Response
+    subgraph Execute [POST /api/agent-scripts/:id/execute]
+        Load[Загрузка скрипта по ID]
+        Run[Выполнение в sandbox]
+        ResponseExec["{ human, raw, scriptId, last_result }"]
+    end
+    
+    LLM --> Save --> Embed --> Sandbox --> Humanize --> Response
+    EmbedQ --> Search --> Suggestions
+    Load --> Run --> ResponseExec
 ```
+
+**Три режима работы:**
+- `/api/v1/natural-query` — **всегда генерирует новый скрипт** через LLM
+- `/api/v1/natural-query/suggest` — ищет похожие вопросы для выбора пользователем
+- `/api/agent-scripts/:id/execute` — выполняет существующий скрипт по ID
 
 ## Структура файлов
 
@@ -70,7 +52,7 @@ flowchart TB
 
 ### POST /api/v1/natural-query
 
-Основной эндпоинт для запросов на естественном языке.
+**Всегда генерирует новый скрипт** через LLM и выполняет его.
 
 **Запрос:**
 ```json
@@ -90,7 +72,11 @@ flowchart TB
     { "source": "api_auct", "target": "validate_data", "type": "calls" }
   ],
   "scriptId": 42,
-  "cached": false
+  "last_result": {
+    "raw": [...],
+    "human": "...",
+    "executed_at": "2024-01-15T10:30:00.000Z"
+  }
 }
 ```
 
@@ -99,10 +85,9 @@ flowchart TB
 {
   "success": false,
   "error": "Script execution failed: rows is not defined",
-  "human": "Ошибка в скрипте: переменная 'rows' не определена. Проверьте сгенерированный скрипт и убедитесь, что все переменные правильно объявлены.",
+  "human": "Ошибка в скрипте: переменная 'rows' не определена...",
   "scriptId": 42,
-  "script": "async function execute(contextCode) { const rows = ... }",
-  "cached": false
+  "script": "async function execute(contextCode) { const rows = ... }"
 }
 ```
 
@@ -114,6 +99,8 @@ flowchart TB
 | GET | `/api/agent-scripts/:id?context-code=XXX` | Детали скрипта |
 | PUT | `/api/agent-scripts/:id?context-code=XXX` | Редактирование (script, is_valid) |
 | DELETE | `/api/agent-scripts/:id?context-code=XXX` | Удаление скрипта |
+| POST | `/api/agent-scripts/:id/execute?context-code=XXX` | Выполнить существующий скрипт |
+| POST | `/api/agent-scripts/:id/embed?context-code=XXX` | Векторизовать вопрос скрипта |
 
 ## Ключевые компоненты
 
@@ -154,42 +141,9 @@ async function executeScript(scriptCode, contextCode, dbService, timeoutMs = 500
 }
 ```
 
-### 2. Двухэтапный поиск в кэше
+### 2. Поиск похожих вопросов (/api/v1/natural-query/suggest)
 
-#### 2.1. Точное совпадение (getAgentScriptByExactQuestion)
-
-Сначала выполняется проверка точного совпадения вопроса для мгновенного кэширования:
-
-```sql
-SELECT id, question, script
-FROM public.agent_script
-WHERE context_code = $1 AND question = $2 AND is_valid = true
-LIMIT 1
-```
-
-**Преимущества:**
-- Мгновенный результат без вызова LLM
-- Использует индекс на `(context_code, question)`
-- Не требует FTS-поиска для точных совпадений
-
-#### 2.2. FTS поиск похожих вопросов (fuzzySearchScripts)
-
-Если точное совпадение не найдено, выполняется FTS-поиск для похожих вопросов. Использует GIN-индекс на `to_tsvector('russian', question)`:
-
-```sql
-SELECT id, question, script, 
-       ts_rank(to_tsvector('russian', question), plainto_tsquery('russian', $1)) as rank
-FROM public.agent_script
-WHERE context_code = $2
-  AND to_tsvector('russian', question) @@ plainto_tsquery('russian', $1)
-  AND is_valid = true
-ORDER BY rank DESC, usage_count DESC
-LIMIT 1
-```
-
-#### 2.3. Векторный поиск по эмбеддингам (searchSimilarQuestions)
-
-Если точное совпадение не найдено, выполняется векторный поиск по эмбеддингам вопросов. Использует cosine similarity для поиска семантически похожих вопросов:
+Эндпоинт `/api/v1/natural-query/suggest` использует векторный поиск для нахождения семантически похожих вопросов:
 
 ```sql
 SELECT 
@@ -210,21 +164,14 @@ LIMIT $4
 ```
 
 **Логика работы:**
-- Если `similarity >= 0.95` → возвращается 1 suggestion с `high_confidence: true` (рекомендация к использованию)
-- Если `similarity >= threshold (0.8)` → возвращается список suggestions с `high_confidence: false` (пользователь выбирает)
-- Если векторный поиск не дал результатов → используется FTS поиск как fallback
+- Если `similarity >= 0.95` → возвращается `high_confidence: true`
+- Если `similarity >= threshold (0.8)` → возвращается список suggestions
+- Пользователь выбирает вопрос и выполняет скрипт через `/api/agent-scripts/:id/execute`
 
 **Преимущества:**
 - Семантический поиск (понимает синонимы и перефразировки)
 - Использует IVFFlat индекс для быстрого поиска
 - Автоматическая векторизация при сохранении нового скрипта
-
-**Порог релевантности:** по умолчанию `threshold = 0.1`. Если ранг совпадения ниже порога, скрипт не используется.
-
-**Логика поиска:**
-1. Сначала проверяется точное совпадение — если найдено, скрипт используется без LLM
-2. Если точного совпадения нет, выполняется FTS-поиск похожих вопросов
-3. Если FTS ничего не нашёл или ранг слишком низкий, генерируется новый скрипт через LLM
 
 ### 3. Системный промпт (naturalQueryPrompts.js)
 
@@ -259,7 +206,8 @@ CREATE TABLE public.agent_script (
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     usage_count int DEFAULT 0,
     is_valid boolean DEFAULT false,
-    last_result jsonb DEFAULT NULL
+    last_result jsonb DEFAULT NULL,
+    question_embedding vector(1536) DEFAULT NULL
 );
 
 CREATE UNIQUE INDEX idx_agent_script_unique 
@@ -267,6 +215,11 @@ CREATE UNIQUE INDEX idx_agent_script_unique
 
 CREATE INDEX idx_agent_script_question_fts 
     ON public.agent_script USING gin (to_tsvector('russian', question));
+
+CREATE INDEX idx_agent_script_question_embedding
+    ON public.agent_script
+    USING ivfflat (question_embedding vector_cosine_ops)
+    WITH (lists = 100);
 ```
 
 ### Поля таблицы
@@ -278,42 +231,13 @@ CREATE INDEX idx_agent_script_question_fts
 | `question` | text | Вопрос пользователя на естественном языке |
 | `script` | text | Сгенерированный JavaScript код скрипта |
 | `created_at` | timestamp | Дата и время создания скрипта |
-| `updated_at` | timestamp | Дата и время последнего обновления (автообновление через триггер) |
-| `usage_count` | int | Счётчик использования скрипта (инкрементируется при каждом использовании из кэша) |
-| `is_valid` | boolean | Флаг валидности скрипта (false если скрипт привёл к ошибке при выполнении) |
-| `last_result` | jsonb | Последний результат выполнения скрипта в формате: `{ raw: [...], human: "...", executed_at: "..." }` |
+| `updated_at` | timestamp | Дата и время последнего обновления |
+| `usage_count` | int | Счётчик использования скрипта |
+| `is_valid` | boolean | Флаг валидности скрипта (false если ошибка при выполнении) |
+| `last_result` | jsonb | Последний результат: `{ raw: [...], human: "...", executed_at: "..." }` |
+| `question_embedding` | vector(1536) | Вектор эмбеддинга вопроса для семантического поиска |
 
-## Таблица agent_script_embedding
-
-Таблица для хранения эмбеддингов вопросов для векторного поиска:
-
-```sql
-CREATE TABLE public.agent_script_embedding (
-    id serial PRIMARY KEY,
-    script_id int NOT NULL REFERENCES public.agent_script(id) ON DELETE CASCADE,
-    question_embedding vector(1536) NOT NULL,
-    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE UNIQUE INDEX idx_agent_script_embedding_script_id 
-    ON public.agent_script_embedding (script_id);
-
-CREATE INDEX idx_agent_script_embedding_vector 
-    ON public.agent_script_embedding 
-    USING ivfflat (question_embedding vector_cosine_ops)
-    WITH (lists = 100);
-```
-
-### Поля таблицы
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `id` | serial | Уникальный идентификатор эмбеддинга |
-| `script_id` | int | Ссылка на скрипт в таблице agent_script |
-| `question_embedding` | vector(1536) | Вектор эмбеддинга вопроса (1536 измерений) |
-| `created_at` | timestamp | Дата и время создания эмбеддинга |
-
-**Примечание:** Эмбеддинг создаётся автоматически при сохранении нового скрипта через `saveAgentScript`.
+**Примечание:** Эмбеддинг создаётся автоматически при сохранении нового скрипта.
 
 ## Настройки
 
@@ -323,15 +247,15 @@ CREATE INDEX idx_agent_script_embedding_vector
 {
   "NATURAL_QUERY_SUGGEST_LIMIT": 5,
   "NATURAL_QUERY_SIMILARITY_THRESHOLD": 0.8,
-  "NATURAL_QUERY_AUTO_USE_THRESHOLD": 0.95
+  "NATURAL_QUERY_HIGH_CONFIDENCE_THRESHOLD": 0.95
 }
 ```
 
 | Параметр | Описание | По умолчанию |
 |----------|----------|--------------|
-| `NATURAL_QUERY_SUGGEST_LIMIT` | Максимальное количество suggestions в ответе | 5 |
+| `NATURAL_QUERY_SUGGEST_LIMIT` | Максимальное количество suggestions | 5 |
 | `NATURAL_QUERY_SIMILARITY_THRESHOLD` | Минимальный порог similarity для включения в результаты | 0.8 |
-| `NATURAL_QUERY_AUTO_USE_THRESHOLD` | Порог similarity для high_confidence (>= 0.95 возвращает 1 suggestion) | 0.95 |
+| `NATURAL_QUERY_HIGH_CONFIDENCE_THRESHOLD` | Порог для `high_confidence: true` в suggest | 0.95 |
 
 ## Эндпоинт /api/v1/natural-query/suggest
 
@@ -398,7 +322,6 @@ node tmp/migrate_question_embeddings.js
 - **Поле `human`**: Человекочитаемое описание ошибки на русском языке
 - **Поле `script`**: Код сгенерированного скрипта для отладки
 - **Поле `scriptId`**: ID скрипта, который пытались выполнить
-- **Поле `cached`**: Был ли скрипт из кэша или сгенерирован заново
 
 Специальная обработка ошибок типа "is not defined" — система автоматически определяет имя переменной и формирует понятное сообщение.
 

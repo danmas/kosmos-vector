@@ -21,6 +21,7 @@ yarn-error.log*
 dist/
 build/
 tmp/
+logs/
 
 # Кэш
 .npm
