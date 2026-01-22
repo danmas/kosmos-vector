@@ -641,7 +641,7 @@ module.exports = (dbService, logBuffer) => {
    * @param {string} body - Исходный код функции (l0_code)
    * @param {Object} metadata - Метаданные функции
    * @param {string} metadata.s_name - Краткое имя функции
-   * @param {Array} metadata.called_functions - Список вызываемых функций (l1_deps)
+   * @param {Array} metadata.called_functions - Список вызываемых функций (l1_out)
    * @param {string} metadata.comment - Описание функции (l2_desc)
    * @returns {string} Промпт для LLM
    */
@@ -720,7 +720,7 @@ ${JSON.stringify({
       // 2. Формируем метаданные
       const metadata = {
         s_name: item.id,
-        called_functions: item.l1_deps || [],
+        called_functions: item.l1_out || [],
         comment: item.l2_desc || null,
         signature: null,
         select_from: null
@@ -847,6 +847,35 @@ ${JSON.stringify({
     }
   });
 
+  // === POST /api/extract-all-columns — Пакетное извлечение колонок из всех SQL-функций ===
+  router.post('/extract-all-columns', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+
+      console.log(`[API] Starting batch column extraction for context: ${contextCode}`);
+
+      const { extractColumnsFromAllFunctions } = require('./loaders/columnExtractor');
+      const report = await extractColumnsFromAllFunctions(contextCode, dbService);
+
+      console.log(`[API] Batch column extraction completed:`);
+      console.log(`[API]   Functions: ${report.functionsProcessed}/${report.totalFunctions}`);
+      console.log(`[API]   Columns found: ${report.totalColumnsFound}, resolved: ${report.totalColumnsResolved}`);
+      console.log(`[API]   Links created: ${report.totalLinksCreated}`);
+
+      res.json({
+        success: true,
+        report: report
+      });
+
+    } catch (error) {
+      console.error('[API] Error in batch column extraction:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to extract columns: ' + error.message
+      });
+    }
+  });
+
   // === 4. Список метаданных всех AiItems (новый контракт) ===
   router.get('/items-list', async (req, res) => {
     try {
@@ -921,65 +950,17 @@ ${JSON.stringify({
         l2_desc: item.l2_desc || ''
       }));
 
-      // Маппинг типов зависимостей → человекочитаемый label
-      const labelMap = {
-        called_functions: 'calls',
-        select_from: 'reads from',
-        update_tables: 'updates',
-        insert_tables: 'inserts into',
-        dependencies: 'depends on',
-        imports: 'imports'
-      };
-
+      // Строим связи из l1_out (исходящие связи)
       for (const item of aiItems) {
-        let rawDeps = item.l1_deps || [];
-
-        // Обрабатываем каждый элемент из l1_deps
-        for (const dep of rawDeps) {
-          let parsedDeps = {};
-
-          if (typeof dep === 'string') {
-            try {
-              parsedDeps = JSON.parse(dep); // основной случай для SQL
-            } catch (e) {
-              // если не JSON — это одиночная строка-зависимость (например, из JS)
-              const targetId = dep.trim();
-              if (targetId && existingIds.has(targetId)) {
-                const linkKey = `${item.id}→${targetId}→depends on`;
-                linksSet.add(linkKey);
-              }
-              continue;
-            }
-          } else if (Array.isArray(dep)) {
-            // простой массив строк
-            dep.forEach(targetId => {
-              const normalized = targetId.trim();
-              if (normalized && existingIds.has(normalized)) {
-                linksSet.add(`${item.id}→${normalized}→depends on`);
-              }
-            });
-            continue;
-          } else if (typeof dep === 'object' && dep !== null) {
-            parsedDeps = dep;
-          } else {
-            continue;
+        const l1Out = item.l1_out || [];
+        
+        // Обрабатываем каждый target из l1_out
+        for (const target of l1Out) {
+          const normalized = typeof target === 'string' ? target.trim() : '';
+          if (normalized && existingIds.has(normalized)) {
+            const linkKey = `${item.id}→${normalized}→depends on`;
+            linksSet.add(linkKey);
           }
-
-          // Теперь parsedDeps — объект вида { called_functions: [...], select_from: [...], ... }
-          Object.keys(parsedDeps).forEach(key => {
-            const targets = parsedDeps[key];
-            if (!Array.isArray(targets)) return;
-
-            const label = labelMap[key] || key; // используем красивый label или оригинал
-
-            targets.forEach(targetId => {
-              const normalized = typeof targetId === 'string' ? targetId.trim() : '';
-              if (normalized && existingIds.has(normalized)) {
-                const linkKey = `${item.id}→${normalized}→${label}`;
-                linksSet.add(linkKey);
-              }
-            });
-          });
         }
       }
 

@@ -107,6 +107,16 @@ node tests/full_system_test.js
 node tests/test_column_extractor.js
 ```
 
+## 6. Пакетное извлечение колонок
+
+Для извлечения колонок из всех SQL-функций в контексте используйте API:
+
+```bash
+curl -X POST "http://localhost:3200/api/extract-all-columns?context-code=CARL"
+```
+
+Или из full_system_test.js — функция `testColumnExtraction()` автоматически обрабатывает все SQL-функции.
+
 ## Важные замечания
 
 -   Все тесты используют `SimpleEmbeddings` и `SimpleChatModel` из ядра `packages/core`, которые являются "заглушками" и не предназначены для качественной семантической работы. Их цель — проверить работоспособность конвейера, а не качество AI-моделей.

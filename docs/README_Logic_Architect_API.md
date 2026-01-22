@@ -185,7 +185,7 @@ app.post('/api/items/:id/analyze-logic', async (req, res) => {
       s_name: item.id,
       full_name: item.id,
       comment: item.l2_desc,
-      called_functions: item.l1_deps,
+      called_functions: item.l1_out,
       signature: null,
       select_from: null
     };

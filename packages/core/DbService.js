@@ -1851,6 +1851,7 @@ class DbService {
       }
 
       const row = aiResult.rows[0];
+      const effectiveContextCode = contextCode || row.context_code;
 
       // Получаем чанки разных уровней
       // Извлекаем поле text из JSONB, если оно есть, иначе весь JSONB как текст
@@ -1862,27 +1863,33 @@ class DbService {
       `, [row.ai_id]);
 
       let l0_code = '';
-      let l1_deps = [];
       let l2_desc = '';
 
       chunksResult.rows.forEach(chunk => {
         if (chunk.level.startsWith('0-')) {
           // chunk_content уже извлечен как текст (поле text из JSONB или весь JSONB как текст)
           l0_code = chunk.chunk_content;
-        } else if (chunk.level.startsWith('1-')) {
-          // Предполагаем, что L1 — это JSON-массив зависимостей или текст
-          try {
-            // Пытаемся распарсить как JSON (если это был JSONB объект без поля text)
-            const parsed = JSON.parse(chunk.chunk_content);
-            l1_deps = Array.isArray(parsed) ? parsed : (typeof parsed === 'string' ? [parsed] : [JSON.stringify(parsed)]);
-          } catch {
-            // Если не JSON, пытаемся разбить по строкам
-            l1_deps = chunk.chunk_content.split('\n').filter(line => line.trim());
-          }
         } else if (chunk.level.startsWith('2-')) {
           l2_desc = chunk.chunk_content;
         }
       });
+
+      // Получаем L1 связи из таблицы link
+      // l1_out: source = текущий item, target существует в ai_item
+      const l1OutResult = await this.pgClient.query(`
+        SELECT DISTINCT l.target 
+        FROM public.link l
+        JOIN public.ai_item ai ON ai.full_name = l.target AND ai.context_code = l.context_code
+        WHERE l.source = $1 AND l.context_code = $2
+      `, [full_name, effectiveContextCode]);
+
+      // l1_in: target = текущий item, source существует в ai_item  
+      const l1InResult = await this.pgClient.query(`
+        SELECT DISTINCT l.source 
+        FROM public.link l
+        JOIN public.ai_item ai ON ai.full_name = l.source AND ai.context_code = l.context_code
+        WHERE l.target = $1 AND l.context_code = $2
+      `, [full_name, effectiveContextCode]);
 
       const language = this._getLanguageFromFilename(row.filename);
 
@@ -1891,7 +1898,8 @@ class DbService {
         type: row.type || 'unknown',
         language,
         l0_code,
-        l1_deps: Array.isArray(l1_deps) ? l1_deps : [],
+        l1_out: l1OutResult.rows.map(r => r.target),
+        l1_in: l1InResult.rows.map(r => r.source),
         l2_desc,
         filePath: row.file_url || path.join(this.docsDir || 'docs', row.filename)
       };
@@ -1942,9 +1950,47 @@ class DbService {
 
       const result = await this.pgClient.query(query, params);
 
+      // Получаем все связи одним batch-запросом
+      let linksQuery = `
+        SELECT 
+          l.source,
+          l.target,
+          CASE WHEN ai_src.id IS NOT NULL THEN true ELSE false END as source_exists,
+          CASE WHEN ai_tgt.id IS NOT NULL THEN true ELSE false END as target_exists
+        FROM public.link l
+        LEFT JOIN public.ai_item ai_src ON ai_src.full_name = l.source AND ai_src.context_code = l.context_code
+        LEFT JOIN public.ai_item ai_tgt ON ai_tgt.full_name = l.target AND ai_tgt.context_code = l.context_code
+        WHERE 1=1
+      `;
+      const linksParams = [];
+      
+      if (contextCode) {
+        linksQuery += ` AND l.context_code = $1`;
+        linksParams.push(contextCode);
+      }
+
+      const linksResult = await this.pgClient.query(linksQuery, linksParams);
+
+      // Построить Map: full_name → {l1_in: [], l1_out: []}
+      const linksMap = new Map();
+      for (const link of linksResult.rows) {
+        if (link.source_exists && link.target_exists) {
+          // l1_out для source
+          if (!linksMap.has(link.source)) {
+            linksMap.set(link.source, { l1_in: [], l1_out: [] });
+          }
+          linksMap.get(link.source).l1_out.push(link.target);
+          
+          // l1_in для target
+          if (!linksMap.has(link.target)) {
+            linksMap.set(link.target, { l1_in: [], l1_out: [] });
+          }
+          linksMap.get(link.target).l1_in.push(link.source);
+        }
+      }
+
       const items = result.rows.map(row => {
         let l0_code = '';
-        let l1_deps = [];
         let l2_desc = '';
 
         // Обрабатываем агрегированные чанки
@@ -1954,26 +2000,21 @@ class DbService {
           
           if (chunk.level.startsWith('0-')) {
             l0_code = chunk.chunk_content || '';
-          } else if (chunk.level.startsWith('1-')) {
-            try {
-              const parsed = JSON.parse(chunk.chunk_content);
-              l1_deps = Array.isArray(parsed) ? parsed : (typeof parsed === 'string' ? [parsed] : [JSON.stringify(parsed)]);
-            } catch {
-              l1_deps = (chunk.chunk_content || '').split('\n').filter(line => line.trim());
-            }
           } else if (chunk.level.startsWith('2-')) {
             l2_desc = chunk.chunk_content || '';
           }
         }
 
         const language = this._getLanguageFromFilename(row.filename);
+        const links = linksMap.get(row.full_name) || { l1_in: [], l1_out: [] };
 
         return {
           id: row.full_name,
           type: row.type || 'unknown',
           language,
           l0_code,
-          l1_deps: Array.isArray(l1_deps) ? l1_deps : [],
+          l1_out: links.l1_out,
+          l1_in: links.l1_in,
           l2_desc,
           filePath: row.file_url || path.join(this.docsDir || 'docs', row.filename)
         };

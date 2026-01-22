@@ -315,6 +315,168 @@ async function checkL1Links() {
 }
 
 /**
+ * Проверка L1 связей через API маршруты
+ */
+async function checkL1LinksViaApi() {
+    console.log('\n[Проверка 2.1] L1 связи через API маршруты...');
+    
+    try {
+        // 1. Получаем все items
+        const itemsRes = await fetch(`${BASE_URL}/api/items?context-code=${CONTEXT_CODE}`);
+        if (!itemsRes.ok) {
+            const errorText = await itemsRes.text();
+            throw new Error(`Статус: ${itemsRes.status}, Тело: ${errorText}`);
+        }
+        
+        const items = await itemsRes.json();
+        if (!Array.isArray(items)) {
+            throw new Error('API вернул не массив');
+        }
+        
+        // 2. Проверяем структуру ответа
+        let hasL1In = 0;
+        let hasL1Out = 0;
+        let missingFields = [];
+        
+        for (const item of items) {
+            // Проверка наличия полей
+            if (!('l1_in' in item)) {
+                missingFields.push(`${item.id}: отсутствует l1_in`);
+            }
+            if (!('l1_out' in item)) {
+                missingFields.push(`${item.id}: отсутствует l1_out`);
+            }
+            
+            // Проверка типов
+            if (!Array.isArray(item.l1_in)) {
+                missingFields.push(`${item.id}: l1_in не массив (${typeof item.l1_in})`);
+            }
+            if (!Array.isArray(item.l1_out)) {
+                missingFields.push(`${item.id}: l1_out не массив (${typeof item.l1_out})`);
+            }
+            
+            // Статистика
+            if (item.l1_in && item.l1_in.length > 0) hasL1In++;
+            if (item.l1_out && item.l1_out.length > 0) hasL1Out++;
+        }
+        
+        console.log(`  [INFO] Всего items: ${items.length}`);
+        console.log(`  [INFO] С l1_in > 0: ${hasL1In}`);
+        console.log(`  [INFO] С l1_out > 0: ${hasL1Out}`);
+        
+        if (missingFields.length > 0) {
+            console.error(`  [ERROR] Отсутствуют поля в ${missingFields.length} элементах`);
+            missingFields.slice(0, 5).forEach(m => console.error(`    - ${m}`));
+            return { success: false, error: 'Отсутствуют l1_in/l1_out', missingFields };
+        }
+        
+        // 3. Проверяем конкретный item через /api/items/:id
+        let singleItemCheckPassed = false;
+        const itemWithLinks = items.find(i => (i.l1_out?.length > 0) || (i.l1_in?.length > 0));
+        if (itemWithLinks) {
+            try {
+                const singleRes = await fetch(
+                    `${BASE_URL}/api/items/${encodeURIComponent(itemWithLinks.id)}?context-code=${CONTEXT_CODE}`
+                );
+                
+                if (!singleRes.ok) {
+                    const errorText = await singleRes.text();
+                    throw new Error(`/api/items/:id статус: ${singleRes.status}, Тело: ${errorText}`);
+                }
+                
+                const singleItem = await singleRes.json();
+                
+                if (!('l1_in' in singleItem) || !('l1_out' in singleItem)) {
+                    console.error(`  [ERROR] /api/items/:id не возвращает l1_in/l1_out`);
+                    // Не возвращаем ошибку, продолжаем проверку graph
+                } else if (!Array.isArray(singleItem.l1_in) || !Array.isArray(singleItem.l1_out)) {
+                    console.error(`  [ERROR] /api/items/:id возвращает l1_in/l1_out не как массивы`);
+                    // Не возвращаем ошибку, продолжаем проверку graph
+                } else {
+                    console.log(`  [SUCCESS] /api/items/:id возвращает l1_in (${singleItem.l1_in.length}) и l1_out (${singleItem.l1_out.length})`);
+                    singleItemCheckPassed = true;
+                }
+            } catch (err) {
+                console.warn(`  [WARNING] Ошибка при проверке /api/items/:id (продолжаем):`, err.message);
+                // Не возвращаем ошибку, продолжаем проверку graph
+            }
+        } else {
+            console.log(`  [INFO] Не найдено items с связями для проверки /api/items/:id`);
+        }
+        
+        // 4. Проверяем /api/graph
+        let graphCheckPassed = false;
+        let graphNodes = 0;
+        let graphLinks = 0;
+        try {
+            const graphRes = await fetch(`${BASE_URL}/api/graph?context-code=${CONTEXT_CODE}`);
+            if (!graphRes.ok) {
+                const errorText = await graphRes.text();
+                throw new Error(`/api/graph статус: ${graphRes.status}, Тело: ${errorText}`);
+            }
+            
+            const graph = await graphRes.json();
+            
+            if (!graph.nodes || !Array.isArray(graph.nodes)) {
+                console.error(`  [ERROR] /api/graph не возвращает nodes как массив`);
+            } else if (!graph.links || !Array.isArray(graph.links)) {
+                console.error(`  [ERROR] /api/graph не возвращает links как массив`);
+            } else {
+                graphNodes = graph.nodes.length;
+                graphLinks = graph.links.length;
+                console.log(`  [INFO] /api/graph: ${graphNodes} nodes, ${graphLinks} links`);
+                
+                // Проверка структуры links
+                let linksValid = true;
+                for (const link of graph.links.slice(0, 5)) {
+                    if (!link.source || !link.target) {
+                        console.error(`  [ERROR] /api/graph link без source/target: ${JSON.stringify(link)}`);
+                        linksValid = false;
+                        break;
+                    }
+                }
+                
+                if (linksValid) {
+                    if ((hasL1Out > 0) && graphLinks === 0) {
+                        console.warn(`  [WARNING] Есть l1_out в items (${hasL1Out}), но graph.links пустой`);
+                    }
+                    graphCheckPassed = true;
+                }
+            }
+        } catch (err) {
+            console.warn(`  [WARNING] Ошибка при проверке /api/graph:`, err.message);
+        }
+        
+        // Итоговая проверка: успех если хотя бы /api/items работает и структура правильная
+        const overallSuccess = missingFields.length === 0 && (singleItemCheckPassed || graphCheckPassed);
+        
+        if (overallSuccess) {
+            console.log(`  [SUCCESS] API маршруты возвращают l1_in и l1_out корректно`);
+        } else {
+            console.warn(`  [WARNING] Некоторые проверки API маршрутов не прошли`);
+        }
+        
+        return { 
+            success: overallSuccess, 
+            itemsCount: items.length, 
+            withL1In: hasL1In, 
+            withL1Out: hasL1Out,
+            graphNodes: graphNodes,
+            graphLinks: graphLinks,
+            singleItemCheckPassed,
+            graphCheckPassed
+        };
+        
+    } catch (error) {
+        console.error(`  [ERROR] Ошибка при проверке API маршрутов:`, error.message);
+        if (error.stack) {
+            console.error(`  [STACK]`, error.stack);
+        }
+        return { success: false, error: error.message };
+    }
+}
+
+/**
  * Проверка Logic Architect API
  */
 async function checkLogicArchitect() {
@@ -653,6 +815,7 @@ async function runFullSystemTest() {
         multiRootCheck: false,
         aiItemsCheck: false,
         linksCheck: false,
+        linksApiCheck: false,
         columnExtractionCheck: false,
         logicArchitectCheck: false,
         naturalQueryTests: []
@@ -738,10 +901,15 @@ async function runFullSystemTest() {
             throw error;
         }
         
-        // Проверка 2: L1 связи
+        // Проверка 2: L1 связи в БД
         const linksResult = await checkL1Links();
         results.linksCheck = linksResult.totalLinks >= EXPECTED_LINKS_MIN && 
                            linksResult.hrNoSchemaLinks === 0;
+        
+        // Проверка 2.1: L1 связи через API маршруты
+        const linksApiResult = await checkL1LinksViaApi();
+        results.linksApiCheck = linksApiResult.success;
+        results.linksApiStats = linksApiResult;
         
         // Проверка 2.5: Извлечение колонок из SQL-функций
         const columnExtractionResult = await testColumnExtraction();
@@ -773,7 +941,13 @@ async function runFullSystemTest() {
         console.log(`Step2 (L1 Fix): ${results.step2 ? '✅' : '❌'}`);
         console.log(`Multi-root: ${results.multiRootCheck ? '✅' : '❌'}`);
         console.log(`Проверка ai_items: ${results.aiItemsCheck ? '✅' : '❌'}`);
-        console.log(`Проверка L1 связей: ${results.linksCheck ? '✅' : '❌'}`);
+        console.log(`Проверка L1 связей (БД): ${results.linksCheck ? '✅' : '❌'}`);
+        console.log(`Проверка L1 связей (API): ${results.linksApiCheck ? '✅' : '❌'}`);
+        if (results.linksApiStats && results.linksApiStats.success) {
+            const stats = results.linksApiStats;
+            console.log(`  Items: ${stats.itemsCount}, с l1_in: ${stats.withL1In}, с l1_out: ${stats.withL1Out}`);
+            console.log(`  Graph: ${stats.graphNodes} nodes, ${stats.graphLinks} links`);
+        }
         console.log(`Извлечение колонок: ${results.columnExtractionCheck ? '✅' : '❌'}`);
         if (results.columnExtractionStats && !results.columnExtractionStats.skipped) {
             const stats = results.columnExtractionStats;
@@ -800,8 +974,8 @@ async function runFullSystemTest() {
         
         const allPassed = results.cleanup && results.step1 && results.step2 && 
                          results.multiRootCheck && results.aiItemsCheck && results.linksCheck &&
-                         results.columnExtractionCheck && results.logicArchitectCheck &&
-                         results.naturalQueryTests.every(t => t.success);
+                         results.linksApiCheck && results.columnExtractionCheck && 
+                         results.logicArchitectCheck && results.naturalQueryTests.every(t => t.success);
         
         console.log('\n' + '='.repeat(80));
         if (allPassed) {

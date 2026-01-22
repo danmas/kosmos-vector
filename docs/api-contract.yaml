@@ -8,6 +8,7 @@ info:
 
       Версия 2.6.0:
       • Добавлен Column Extraction API: POST /api/items/{id}/extract-columns для извлечения колонок таблиц из SQL-функций
+      • Добавлен Batch Column Extraction: POST /api/extract-all-columns для пакетного извлечения колонок из всех SQL-функций
       • Новый тип ai_item: table_column для представления колонок таблиц
       • Новые типы связей: reads_column, updates_column, inserts_column
       • Резолвинг полных имён колонок через загруженные таблицы
@@ -94,13 +95,20 @@ components:
           example: sql
     AiItem:
       type: object
-      required: [id, type, language, l0_code, l1_deps, l2_desc, filePath]
+      required: [id, type, language, l0_code, l1_in, l1_out, l2_desc, filePath]
       properties:
         id: { type: string, example: "utils.fetchData" }
         type: { $ref: '#/components/schemas/AiItemType' }
         language: { $ref: '#/components/schemas/Language' }
         l0_code: { type: string }
-        l1_deps: { type: array, items: { type: string } }
+        l1_in: 
+          type: array 
+          items: { type: string }
+          description: "Входящие связи: кто вызывает/использует этот элемент"
+        l1_out: 
+          type: array 
+          items: { type: string }
+          description: "Исходящие связи: что вызывает/использует этот элемент"
         l2_desc: { type: string }
         filePath: { type: string, example: "./src/utils/api.ts" }
     ProjectFile:
@@ -353,6 +361,71 @@ components:
           enum: [true]
         report:
           $ref: '#/components/schemas/ColumnExtractionReport'
+
+    BatchColumnExtractionReport:
+      type: object
+      required: [totalFunctions, functionsProcessed, functionsSkipped, totalColumnsFound, totalColumnsResolved, totalColumnsUnresolved, totalLinksCreated]
+      properties:
+        totalFunctions:
+          type: integer
+          description: Всего SQL-функций в контексте
+          example: 50
+        functionsProcessed:
+          type: integer
+          description: Успешно обработано функций
+          example: 48
+        functionsSkipped:
+          type: integer
+          description: Пропущено функций (ошибки)
+          example: 2
+        totalColumnsFound:
+          type: integer
+          description: Всего найдено колонок
+          example: 320
+        totalColumnsResolved:
+          type: integer
+          description: Колонок с резолвленным полным именем
+          example: 280
+        totalColumnsUnresolved:
+          type: integer
+          description: Колонок без резолвленного имени
+          example: 40
+        totalLinksCreated:
+          type: integer
+          description: Всего создано связей function→column
+          example: 320
+        reports:
+          type: array
+          description: Краткий отчёт по каждой функции
+          items:
+            type: object
+            properties:
+              functionFullName:
+                type: string
+                example: "hr.get_employee_skills"
+              columnsFound:
+                type: integer
+              columnsResolved:
+                type: integer
+              linksCreated:
+                type: integer
+              hasErrors:
+                type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+          description: Список ошибок при обработке
+
+    BatchColumnExtractionResponse:
+      type: object
+      required: [success, report]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        report:
+          $ref: '#/components/schemas/BatchColumnExtractionReport'
 
     # ────────────────────────────────────── AI Comment
     AiComment:
@@ -2217,6 +2290,39 @@ paths:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
         '500':
           description: Ошибка извлечения колонок
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/extract-all-columns:
+    post:
+      tags: [Core]
+      summary: Пакетное извлечение колонок из всех SQL-функций
+      description: |
+        Извлекает колонки из всех SQL-функций в контексте за один вызов:
+        1. Находит все ai_item с type='function' из .sql файлов
+        2. Для каждой функции вызывает extractColumnsFromFunction
+        3. Создаёт ai_item типа table_column и связи function→column
+        4. Возвращает суммарный отчёт со статистикой
+        
+        Долгая операция — рекомендуется запускать после загрузки всех таблиц и функций.
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных
+          schema:
+            type: string
+            example: "CARL"
+      responses:
+        '200':
+          description: Пакетное извлечение завершено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchColumnExtractionResponse'
+        '500':
+          description: Ошибка пакетного извлечения
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }

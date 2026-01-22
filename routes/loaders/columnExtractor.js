@@ -515,9 +515,107 @@ async function extractColumnsFromFunction(aiItemId, contextCode, dbService) {
   }
 }
 
+/**
+ * Пакетное извлечение колонок из всех SQL-функций
+ * @param {string} contextCode - Код контекста
+ * @param {DbService} dbService - Экземпляр DbService
+ * @param {Object} options - Опции
+ * @param {Function} options.onProgress - Колбэк прогресса (processed, total, current)
+ * @returns {Promise<Object>} Суммарный отчет
+ */
+async function extractColumnsFromAllFunctions(contextCode, dbService, options = {}) {
+  const { onProgress } = options;
+  
+  const summaryReport = {
+    totalFunctions: 0,
+    functionsProcessed: 0,
+    functionsSkipped: 0,
+    totalColumnsFound: 0,
+    totalColumnsResolved: 0,
+    totalColumnsUnresolved: 0,
+    totalLinksCreated: 0,
+    errors: [],
+    reports: []
+  };
+
+  try {
+    // 1. Получаем все SQL-функции
+    const functionsResult = await dbService.pgClient.query(
+      `SELECT ai.id, ai.full_name 
+       FROM public.ai_item ai
+       JOIN public.files f ON ai.file_id = f.id
+       WHERE ai.context_code = $1 
+         AND ai.type = 'function'
+         AND (f.file_url LIKE '%.sql' OR f.file_url LIKE '%.SQL')
+       ORDER BY ai.full_name`,
+      [contextCode]
+    );
+
+    const functions = functionsResult.rows;
+    summaryReport.totalFunctions = functions.length;
+
+    console.log(`[ColumnExtractor] Найдено ${functions.length} SQL-функций для обработки`);
+
+    // 2. Обрабатываем каждую функцию
+    for (let i = 0; i < functions.length; i++) {
+      const func = functions[i];
+      
+      try {
+        // Вызываем колбэк прогресса
+        if (onProgress) {
+          onProgress(i, functions.length, func.full_name);
+        }
+
+        console.log(`[ColumnExtractor] [${i + 1}/${functions.length}] Обрабатываю: ${func.full_name}`);
+
+        // Извлекаем колонки
+        const report = await extractColumnsFromFunction(func.id, contextCode, dbService);
+
+        // Суммируем статистику
+        summaryReport.functionsProcessed++;
+        summaryReport.totalColumnsFound += report.columnsFound;
+        summaryReport.totalColumnsResolved += report.columnsResolved;
+        summaryReport.totalColumnsUnresolved += report.columnsUnresolved;
+        summaryReport.totalLinksCreated += report.linksCreated;
+
+        // Сохраняем краткий отчет по функции
+        summaryReport.reports.push({
+          functionFullName: func.full_name,
+          columnsFound: report.columnsFound,
+          columnsResolved: report.columnsResolved,
+          linksCreated: report.linksCreated,
+          hasErrors: report.errors.length > 0
+        });
+
+        if (report.errors.length > 0) {
+          summaryReport.errors.push(...report.errors.map(e => `${func.full_name}: ${e}`));
+        }
+
+      } catch (err) {
+        const errorMsg = `Ошибка обработки функции ${func.full_name}: ${err.message}`;
+        console.error(`[ColumnExtractor] ${errorMsg}`);
+        summaryReport.errors.push(errorMsg);
+        summaryReport.functionsSkipped++;
+      }
+    }
+
+    console.log(`[ColumnExtractor] Завершено. Обработано: ${summaryReport.functionsProcessed}/${summaryReport.totalFunctions}, ` +
+                `колонок: ${summaryReport.totalColumnsFound}, связей: ${summaryReport.totalLinksCreated}`);
+
+    return summaryReport;
+
+  } catch (error) {
+    const errorMsg = `Критическая ошибка пакетной обработки: ${error.message}`;
+    console.error(`[ColumnExtractor] ${errorMsg}`);
+    summaryReport.errors.push(errorMsg);
+    return summaryReport;
+  }
+}
+
 module.exports = {
   parseColumnsFromSqlBody,
   resolveTableAliases,
   findTableByName,
-  extractColumnsFromFunction
+  extractColumnsFromFunction,
+  extractColumnsFromAllFunctions
 };

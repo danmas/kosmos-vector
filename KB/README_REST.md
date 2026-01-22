@@ -261,6 +261,37 @@
 
 **Примечание:** Колонки, для которых не найдена таблица, создаются с full_name `unknown.column_name` и флагом `unresolved`.
 
+**POST** `/api/extract-all-columns?context-code=...`  
+Пакетное извлечение колонок из **всех** SQL-функций в контексте.
+
+**Ответ (успех):**
+```json
+{
+  "success": true,
+  "report": {
+    "totalFunctions": 50,
+    "functionsProcessed": 48,
+    "functionsSkipped": 2,
+    "totalColumnsFound": 320,
+    "totalColumnsResolved": 280,
+    "totalColumnsUnresolved": 40,
+    "totalLinksCreated": 320,
+    "reports": [
+      {
+        "functionFullName": "hr.get_employee_skills",
+        "columnsFound": 5,
+        "columnsResolved": 4,
+        "linksCreated": 5,
+        "hasErrors": false
+      }
+    ],
+    "errors": []
+  }
+}
+```
+
+**Примечание:** Долгая операция — рекомендуется запускать после загрузки всех таблиц и функций.
+
 ### 5.3. Анализ логики (Logic Graph)
 
 **GET** `/api/items/:id/logic-graph?context-code=TEST`  
