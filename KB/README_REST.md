@@ -209,10 +209,62 @@
 
 **POST** `/api/ai/ai-item/:id/generate-chunk` — генерация чанков L1/L2 (авто или ручной промпт)
 
-### 5.1. Анализ логики (Logic Graph)
+### 5.2. Извлечение колонок таблиц (Column Extraction)
+
+**POST** `/api/items/:id/extract-columns?context-code=...`  
+Извлечь использование колонок таблиц из SQL-функции.
+
+**Параметры:**
+- `:id` — full_name AI Item функции (URL-encoded)
+- `context-code` (query) — обязательный контекстный код
+
+**Ответ (успех):**
+```json
+{
+  "success": true,
+  "functionId": "hr.get_employee_skills",
+  "report": {
+    "columnsFound": 5,
+    "columnsResolved": 4,
+    "columnsUnresolved": 1,
+    "linksCreated": 5,
+    "columns": [
+      {
+        "fullName": "hr.employees.id",
+        "operation": "reads_column",
+        "resolved": true
+      },
+      {
+        "fullName": "unknown.some_field",
+        "operation": "reads_column",
+        "resolved": false
+      }
+    ]
+  }
+}
+```
+
+**Логика работы:**
+1. Парсит тело SQL-функции
+2. Извлекает алиасы таблиц из FROM/JOIN
+3. Находит колонки в SELECT, UPDATE SET, INSERT
+4. Резолвит полные имена через загруженные таблицы
+5. Создаёт ai_item типа `table_column` для каждой уникальной колонки
+6. Создаёт связи function→column в таблице link
+
+**Типы связей:**
+| link_type | Описание |
+|-----------|----------|
+| reads_column | Колонка используется в SELECT |
+| updates_column | Колонка обновляется в UPDATE SET |
+| inserts_column | В колонку вставляются данные |
+
+**Примечание:** Колонки, для которых не найдена таблица, создаются с full_name `unknown.column_name` и флагом `unresolved`.
+
+### 5.3. Анализ логики (Logic Graph)
 
 **GET** `/api/items/:id/logic-graph?context-code=TEST`  
-Получить сохраненный анализ логики для AiItem (текстовое описание и граф потока управления).
+Получить сохранённый анализ логики для AiItem (текстовое описание и граф потока управления).
 
 **Параметры:**
 - `:id` — full_name AiItem (например, `utils.fetchData`)
@@ -491,4 +543,5 @@
 - Эмбеддинги: simple (локально) или OpenAI (`USE_OPENAI=true`). Размерность по умолчанию 1536.
 
 **Обновлено:** 13 декабря 2025 — добавлен раздел «Очистка базы данных».  
-**Обновлено:** [дата] — добавлен раздел «Анализ логики (Logic Graph)» для работы с графами потока управления.
+**Обновлено:** 15 января 2026 — добавлен раздел «Анализ логики (Logic Graph)» для работы с графами потока управления.  
+**Обновлено:** 22 января 2026 — добавлен раздел «Извлечение колонок таблиц (Column Extraction)».

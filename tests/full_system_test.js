@@ -476,6 +476,103 @@ async function checkLogicArchitect() {
 }
 
 /**
+ * Тест извлечения колонок из SQL-функций
+ */
+async function testColumnExtraction() {
+    console.log('\n[Проверка] Извлечение колонок таблиц из SQL-функций...');
+    
+    try {
+        // 1. Получаем список SQL-функций
+        const itemsRes = await fetch(`${BASE_URL}/api/items?context-code=${CONTEXT_CODE}`);
+        if (!itemsRes.ok) {
+            throw new Error(`Не удалось получить ai_items: ${itemsRes.status}`);
+        }
+        
+        const itemsData = await itemsRes.json();
+        // API возвращает массив напрямую или объект с items
+        const items = Array.isArray(itemsData) ? itemsData : (itemsData.items || []);
+        const sqlFunctions = items.filter(item => 
+            item.type === 'function' && item.full_name && item.full_name.includes('.')
+        );
+        
+        if (sqlFunctions.length === 0) {
+            console.log('  [INFO] SQL-функции не найдены, пропускаем тест');
+            return { success: true, skipped: true, functionsProcessed: 0 };
+        }
+        
+        console.log(`  [INFO] Найдено SQL-функций для обработки: ${sqlFunctions.length}`);
+        
+        let totalColumnsFound = 0;
+        let totalColumnsResolved = 0;
+        let totalLinksCreated = 0;
+        let processedFunctions = 0;
+        let errors = [];
+        
+        // 2. Обрабатываем каждую функцию
+        for (const func of sqlFunctions) {
+            try {
+                const extractRes = await fetch(
+                    `${BASE_URL}/api/items/${encodeURIComponent(func.full_name)}/extract-columns?context-code=${CONTEXT_CODE}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    }
+                );
+                
+                if (!extractRes.ok) {
+                    const errorText = await extractRes.text();
+                    console.log(`  [WARNING] Ошибка извлечения для ${func.full_name}: ${errorText}`);
+                    continue;
+                }
+                
+                const extractResult = await extractRes.json();
+                
+                if (extractResult.success && extractResult.report) {
+                    totalColumnsFound += extractResult.report.columnsFound || 0;
+                    totalColumnsResolved += extractResult.report.columnsResolved || 0;
+                    totalLinksCreated += extractResult.report.linksCreated || 0;
+                    processedFunctions++;
+                    
+                    if (extractResult.report.columnsFound > 0) {
+                        console.log(`    ✓ ${func.full_name}: найдено ${extractResult.report.columnsFound}, резолвлено ${extractResult.report.columnsResolved}, связей ${extractResult.report.linksCreated}`);
+                    }
+                }
+            } catch (err) {
+                errors.push(`${func.full_name}: ${err.message}`);
+            }
+        }
+        
+        console.log(`  [ИТОГО] Обработано функций: ${processedFunctions}/${sqlFunctions.length}`);
+        console.log(`  [ИТОГО] Колонок найдено: ${totalColumnsFound}, резолвлено: ${totalColumnsResolved}`);
+        console.log(`  [ИТОГО] Связей создано: ${totalLinksCreated}`);
+        
+        if (errors.length > 0) {
+            console.log(`  [WARNING] Ошибки: ${errors.length}`);
+        }
+        
+        // Успех если хотя бы одна функция обработана или нет функций для обработки
+        const success = processedFunctions > 0 || sqlFunctions.length === 0;
+        
+        if (success) {
+            console.log('  [SUCCESS] Тест извлечения колонок пройден');
+        }
+        
+        return {
+            success,
+            functionsProcessed: processedFunctions,
+            totalFunctions: sqlFunctions.length,
+            columnsFound: totalColumnsFound,
+            columnsResolved: totalColumnsResolved,
+            linksCreated: totalLinksCreated,
+            errors
+        };
+    } catch (error) {
+        console.error(`  [FAILURE] Ошибка теста извлечения колонок:`, error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
  * Тест Natural Query
  */
 async function testNaturalQuery(question, expectedKeywords) {
@@ -556,6 +653,7 @@ async function runFullSystemTest() {
         multiRootCheck: false,
         aiItemsCheck: false,
         linksCheck: false,
+        columnExtractionCheck: false,
         logicArchitectCheck: false,
         naturalQueryTests: []
     };
@@ -645,6 +743,11 @@ async function runFullSystemTest() {
         results.linksCheck = linksResult.totalLinks >= EXPECTED_LINKS_MIN && 
                            linksResult.hrNoSchemaLinks === 0;
         
+        // Проверка 2.5: Извлечение колонок из SQL-функций
+        const columnExtractionResult = await testColumnExtraction();
+        results.columnExtractionCheck = columnExtractionResult.success;
+        results.columnExtractionStats = columnExtractionResult;
+        
         // Проверка 3: Logic Architect
         const logicArchitectResult = await checkLogicArchitect();
         results.logicArchitectCheck = logicArchitectResult.allPassed;
@@ -671,6 +774,11 @@ async function runFullSystemTest() {
         console.log(`Multi-root: ${results.multiRootCheck ? '✅' : '❌'}`);
         console.log(`Проверка ai_items: ${results.aiItemsCheck ? '✅' : '❌'}`);
         console.log(`Проверка L1 связей: ${results.linksCheck ? '✅' : '❌'}`);
+        console.log(`Извлечение колонок: ${results.columnExtractionCheck ? '✅' : '❌'}`);
+        if (results.columnExtractionStats && !results.columnExtractionStats.skipped) {
+            const stats = results.columnExtractionStats;
+            console.log(`  Функций: ${stats.functionsProcessed || 0}/${stats.totalFunctions || 0}, Колонок: ${stats.columnsFound || 0}, Связей: ${stats.linksCreated || 0}`);
+        }
         console.log(`Logic Architect: ${results.logicArchitectCheck ? '✅' : '❌'}`);
         if (results.logicArchitectCheck) {
             const logicResults = results.logicArchitectResults || [];
@@ -692,7 +800,7 @@ async function runFullSystemTest() {
         
         const allPassed = results.cleanup && results.step1 && results.step2 && 
                          results.multiRootCheck && results.aiItemsCheck && results.linksCheck &&
-                         results.logicArchitectCheck &&
+                         results.columnExtractionCheck && results.logicArchitectCheck &&
                          results.naturalQueryTests.every(t => t.success);
         
         console.log('\n' + '='.repeat(80));

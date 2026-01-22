@@ -793,6 +793,60 @@ ${JSON.stringify({
     }
   });
 
+  // === POST /api/items/:id/extract-columns — Извлечение колонок таблиц из SQL-функции ===
+  router.post('/items/:id/extract-columns', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const decodedId = decodeURIComponent(id);
+      const contextCode = req.contextCode;
+
+      console.log(`[API] Extracting columns from function: ${decodedId}`);
+
+      // 1. Получаем AiItem из БД по full_name
+      const itemResult = await dbService.pgClient.query(
+        `SELECT id, full_name, type FROM public.ai_item 
+         WHERE full_name = $1 AND context_code = $2`,
+        [decodedId, contextCode]
+      );
+
+      if (itemResult.rows.length === 0) {
+        return res.status(404).json({ 
+          success: false,
+          error: `AiItem with full_name '${decodedId}' not found` 
+        });
+      }
+
+      const item = itemResult.rows[0];
+
+      // 2. Проверяем, что это функция
+      if (item.type !== 'function') {
+        return res.status(400).json({
+          success: false,
+          error: `AiItem '${decodedId}' is not a function (type: ${item.type})`
+        });
+      }
+
+      // 3. Извлекаем колонки
+      const { extractColumnsFromFunction } = require('./loaders/columnExtractor');
+      const report = await extractColumnsFromFunction(item.id, contextCode, dbService);
+
+      console.log(`[API] Column extraction completed for: ${decodedId}`);
+      console.log(`[API]   Found: ${report.columnsFound}, Resolved: ${report.columnsResolved}, Links: ${report.linksCreated}`);
+
+      res.json({
+        success: true,
+        report: report
+      });
+
+    } catch (error) {
+      console.error('[API] Error extracting columns:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to extract columns: ' + error.message
+      });
+    }
+  });
+
   // === 4. Список метаданных всех AiItems (новый контракт) ===
   router.get('/items-list', async (req, res) => {
     try {

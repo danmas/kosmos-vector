@@ -7,6 +7,7 @@
 - Парсинг и загрузку файлов разных типов (JS, TS, PHP, SQL, DDL)
 - Создание ai_items и chunk_vector
 - Связи L1 в таблице link
+- Извлечение колонок таблиц из SQL-функций (Column Extraction)
 - Logic Architect API (анализ логики функций через LLM)
 - Natural Query API
 
@@ -128,6 +129,15 @@ DELETE FROM files WHERE context_code = 'FULL_TEST';
 | updates | UPDATE таблицы |
 | inserts_into | INSERT в таблицу |
 | imports | import/require |
+| reads_column | Чтение колонки в SELECT |
+| updates_column | Обновление колонки в SET |
+| inserts_column | Вставка в колонку |
+
+#### Проверка 2.5: Извлечение колонок
+После Step2 выполняется извлечение колонок из SQL-функций:
+- Для каждой SQL-функции вызывается `/api/items/:id/extract-columns`
+- Создаются ai_item типа `table_column`
+- Создаются связи function→column в таблице link
 
 #### Проверка 3: Natural Query
 Тестовые запросы:
@@ -147,6 +157,8 @@ Step2 (L1 Fix): ✅
 Multi-root: ✅
 Проверка ai_items: ✅
 Проверка L1 связей: ✅
+Извлечение колонок: ✅
+Logic Architect: ✅
 Natural Query тесты:
   1. ✅ "Какие функции работают с таблицей employees..."
   2. ✅ "Какие классы есть в проекте..."
@@ -190,6 +202,26 @@ SELECT ai.full_name, lg.logic, lg.graph
 FROM logic_graph lg
 JOIN ai_item ai ON lg.ai_item_id = ai.id
 WHERE ai.context_code = 'FULL_TEST';
+```
+
+### Проверка извлечённых колонок
+```sql
+-- Все ai_item типа table_column
+SELECT full_name, s_name 
+FROM ai_item 
+WHERE context_code = 'FULL_TEST' AND type = 'table_column';
+
+-- Связи function→column
+SELECT 
+  src.full_name AS function_name,
+  lt.code AS link_type,
+  tgt.full_name AS column_name
+FROM link l
+JOIN ai_item src ON l.source_ai_item_id = src.id
+JOIN ai_item tgt ON l.target_ai_item_id = tgt.id
+JOIN link_type lt ON l.link_type_id = lt.id
+WHERE l.context_code = 'FULL_TEST'
+  AND lt.code IN ('reads_column', 'updates_column', 'inserts_column');
 ```
 
 ## Известные особенности

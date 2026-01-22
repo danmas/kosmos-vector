@@ -3295,6 +3295,147 @@ class DbService {
     }
   }
 
+  /**
+   * Поиск ai_item по короткому имени таблицы (без схемы)
+   * @param {string} tableName - Короткое имя таблицы (например, 'label')
+   * @param {string} contextCode - Код контекста
+   * @returns {Promise<Object|null>} ai_item или null если не найдено
+   */
+  async findAiItemByName(tableName, contextCode) {
+    try {
+      // Ищем таблицу по короткому имени (s_name) или по полному имени, заканчивающемуся на .tableName
+      const result = await this.pgClient.query(
+        `SELECT * FROM public.ai_item 
+         WHERE context_code = $1 
+           AND type = 'table' 
+           AND (s_name = $2 OR full_name LIKE $3 OR full_name = $2)
+         ORDER BY 
+           CASE WHEN s_name = $2 THEN 1 ELSE 2 END,
+           CASE WHEN full_name = $2 THEN 1 ELSE 2 END
+         LIMIT 1`,
+        [contextCode, tableName, `%.${tableName}`]
+      );
+
+      return result.rows.length > 0 ? result.rows[0] : null;
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка findAiItemByName для ${tableName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Получение метаданных колонки из чанка таблицы
+   * @param {string} tableFullName - Полное имя таблицы (например, 'carl_data.label')
+   * @param {string} columnName - Имя колонки
+   * @param {string} contextCode - Код контекста
+   * @returns {Promise<Object|null>} Объект с data_type, is_nullable, column_default или null
+   */
+  async getColumnMetadataFromTable(tableFullName, columnName, contextCode) {
+    try {
+      // Находим ai_item таблицы
+      const tableItemResult = await this.pgClient.query(
+        `SELECT id FROM public.ai_item 
+         WHERE full_name = $1 AND context_code = $2 AND type = 'table'`,
+        [tableFullName, contextCode]
+      );
+
+      if (tableItemResult.rows.length === 0) {
+        return null;
+      }
+
+      const tableAiItemId = tableItemResult.rows[0].id;
+
+      // Находим чанк L0 для этой таблицы
+      const chunkResult = await this.pgClient.query(
+        `SELECT chunk_content FROM public.chunk_vector 
+         WHERE ai_item_id = $1 AND level = '0-исходник' 
+         ORDER BY created_at DESC LIMIT 1`,
+        [tableAiItemId]
+      );
+
+      if (chunkResult.rows.length === 0) {
+        return null;
+      }
+
+      const chunkContent = chunkResult.rows[0].chunk_content;
+      
+      // Парсим JSON из chunk_content
+      let contentData;
+      if (typeof chunkContent === 'string') {
+        contentData = JSON.parse(chunkContent);
+      } else {
+        contentData = chunkContent;
+      }
+
+      // Если есть поле text, берём его
+      const textData = contentData.text || contentData;
+
+      // Ищем колонку в массиве columns
+      if (textData.columns && Array.isArray(textData.columns)) {
+        const column = textData.columns.find(col => 
+          col.column_name && col.column_name.toLowerCase() === columnName.toLowerCase()
+        );
+
+        if (column) {
+          return {
+            data_type: column.data_type || null,
+            is_nullable: column.is_nullable === 'YES' || column.is_nullable === true,
+            column_default: column.column_default || null
+          };
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка getColumnMetadataFromTable для ${tableFullName}.${columnName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Получение тела функции (L0 чанк) по ai_item_id
+   * @param {number} aiItemId - ID ai_item функции
+   * @returns {Promise<string|null>} Тело функции или null
+   */
+  async getFunctionBodyByAiItemId(aiItemId) {
+    try {
+      const result = await this.pgClient.query(
+        `SELECT cv.chunk_content 
+         FROM public.chunk_vector cv
+         WHERE cv.ai_item_id = $1 AND cv.level = '0-исходник'
+         ORDER BY cv.created_at DESC LIMIT 1`,
+        [aiItemId]
+      );
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      const chunkContent = result.rows[0].chunk_content;
+      
+      // Парсим JSON из chunk_content
+      let contentData;
+      if (typeof chunkContent === 'string') {
+        contentData = JSON.parse(chunkContent);
+      } else {
+        contentData = chunkContent;
+      }
+
+      // Если есть поле text, берём его
+      const textData = contentData.text || contentData;
+
+      // Возвращаем body из структуры функции
+      if (textData.body) {
+        return textData.body;
+      }
+
+      return null;
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка getFunctionBodyByAiItemId для ai_item_id ${aiItemId}:`, error);
+      throw error;
+    }
+  }
+
 }
 
 module.exports = DbService; 

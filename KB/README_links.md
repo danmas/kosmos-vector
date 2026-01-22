@@ -80,6 +80,9 @@
 | `update_tables`       | `updates`           | Изменение данных в таблице        |
 | `insert_tables`       | `inserts into`      | Вставка данных в таблицу          |
 | `dependencies` / `imports` | `depends on`   | Общая/импортная зависимость       |
+| `reads_column`        | `reads_column`      | Функция читает колонку в SELECT   |
+| `updates_column`      | `updates_column`    | Функция обновляет колонку в SET   |
+| `inserts_column`      | `inserts_column`    | Функция вставляет в колонку       |
 | Неизвестный ключ      | оригинальный ключ   | fallback                          |
 
 ### Пример результата
@@ -110,13 +113,51 @@
   ]
 }
 
+## Извлечение колонок (Column Extraction)
+
+Дополнительно к связям с таблицами, система может извлекать связи с отдельными колонками таблиц.
+
+### Процесс
+
+1. Парсим тело SQL-функции (из ai_item типа `function`)
+2. Извлекаем алиасы таблиц из FROM/JOIN
+3. Находим колонки в SELECT, UPDATE SET, INSERT
+4. Резолвим полные имена колонок через ранее загруженные таблицы
+5. Создаём ai_item типа `table_column` для каждой уникальной колонки
+6. Сохраняем связи function→column в таблицу link
+
+### Формат full_name для колонок
+
+```
+schema.table.column
+```
+
+Примеры:
+- `carl_data.label.id_label`
+- `hr.employees.first_name`
+
+### API
+
+**POST** `/api/items/:id/extract-columns?context-code=...`
+
+Извлекает колонки из SQL-функции и создаёт соответствующие ai_item и связи.
+
+### Типы связей
+
+| link_type | Описание |
+|-----------|----------|
+| reads_column | Колонка в SELECT |
+| updates_column | Колонка в UPDATE SET |
+| inserts_column | Колонка в INSERT |
+
 ## Текущее состояние
 
 Граф полностью работает:
 - Поддерживает все языки
 - Корректно извлекает зависимости из SQL (даже при "сыром" JSON в `l1_deps`)
 - Возвращает типизированные связи с `label`
+- Поддерживает связи с колонками таблиц
 
 Готов к визуализации в UI (vis.js, cytoscape, react-force-graph и т.д.).
 
-Последнее обновление: 15 декабря 2025
+Последнее обновление: 22 января 2026

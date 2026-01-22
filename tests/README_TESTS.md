@@ -71,7 +71,45 @@
     node server-v2/folder_cycle_test.js
     ```
 
+## 4. Full System Test (`tests/full_system_test.js`)
+
+Полный E2E тест системы, проверяющий весь pipeline обработки кода.
+
+### Что проверяет:
+- Multi-root конфигурацию (несколько rootPath)
+- Парсинг и загрузку файлов разных типов (JS, TS, PHP, SQL, DDL)
+- Создание ai_items и chunk_vector
+- Связи L1 в таблице link
+- Извлечение колонок таблиц из SQL-функций
+- Logic Architect API
+- Natural Query API
+
+### Как запустить:
+```bash
+node tests/full_system_test.js
+```
+
+Подробнее см. [KB/README_FULL_TEST.md](../KB/README_FULL_TEST.md)
+
+## 5. Column Extractor Test (`tests/test_column_extractor.js`)
+
+Тест извлечения колонок таблиц из SQL-функций.
+
+### Что проверяет:
+- Парсинг алиасов таблиц из FROM/JOIN
+- Извлечение колонок из SELECT, UPDATE SET, INSERT
+- Резолвинг полных имён колонок через загруженные таблицы
+- Создание ai_item типа `table_column`
+- Создание связей function→column с типами reads_column, updates_column, inserts_column
+
+### Как запустить:
+```bash
+node tests/test_column_extractor.js
+```
+
 ## Важные замечания
 
 -   Все тесты используют `SimpleEmbeddings` и `SimpleChatModel` из ядра `packages/core`, которые являются "заглушками" и не предназначены для качественной семантической работы. Их цель — проверить работоспособность конвейера, а не качество AI-моделей.
--   Тесты спроектированы так, чтобы быть идемпотентными: `full_cycle_test.js` и `folder_cycle_test.js` сами за собой прибираются, удаляя созданные ими сущности. 
+-   Тесты спроектированы так, чтобы быть идемпотентными: `full_cycle_test.js` и `folder_cycle_test.js` сами за собой прибираются, удаляя созданные ими сущности.
+-   `full_system_test.js` оставляет данные в БД для ручной проверки (context_code = FULL_TEST).
+-   `test_column_extractor.js` использует отдельный context_code (COLUMN_TEST) и очищает данные после себя. 

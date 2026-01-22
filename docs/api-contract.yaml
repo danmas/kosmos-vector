@@ -2,9 +2,15 @@ openapi: 3.0.3
 info:
   title: AiItem RAG Architect API
   info:
-    version: 2.5.1
+    version: 2.6.0
     description: |
       RESTful API для системы RAG-анализа кодовой базы.
+
+      Версия 2.6.0:
+      • Добавлен Column Extraction API: POST /api/items/{id}/extract-columns для извлечения колонок таблиц из SQL-функций
+      • Новый тип ai_item: table_column для представления колонок таблиц
+      • Новые типы связей: reads_column, updates_column, inserts_column
+      • Резолвинг полных имён колонок через загруженные таблицы
 
       Версия 2.5.1:
       • Добавлены API для массовых операций с тегами: POST /api/ai-items/bulk/tags/add и POST /api/ai-items/bulk/tags/remove
@@ -80,7 +86,7 @@ components:
     # ────────────────────────────────────── Основные типы
     AiItemType:
       type: string
-      enum: [function, class, method, module, interface, struct, table, view, procedure, trigger, index, sequence, type, domain, schema, role, grant]
+      enum: [function, class, method, module, interface, struct, table, table_column, view, procedure, trigger, index, sequence, type, domain, schema, role, grant]
     Language:
           type: string
           nullable: true
@@ -149,7 +155,16 @@ components:
         label:
           type: string
           nullable: true
-          description: Опциональное имя/метка связи (например, имя функции или метода)
+          description: |
+            Тип связи между элементами:
+            - calls: вызов функции
+            - reads from: чтение из таблицы (SELECT)
+            - updates: обновление таблицы (UPDATE)
+            - inserts into: вставка в таблицу (INSERT)
+            - depends on: зависимость/импорт
+            - reads_column: чтение колонки в SELECT
+            - updates_column: обновление колонки в SET
+            - inserts_column: вставка в колонку
 
     GraphData:
       type: object
@@ -261,6 +276,83 @@ components:
           format: date-time
           nullable: true
           description: Время последнего обновления анализа
+
+    # ────────────────────────────────────── Column Extraction
+    ColumnInfo:
+      type: object
+      required: [fullName, operation, resolved]
+      properties:
+        fullName:
+          type: string
+          description: Полное имя колонки (schema.table.column или unknown.column)
+          example: "hr.employees.first_name"
+        operation:
+          type: string
+          enum: [select, update, insert]
+          description: Тип операции над колонкой
+        resolved:
+          type: boolean
+          description: Удалось ли резолвить полное имя таблицы
+        ambiguous:
+          type: boolean
+          description: Колонка найдена в нескольких таблицах (не удалось однозначно резолвить)
+        tableFullName:
+          type: string
+          nullable: true
+          description: Полное имя таблицы (если resolved=true)
+          example: "hr.employees"
+
+    ColumnExtractionReport:
+      type: object
+      required: [functionFullName, functionAiItemId, columnsFound, columnsResolved, columnsUnresolved, linksCreated, columns]
+      properties:
+        functionFullName:
+          type: string
+          description: Полное имя функции
+          example: "hr.get_employee_skills"
+        functionAiItemId:
+          type: integer
+          description: ID ai_item функции
+        columnsFound:
+          type: integer
+          description: Всего найдено колонок в SQL
+          example: 5
+        columnsResolved:
+          type: integer
+          description: Колонок с резолвленным полным именем
+          example: 4
+        columnsUnresolved:
+          type: integer
+          description: Колонок без резолвленного имени (unknown.column)
+          example: 1
+        columnsAmbiguous:
+          type: integer
+          description: Колонок с неоднозначным резолвингом
+          example: 0
+        linksCreated:
+          type: integer
+          description: Создано связей function→column
+          example: 5
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/ColumnInfo'
+          description: Список извлечённых колонок
+        errors:
+          type: array
+          items:
+            type: string
+          description: Список ошибок при обработке
+
+    ColumnExtractionResponse:
+      type: object
+      required: [success, report]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        report:
+          $ref: '#/components/schemas/ColumnExtractionReport'
 
     # ────────────────────────────────────── AI Comment
     AiComment:
@@ -2070,6 +2162,61 @@ paths:
                         example: "Logic analysis deleted successfully for item: utils.fetchData"
         '404':
           description: Анализ логики не найден для данного AiItem
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/items/{id}/extract-columns:
+    post:
+      tags: [Core]
+      summary: Извлечение колонок таблиц из SQL-функции
+      description: |
+        Парсит тело SQL-функции и извлекает использование колонок таблиц:
+        1. Получает ai_item функции по full_name из БД
+        2. Берёт l0_code (тело функции) из chunk_vector
+        3. Парсит алиасы таблиц из FROM/JOIN
+        4. Извлекает колонки из SELECT, UPDATE SET, INSERT
+        5. Резолвит полные имена колонок через загруженные таблицы
+        6. Создаёт ai_item типа table_column для каждой уникальной колонки
+        7. Создаёт связи function→column в таблице link
+        
+        Типы связей:
+        - reads_column: колонка используется в SELECT
+        - updates_column: колонка обновляется в UPDATE SET
+        - inserts_column: в колонку вставляются данные
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных
+          schema:
+            type: string
+            example: "CARL"
+        - name: id
+          in: path
+          required: true
+          description: ID AiItem функции (full_name)
+          schema: { type: string }
+          example: "hr.get_employee_skills"
+      responses:
+        '200':
+          description: Колонки успешно извлечены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ColumnExtractionResponse'
+        '400':
+          description: AiItem не является функцией
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '404':
+          description: AiItem не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500':
+          description: Ошибка извлечения колонок
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
