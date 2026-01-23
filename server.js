@@ -249,6 +249,11 @@ app.use((req, res, next) => {
     return next();
   }
   
+  // Пропускаем частые запросы статуса pipeline (забивают лог)
+  if (req.path === '/api/pipeline/steps/status' && req.query['context-code']) {
+    return next();
+  }
+  
   const start = Date.now();
   const method = req.method;
   const url = req.originalUrl;
