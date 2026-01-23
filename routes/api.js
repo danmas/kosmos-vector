@@ -954,11 +954,15 @@ ${JSON.stringify({
       for (const item of aiItems) {
         const l1Out = item.l1_out || [];
         
-        // Обрабатываем каждый target из l1_out
-        for (const target of l1Out) {
+        // Обрабатываем каждый link из l1_out (теперь это объекты {target, type})
+        for (const link of l1Out) {
+          // Поддержка обратной совместимости: если link - строка, используем fallback
+          const target = typeof link === 'object' ? link.target : link;
+          const type = typeof link === 'object' ? (link.type || 'depends_on') : 'depends_on';
           const normalized = typeof target === 'string' ? target.trim() : '';
+          
           if (normalized && existingIds.has(normalized)) {
-            const linkKey = `${item.id}→${normalized}→depends on`;
+            const linkKey = `${item.id}→${normalized}→${type}`;
             linksSet.add(linkKey);
           }
         }

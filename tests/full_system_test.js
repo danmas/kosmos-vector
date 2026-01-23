@@ -347,12 +347,29 @@ async function checkL1LinksViaApi() {
                 missingFields.push(`${item.id}: отсутствует l1_out`);
             }
             
-            // Проверка типов
+            // Проверка типов - теперь массивы объектов
             if (!Array.isArray(item.l1_in)) {
                 missingFields.push(`${item.id}: l1_in не массив (${typeof item.l1_in})`);
+            } else {
+                // Проверяем структуру объектов l1_in
+                for (const link of item.l1_in) {
+                    if (typeof link !== 'object' || !link.source || !link.type) {
+                        missingFields.push(`${item.id}: l1_in содержит невалидный объект (ожидается {source, type})`);
+                        break;
+                    }
+                }
             }
+            
             if (!Array.isArray(item.l1_out)) {
                 missingFields.push(`${item.id}: l1_out не массив (${typeof item.l1_out})`);
+            } else {
+                // Проверяем структуру объектов l1_out
+                for (const link of item.l1_out) {
+                    if (typeof link !== 'object' || !link.target || !link.type) {
+                        missingFields.push(`${item.id}: l1_out содержит невалидный объект (ожидается {target, type})`);
+                        break;
+                    }
+                }
             }
             
             // Статистика
@@ -393,8 +410,26 @@ async function checkL1LinksViaApi() {
                     console.error(`  [ERROR] /api/items/:id возвращает l1_in/l1_out не как массивы`);
                     // Не возвращаем ошибку, продолжаем проверку graph
                 } else {
-                    console.log(`  [SUCCESS] /api/items/:id возвращает l1_in (${singleItem.l1_in.length}) и l1_out (${singleItem.l1_out.length})`);
-                    singleItemCheckPassed = true;
+                    // Проверяем структуру объектов
+                    let validStructure = true;
+                    for (const link of singleItem.l1_in) {
+                        if (typeof link !== 'object' || !link.source || !link.type) {
+                            console.error(`  [ERROR] /api/items/:id l1_in содержит невалидный объект`);
+                            validStructure = false;
+                            break;
+                        }
+                    }
+                    for (const link of singleItem.l1_out) {
+                        if (typeof link !== 'object' || !link.target || !link.type) {
+                            console.error(`  [ERROR] /api/items/:id l1_out содержит невалидный объект`);
+                            validStructure = false;
+                            break;
+                        }
+                    }
+                    if (validStructure) {
+                        console.log(`  [SUCCESS] /api/items/:id возвращает l1_in (${singleItem.l1_in.length}) и l1_out (${singleItem.l1_out.length}) с типами`);
+                        singleItemCheckPassed = true;
+                    }
                 }
             } catch (err) {
                 console.warn(`  [WARNING] Ошибка при проверке /api/items/:id (продолжаем):`, err.message);

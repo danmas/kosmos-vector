@@ -1874,19 +1874,21 @@ class DbService {
         }
       });
 
-      // Получаем L1 связи из таблицы link
-      // l1_out: source = текущий item, target существует в ai_item
+      // Получаем L1 связи из таблицы link с типами
+      // l1_out: source = текущий item, target существует в ai_item, с типом связи
       const l1OutResult = await this.pgClient.query(`
-        SELECT DISTINCT l.target 
+        SELECT DISTINCT l.target, lt.code as type
         FROM public.link l
+        JOIN public.link_type lt ON lt.id = l.link_type_id
         JOIN public.ai_item ai ON ai.full_name = l.target AND ai.context_code = l.context_code
         WHERE l.source = $1 AND l.context_code = $2
       `, [full_name, effectiveContextCode]);
 
-      // l1_in: target = текущий item, source существует в ai_item  
+      // l1_in: target = текущий item, source существует в ai_item, с типом связи
       const l1InResult = await this.pgClient.query(`
-        SELECT DISTINCT l.source 
+        SELECT DISTINCT l.source, lt.code as type
         FROM public.link l
+        JOIN public.link_type lt ON lt.id = l.link_type_id
         JOIN public.ai_item ai ON ai.full_name = l.source AND ai.context_code = l.context_code
         WHERE l.target = $1 AND l.context_code = $2
       `, [full_name, effectiveContextCode]);
@@ -1898,8 +1900,8 @@ class DbService {
         type: row.type || 'unknown',
         language,
         l0_code,
-        l1_out: l1OutResult.rows.map(r => r.target),
-        l1_in: l1InResult.rows.map(r => r.source),
+        l1_out: l1OutResult.rows.map(r => ({ target: r.target, type: r.type })),
+        l1_in: l1InResult.rows.map(r => ({ source: r.source, type: r.type })),
         l2_desc,
         filePath: row.file_url || path.join(this.docsDir || 'docs', row.filename)
       };
@@ -1950,14 +1952,16 @@ class DbService {
 
       const result = await this.pgClient.query(query, params);
 
-      // Получаем все связи одним batch-запросом
+      // Получаем все связи одним batch-запросом с типами
       let linksQuery = `
         SELECT 
           l.source,
           l.target,
+          lt.code as link_type,
           CASE WHEN ai_src.id IS NOT NULL THEN true ELSE false END as source_exists,
           CASE WHEN ai_tgt.id IS NOT NULL THEN true ELSE false END as target_exists
         FROM public.link l
+        JOIN public.link_type lt ON lt.id = l.link_type_id
         LEFT JOIN public.ai_item ai_src ON ai_src.full_name = l.source AND ai_src.context_code = l.context_code
         LEFT JOIN public.ai_item ai_tgt ON ai_tgt.full_name = l.target AND ai_tgt.context_code = l.context_code
         WHERE 1=1
@@ -1979,13 +1983,13 @@ class DbService {
           if (!linksMap.has(link.source)) {
             linksMap.set(link.source, { l1_in: [], l1_out: [] });
           }
-          linksMap.get(link.source).l1_out.push(link.target);
+          linksMap.get(link.source).l1_out.push({ target: link.target, type: link.link_type });
           
           // l1_in для target
           if (!linksMap.has(link.target)) {
             linksMap.set(link.target, { l1_in: [], l1_out: [] });
           }
-          linksMap.get(link.target).l1_in.push(link.source);
+          linksMap.get(link.target).l1_in.push({ source: link.source, type: link.link_type });
         }
       }
 

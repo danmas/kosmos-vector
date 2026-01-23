@@ -103,12 +103,12 @@ components:
         l0_code: { type: string }
         l1_in: 
           type: array 
-          items: { type: string }
-          description: "Входящие связи: кто вызывает/использует этот элемент"
+          items: { $ref: '#/components/schemas/L1LinkIn' }
+          description: "Входящие связи с типом: кто вызывает/использует этот элемент"
         l1_out: 
           type: array 
-          items: { type: string }
-          description: "Исходящие связи: что вызывает/использует этот элемент"
+          items: { $ref: '#/components/schemas/L1Link' }
+          description: "Исходящие связи с типом: что вызывает/использует этот элемент"
         l2_desc: { type: string }
         filePath: { type: string, example: "./src/utils/api.ts" }
     ProjectFile:
@@ -143,6 +143,29 @@ components:
           items: { $ref: '#/components/schemas/TagSummary' }
           default: []
           
+    # ────────────────────────────────────── L1 Links
+    L1Link:
+      type: object
+      required: [target, type]
+      properties:
+        target:
+          type: string
+          description: "full_name целевого элемента"
+        type:
+          type: string
+          description: "Тип связи (код из link_type: calls, reads_from, updates, inserts_into, etc.)"
+    
+    L1LinkIn:
+      type: object
+      required: [source, type]
+      properties:
+        source:
+          type: string
+          description: "full_name исходного элемента"
+        type:
+          type: string
+          description: "Тип связи (код из link_type: calls, reads_from, updates, inserts_into, etc.)"
+    
     # ────────────────────────────────────── Граф
     GraphNode:
       type: object
