@@ -3,12 +3,12 @@
   "includeMask": "**/api*.sql",
   "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
   "fileSelection": [],
-  "lastUpdated": "2026-01-23T07:14:02.188Z",
+  "lastUpdated": "2026-01-23T07:31:52.085Z",
   "metadata": {
     "projectName": "New Project",
     "description": "RAG knowledge base",
     "tags": [],
-    "custom_settings": "functions_loading:\n  enabled: false\ntable_loading:\n  enabled: true\n  schema: carl_amo\n  include_patterns:\n    - \"%%\"\n  exclude_patterns:\n    - \"\\\\_%\"\n  exclude_names:\n    - \"a\"\n    - \"auction_b20210519\"\n    - \"test_table\""
+    "custom_settings": "functions_loading:\n  enabled: false\ntable_loading:\n  enabled: true\n  schema: carl_inspect, carl_dict, carl_car, carl_wf, carl_comm\n  __schema: carl_data, carl_amo\n  include_patterns:\n    - \"%%\"\n  exclude_patterns:\n    - \"\\\\_%\"\n  exclude_names:\n    - \"a\"\n    - \"auction_b20210519\"\n    - \"test_table\""
   },
   "pipelineConfig": {
     "parsing": {},

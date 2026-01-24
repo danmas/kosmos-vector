@@ -18,7 +18,7 @@ const { createStepLogger } = require('./stepLogger');
 /**
  * Парсинг настроек загрузки таблиц из YAML строки custom_settings
  * @param {string|null} customSettingsYaml - YAML строка из metadata.custom_settings
- * @returns {object|null} Объект с настройками { enabled, schema, includePatterns, excludePatterns, excludeNames } или null
+ * @returns {object|null} Объект с настройками { enabled, schemas, schema, includePatterns, excludePatterns, excludeNames } или null
  */
 function parseTableLoadingConfig(customSettingsYaml) {
   if (!customSettingsYaml || typeof customSettingsYaml !== 'string' || customSettingsYaml.trim() === '') {
@@ -48,11 +48,22 @@ function parseTableLoadingConfig(customSettingsYaml) {
 
     if (!tableLoading.enabled) {
       console.log('[Step1] Загрузка таблиц отключена в конфигурации (table_loading.enabled = false)');
-      return { enabled: false, schema: null, includePatterns: [], excludePatterns: [], excludeNames: [] };
+      return { enabled: false, schemas: [], schema: null, includePatterns: [], excludePatterns: [], excludeNames: [] };
     }
 
     if (!tableLoading.schema || typeof tableLoading.schema !== 'string') {
       console.warn('[Step1] table_loading.schema обязателен и должен быть строкой, пропускаем загрузку таблиц');
+      return null;
+    }
+
+    // Парсим несколько схем через запятую
+    const schemas = tableLoading.schema
+      .split(',')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    if (schemas.length === 0) {
+      console.warn('[Step1] table_loading.schema пуст после парсинга, пропускаем загрузку таблиц');
       return null;
     }
 
@@ -72,7 +83,8 @@ function parseTableLoadingConfig(customSettingsYaml) {
 
     return {
       enabled: true,
-      schema: tableLoading.schema,
+      schemas: schemas,  // массив всех схем
+      schema: schemas[0], // первая схема для обратной совместимости
       includePatterns: includePatterns,
       excludePatterns: excludePatterns,
       excludeNames: excludeNames
@@ -729,27 +741,38 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
 
   if (tableLoadingConfig && tableLoadingConfig.enabled) {
     try {
-      logger.log(`Загрузка таблиц из схемы "${tableLoadingConfig.schema}"`);
+      const schemas = tableLoadingConfig.schemas || [tableLoadingConfig.schema];
+      logger.log(`Загрузка таблиц из схем: ${schemas.join(', ')}`);
       logger.log(`Включаемые паттерны: ${tableLoadingConfig.includePatterns.join(', ') || '(все)'}`);
       logger.log(`Исключаемые паттерны: ${tableLoadingConfig.excludePatterns.join(', ') || '(нет)'}`);
       logger.log(`Исключаемые имена: ${tableLoadingConfig.excludeNames.join(', ') || '(нет)'}`);
 
-      allTables = await getFilteredTableNames(
-        tableLoadingConfig.schema,
-        tableLoadingConfig.includePatterns,
-        tableLoadingConfig.excludePatterns,
-        tableLoadingConfig.excludeNames
-      );
+      // Итерируем по всем схемам
+      for (const schema of schemas) {
+        logger.log(`Получение таблиц из схемы "${schema}"...`);
+        const schemaTables = await getFilteredTableNames(
+          schema,
+          tableLoadingConfig.includePatterns,
+          tableLoadingConfig.excludePatterns,
+          tableLoadingConfig.excludeNames
+        );
+        logger.log(`  Найдено ${schemaTables.length} таблиц в схеме "${schema}"`);
+        
+        // Сохраняем схему вместе с именем таблицы для последующего формирования fullName
+        for (const tableName of schemaTables) {
+          allTables.push({ schema, tableName });
+        }
+      }
 
-      logger.log(`Найдено ${allTables.length} таблиц для загрузки`);
+      logger.log(`Всего найдено ${allTables.length} таблиц для загрузки`);
     } catch (err) {
       logger.error(`Ошибка при получении списка таблиц: ${err.message}`);
       // Ошибка будет добавлена в report позже, если потребуется
     }
 
     // Добавляем найденные таблицы в задачи
-    for (const tableName of allTables) {
-      const fullName = `${tableLoadingConfig.schema}.${tableName}`;
+    for (const { schema, tableName } of allTables) {
+      const fullName = `${schema}.${tableName}`;
       tasks.push({
         type: 'table',
         name: fullName
