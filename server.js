@@ -13,6 +13,13 @@ const serverLogs = [];
 // Подписчики на SSE поток логов
 const logsSseConnections = new Set();
 
+const process_cwd = process.cwd ();
+const process_env_PORT = process.env.PORT;
+console.log(`*********************************************`);
+console.log(`**${process_cwd}***`);
+console.log(`**${process_env_PORT}***`);
+console.log(`*********************************************`);
+  
 // Директория для сохранения сессий логов
 const SESSIONS_DIR = path.join(process.cwd(), 'data', 'logs', 'sessions');
 
