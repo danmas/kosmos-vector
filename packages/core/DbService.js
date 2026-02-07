@@ -486,8 +486,8 @@ class DbService {
             itemId = existingItemQuery.rows[0].id;
             console.log(`[DB] Обновляем существующий AI Item ID: ${itemId}`);
             await this.pgClient.query(
-              'UPDATE public.ai_item SET updated_at = CURRENT_TIMESTAMP, type = $1, s_name = $2, h_name = $3, file_id = $4 WHERE id = $5',
-              [type, s_name, h_name, fileId, itemId]
+              'UPDATE public.ai_item SET updated_at = CURRENT_TIMESTAMP, s_name = $1, h_name = $2, file_id = $3 WHERE id = $4',
+              [s_name, h_name, fileId, itemId]
             );
           } else {
             console.log(`[DB] Создаём новый AI Item: "${full_name}" (${finalContextCode})`);

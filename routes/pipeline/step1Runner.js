@@ -13,6 +13,7 @@ const { loadTsFunctionsFromFile } = require('../loaders/tsFunctionLoader');
 const { loadPhpFunctionsFromFile } = require('../loaders/phpFunctionLoader');
 const { loadDdlFromFile } = require('../loaders/ddlSchemaLoader');
 const { getFilteredTableNames, loadTableSchema } = require('../loaders/tableSchemaLoader');
+const { loadMarkdownFromFile } = require('../loaders/mdLoader');
 const { createStepLogger } = require('./stepLogger');
 
 /**
@@ -232,6 +233,40 @@ function parsePhpLoadingConfig(customSettingsYaml) {
 }
 
 /**
+ * Парсинг настроек загрузки Markdown файлов из YAML строки custom_settings
+ * @param {string|null} customSettingsYaml - YAML строка из metadata.custom_settings
+ * @returns {object} Объект с настройками { enabled } (по умолчанию enabled: false)
+ */
+function parseMdLoadingConfig(customSettingsYaml) {
+  if (!customSettingsYaml || typeof customSettingsYaml !== 'string' || customSettingsYaml.trim() === '') {
+    return { enabled: false };
+  }
+
+  try {
+    const parsed = yaml.load(customSettingsYaml);
+    
+    if (!parsed || typeof parsed !== 'object') {
+      return { enabled: false };
+    }
+
+    const mdLoading = parsed.md_loading;
+    
+    if (!mdLoading || typeof mdLoading !== 'object') {
+      return { enabled: false };
+    }
+
+    if (typeof mdLoading.enabled !== 'boolean') {
+      return { enabled: false };
+    }
+
+    return { enabled: mdLoading.enabled };
+  } catch (error) {
+    console.error(`[Step1] Ошибка парсинга YAML из custom_settings для md_loading: ${error.message}`);
+    return { enabled: false };
+  }
+}
+
+/**
  * Парсинг настроек загрузки DDL схем из YAML строки custom_settings
  * @param {string|null} customSettingsYaml - YAML строка из metadata.custom_settings
  * @returns {object} Объект с настройками { enabled, files } (по умолчанию enabled: false)
@@ -324,12 +359,13 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
 
   const tasks = [];
 
-  // Получаем custom_settings для проверки функций, JS, TS, PHP и таблиц
+  // Получаем custom_settings для проверки функций, JS, TS, PHP, MD и таблиц
   const customSettings = kbConfig.metadata?.custom_settings || null;
   const functionsLoadingConfig = parseFunctionsLoadingConfig(customSettings);
   const jsLoadingConfig = parseJsLoadingConfig(customSettings);
   const tsLoadingConfig = parseTsLoadingConfig(customSettings);
   const phpLoadingConfig = parsePhpLoadingConfig(customSettings);
+  const mdLoadingConfig = parseMdLoadingConfig(customSettings);
   const ddlLoadingConfig = parseDdlLoadingConfig(customSettings);
 
   // Подготовка матчеров (используем общие функции для синхронизации с /api/project/tree)
@@ -679,6 +715,83 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     logger.log('Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)');
   }
 
+  // === Сканирование MD-файлов (если включено) ===
+  let mdFilePaths = [];
+  
+  if (mdLoadingConfig.enabled) {
+    logger.log('Сканирование MD файлов включено');
+    
+    // === Режим 1: Точный выбор файлов ===
+    if (fileSelection.length > 0) {
+      for (const filePath of fileSelection) {
+        const parsed = parseFileSelectionPath(filePath);
+        let targetRootPath;
+        let relativePath;
+
+        if (parsed) {
+          targetRootPath = parsed.rootPath;
+          relativePath = parsed.relativePath;
+          if (!validRootPaths.includes(targetRootPath)) continue;
+        } else {
+          targetRootPath = validRootPaths[0];
+          relativePath = filePath.startsWith('./') ? filePath : './' + filePath;
+        }
+
+        const cleanRel = relativePath.startsWith('./') ? relativePath.slice(2) : relativePath;
+        const absPath = path.join(targetRootPath, cleanRel);
+
+        if (!fs.existsSync(absPath)) continue;
+        if (!absPath.toLowerCase().endsWith('.md')) continue;
+        if (isIgnored(relativePath)) continue;
+
+        mdFilePaths.push(absPath);
+      }
+    } 
+    // === Режим 2: Glob-маски ===
+    else {
+      function scanDirectoryForMd(currentDir, currentRootPath, baseRelPath = '.') {
+        if (!fs.existsSync(currentDir)) return;
+
+        const entries = fs.readdirSync(currentDir);
+        for (const entry of entries) {
+          const absPath = path.join(currentDir, entry);
+          const relPath = path.join(baseRelPath, entry).replace(/\\/g, '/');
+          const fullRelPath = normalizeRelativePath(relPath);
+
+          try {
+            const stats = fs.statSync(absPath);
+
+            if (stats.isDirectory()) {
+              if (!isIgnored(fullRelPath)) {
+                scanDirectoryForMd(absPath, currentRootPath, relPath);
+              }
+            } else if (stats.isFile() && absPath.toLowerCase().endsWith('.md')) {
+              if (isIgnored(fullRelPath)) continue;
+              mdFilePaths.push(absPath);
+            }
+          } catch (err) {
+            logger.warn(`Ошибка доступа к ${absPath}: ${err.message}`);
+          }
+        }
+      }
+
+      for (const rootPath of validRootPaths) {
+        scanDirectoryForMd(rootPath, rootPath, '.');
+      }
+    }
+
+    logger.log(`Найдено ${mdFilePaths.length} MD-файлов для обработки`);
+    for (const filePath of mdFilePaths) {
+      tasks.push({
+        type: 'md',
+        path: filePath,
+        name: path.basename(filePath)
+      });
+    }
+  } else {
+    logger.log('Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)');
+  }
+
   // === Сканирование DDL-файлов (если включено) ===
   let ddlFilePaths = [];
   
@@ -796,7 +909,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
   }
 
   logger.log(`=====================`);
-  logger.log(`Всего задач: ${tasks.length} (${sqlFilePaths.length} SQL + ${jsFilePaths.length} JS + ${tsFilePaths.length} TS + ${phpFilePaths.length} PHP + ${ddlFilePaths.length} DDL + ${allTables.length} таблиц)`);
+  logger.log(`Всего задач: ${tasks.length} (${sqlFilePaths.length} SQL + ${jsFilePaths.length} JS + ${tsFilePaths.length} TS + ${phpFilePaths.length} PHP + ${mdFilePaths.length} MD + ${ddlFilePaths.length} DDL + ${allTables.length} таблиц)`);
   logger.log(`=====================`);
 
   // === Инициализация отчета ===
@@ -815,6 +928,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
       jsFiles: [],
       tsFiles: [],
       phpFiles: [],
+      mdFiles: [],
       ddlFiles: [],
       tables: [],
       errors: []
@@ -948,6 +1062,55 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
             if (func.errors?.length > 0) {
               report.summary.errors += func.errors.length;
               func.errors.forEach(err => report.details.errors.push({ type: 'php', name: `${fileReport.filename}:${func.full_name}`, message: err }));
+            }
+          });
+        } else {
+          report.summary.skipped++;
+        }
+      } else if (task.type === 'md') {
+        const fileReport = await loadMarkdownFromFile(task.path, contextCode, dbService, pipelineState);
+
+        if (fileReport) {
+          report.details.mdFiles.push(fileReport);
+
+          if (fileReport.fileId) {
+            report.summary.totalFiles++;
+            report.summary.totalAiItems += fileReport.sectionsProcessed || 0;
+
+            fileReport.sections.forEach(section => {
+              if (section.aiItemId) report.summary.totalAiItems++;
+              if (section.chunkL0Id || section.chunkL1Id) report.summary.totalChunks++;
+              
+              // Учитываем H2 дочерние секции
+              if (section.h2Children) {
+                section.h2Children.forEach(h2 => {
+                  if (h2.chunkL0Id) report.summary.totalChunks++;
+                });
+              }
+            });
+          } else {
+            report.summary.skipped++;
+          }
+
+          // Ошибки из файла и секций
+          if (fileReport.errors?.length > 0) {
+            report.summary.errors += fileReport.errors.length;
+            fileReport.errors.forEach(err => report.details.errors.push({ type: 'md', name: fileReport.filename, message: err }));
+          }
+          fileReport.sections.forEach(section => {
+            if (section.errors?.length > 0) {
+              report.summary.errors += section.errors.length;
+              section.errors.forEach(err => report.details.errors.push({ type: 'md', name: `${fileReport.filename}:${section.full_name}`, message: err }));
+            }
+            
+            // Ошибки из H2 секций
+            if (section.h2Children) {
+              section.h2Children.forEach(h2 => {
+                if (h2.errors?.length > 0) {
+                  report.summary.errors += h2.errors.length;
+                  h2.errors.forEach(err => report.details.errors.push({ type: 'md', name: `${fileReport.filename}:${h2.full_name}`, message: err }));
+                }
+              });
             }
           });
         } else {

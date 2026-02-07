@@ -1,0 +1,11 @@
+{
+  "rootPath": "C:\\ERV\\projects-ex\\kosmos-vector\\tests\\test_data",
+  "includeMask": "**/*.{sql,js,ts,php,md}",
+  "ignorePatterns": "**/node_modules/**,**/dist/**,**/.git/**",
+  "fileSelection": [],
+  "metadata": {
+    "name": "Test MD Loading",
+    "description": "Тестовая конфигурация для проверки загрузки Markdown файлов",
+    "custom_settings": "functions_loading:\n  enabled: false\njs_loading:\n  enabled: false\nts_loading:\n  enabled: false\nphp_loading:\n  enabled: false\nmd_loading:\n  enabled: true\nddl_loading:\n  enabled: false\ntable_loading:\n  enabled: false\n"
+  }
+}
