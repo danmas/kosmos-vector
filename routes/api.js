@@ -879,9 +879,10 @@ ${JSON.stringify({
   // === 4. Список метаданных всех AiItems (новый контракт) ===
   router.get('/items-list', async (req, res) => {
     try {
-      // Получаем список всех уникальных full_name из ai_item с тегами (с фильтром по контексту)
+      // Получаем список всех уникальных full_name из ai_item с тегами и статусом векторизации (с фильтром по контексту)
       const query = `
         SELECT 
+          ai.id as ai_item_id,
           ai.full_name,
           ai.type,
           ai.context_code,
@@ -899,11 +900,18 @@ ${JSON.stringify({
               ) sub
             ),
             '[]'::json
-          ) as tags
+          ) as tags,
+          EXISTS(
+            SELECT 1 
+            FROM public.chunk_vector cv
+            WHERE cv.ai_item_id = ai.id 
+              AND cv.embedding IS NOT NULL
+            LIMIT 1
+          ) as is_vectorized
         FROM public.ai_item ai
         JOIN public.files f ON ai.file_id = f.id
         WHERE ai.context_code = $1
-        GROUP BY ai.full_name, ai.type, ai.context_code, f.filename, f.file_url
+        GROUP BY ai.id, ai.full_name, ai.type, ai.context_code, f.filename, f.file_url
         ORDER BY ai.full_name
       `;
       const params = [req.contextCode];
@@ -919,7 +927,8 @@ ${JSON.stringify({
           type: row.type || 'unknown',
           language: language,
           filePath: row.file_url || path.join(process.cwd(), 'docs', row.filename),
-          tags: row.tags || []                                    // теги элемента (TagSummary[])
+          tags: row.tags || [],                                   // теги элемента (TagSummary[])
+          isVectorized: row.is_vectorized || false                // флаг наличия embedding
         };
       });
 

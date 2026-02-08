@@ -347,6 +347,10 @@ app.use('/api/prompts', promptsRoutes);
 // Подключаем роуты для чата
 app.use('/api', chatRoutes(dbService, vectorStore, embeddings));
 
+// Подключаем роуты для RAG
+const ragRoutes = require('./routes/rag');
+app.use('/api/rag', ragRoutes(dbService, vectorStore, embeddings));
+
 // Конфигурация для UI
 app.get('/api/config', (req, res) => {
   try {

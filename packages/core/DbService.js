@@ -1891,7 +1891,7 @@ class DbService {
       // Получаем чанки разных уровней
       // Извлекаем поле text из JSONB, если оно есть, иначе весь JSONB как текст
       const chunksResult = await this.pgClient.query(`
-        SELECT COALESCE(chunk_content->>'text', chunk_content::text) as chunk_content, level, type
+        SELECT COALESCE(chunk_content->>'text', chunk_content::text) as chunk_content, level, type, embedding
         FROM public.chunk_vector
         WHERE ai_item_id = $1
         ORDER BY chunk_index
@@ -1899,6 +1899,7 @@ class DbService {
 
       let l0_code = '';
       let l2_desc = '';
+      let hasEmbedding = false;
 
       chunksResult.rows.forEach(chunk => {
         if (chunk.level.startsWith('0-')) {
@@ -1906,6 +1907,10 @@ class DbService {
           l0_code = chunk.chunk_content;
         } else if (chunk.level.startsWith('2-')) {
           l2_desc = chunk.chunk_content;
+        }
+        // Проверяем наличие embedding хотя бы у одного чанка
+        if (chunk.embedding) {
+          hasEmbedding = true;
         }
       });
 
@@ -1938,7 +1943,8 @@ class DbService {
         l1_out: l1OutResult.rows.map(r => ({ target: r.target, type: r.type })),
         l1_in: l1InResult.rows.map(r => ({ source: r.source, type: r.type })),
         l2_desc,
-        filePath: row.file_url || path.join(this.docsDir || 'docs', row.filename)
+        filePath: row.file_url || path.join(this.docsDir || 'docs', row.filename),
+        isVectorized: hasEmbedding           // флаг наличия embedding
       };
     } catch (error) {
       console.error(`[DB] Ошибка getFullAiItemByFullName("${full_name}"):`, error);

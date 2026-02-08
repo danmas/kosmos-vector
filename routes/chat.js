@@ -3,6 +3,8 @@
 const express = require('express');
 const { callLLM } = require('../packages/core/llmClient');
 const promptsService = require('../packages/core/promptsService');
+const RAGRetriever = require('../packages/core/RAGRetriever');
+const ContextBuilder = require('../packages/core/ContextBuilder');
 
 const router = express.Router();
 
@@ -41,27 +43,25 @@ module.exports = (dbService, vectorStore, embeddings) => {
                 });
             }
 
-            // Устанавливаем контекстный код для векторного хранилища
-            vectorStore.setContextCode(contextCode);
-
-            // Создаем эмбеддинг для запроса
-            const queryEmbedding = await embeddings.embedQuery(message);
-
-            // Поиск релевантных документов (по умолчанию 5, можно настроить)
-            const maxResults = parseInt(process.env.MAX_RESULTS) || 5;
-            const relevantDocs = await dbService.similaritySearch(
-                queryEmbedding,
-                maxResults,
-                contextCode
-            );
-
-            // Формируем контекст из найденных документов
-            const contextText = relevantDocs
-                .map((doc, index) => `[Документ ${index + 1}]\n${doc.content}`)
-                .join('\n\n');
-
-            // Собираем ID использованных чанков
-            const usedContextIds = relevantDocs.map(doc => doc.id);
+            // Используем RAGRetriever для интеллектуального поиска контекста
+            const ragRetriever = new RAGRetriever(dbService, embeddings, {
+                strategy: 'hierarchical',
+                maxChunks: parseInt(process.env.MAX_RESULTS) || 5,
+                includeRelations: true
+            });
+            
+            const retrievalResult = await ragRetriever.retrieve(message, contextCode);
+            
+            // Форматируем контекст с помощью ContextBuilder
+            const contextBuilder = new ContextBuilder({
+                style: 'standard',
+                includeFileNames: true,
+                includeRelations: true
+            });
+            
+            const contextData = contextBuilder.build(retrievalResult, 'hierarchical');
+            const contextText = contextData.formatted;
+            const usedContextIds = contextData.metadata.usedChunkIds;
 
             // Формируем промпт для LLM из prompts.json
             const ragPrompts = promptsService.getRagPrompts();
