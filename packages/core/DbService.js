@@ -1346,7 +1346,8 @@ class DbService {
                COALESCE(fv.chunk_content->>'text', fv.chunk_content::text) as chunk_content, 
                fv.type, fv.level, 
                fv.s_name, fv.full_name, fv.h_name, fv.created_at,
-               f.filename, f.context_code
+               f.filename, f.context_code,
+               (fv.embedding IS NOT NULL) AS has_embedding
         FROM public.chunk_vector fv
         JOIN public.files f ON fv.file_id = f.id
         WHERE fv.ai_item_id = $1
@@ -1367,6 +1368,40 @@ class DbService {
       console.error(`Ошибка при получении чанков для ai_item с ID ${itemId}:`, error);
       throw error;
     }
+  }
+
+  /**
+   * Обновление embedding чанка по ID
+   * @param {number} chunkId - ID чанка в chunk_vector
+   * @param {number[]} embedding - Массив чисел (вектор)
+   * @returns {Promise<void>}
+   */
+  async updateChunkEmbedding(chunkId, embedding) {
+    if (!Array.isArray(embedding) || embedding.length === 0) {
+      throw new Error('embedding must be a non-empty array of numbers');
+    }
+    const vectorString = `[${embedding.join(',')}]`;
+    await this.pgClient.query(
+      'UPDATE public.chunk_vector SET embedding = $1 WHERE id = $2',
+      [vectorString, chunkId]
+    );
+  }
+
+  /**
+   * Получение id записей ai_item по списку full_name и context_code
+   * @param {string[]} fullNames - Список full_name
+   * @param {string} contextCode - Код контекста
+   * @returns {Promise<Array<{id: number, full_name: string}>>} Список { id, full_name } для найденных записей
+   */
+  async getAiItemIdsByFullNames(fullNames, contextCode) {
+    if (!Array.isArray(fullNames) || fullNames.length === 0) {
+      return [];
+    }
+    const result = await this.pgClient.query(
+      'SELECT id, full_name FROM public.ai_item WHERE full_name = ANY($1::text[]) AND context_code = $2',
+      [fullNames, contextCode]
+    );
+    return result.rows;
   }
 
   /**

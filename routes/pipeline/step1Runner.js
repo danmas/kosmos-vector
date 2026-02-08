@@ -460,7 +460,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
         }
       }
 
-      // Сканируем каждый корневой путь
+      // Сканируем каждый корневой путь  --- 
       for (const rootPath of validRootPaths) {
         scanDirectory(rootPath, rootPath, '.');
       }

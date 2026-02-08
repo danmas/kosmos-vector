@@ -3,9 +3,12 @@
   "includeMask": "**/*.{sql,js,ts,php,md}",
   "ignorePatterns": "**/node_modules/**,**/dist/**,**/.git/**",
   "fileSelection": [],
+  "lastUpdated": "2026-02-07T15:41:01.451Z",
   "metadata": {
-    "name": "Test MD Loading",
+    "projectName": "New Project",
     "description": "Тестовая конфигурация для проверки загрузки Markdown файлов",
-    "custom_settings": "functions_loading:\n  enabled: false\njs_loading:\n  enabled: false\nts_loading:\n  enabled: false\nphp_loading:\n  enabled: false\nmd_loading:\n  enabled: true\nddl_loading:\n  enabled: false\ntable_loading:\n  enabled: false\n"
+    "tags": [],
+    "custom_settings": "functions_loading:\n  enabled: false\njs_loading:\n  enabled: false\nts_loading:\n  enabled: false\nphp_loading:\n  enabled: false\nmd_loading:\n  enabled: true\nddl_loading:\n  enabled: false\ntable_loading:\n  enabled: false\n",
+    "name": "Test MD Loading"
   }
 }

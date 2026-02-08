@@ -639,6 +639,81 @@ module.exports = (dbService, embeddings) => {
         }
     });
 
+    // Векторизация ai_item по списку id или fullNames; contextCode из query (параметры маршрута); force — перевекторизовать уже имеющие embedding
+    router.post('/vectorize-ai-items', async (req, res) => {
+        try {
+            const contextCode = req.query['context-code'] || req.query.contextCode || null;
+            const { aiItemIds, fullNames, force = false } = req.body || {};
+            const forceRevectorize = force === true;
+
+            let itemIds = [];
+            if (Array.isArray(aiItemIds) && aiItemIds.length > 0) {
+                itemIds = aiItemIds.map(id => parseInt(id, 10)).filter(n => !isNaN(n));
+            } else if (Array.isArray(fullNames) && fullNames.length > 0) {
+                if (!contextCode) {
+                    return res.status(400).json({
+                        error: 'При указании fullNames обязателен параметр context-code (в query)'
+                    });
+                }
+                const rows = await dbService.getAiItemIdsByFullNames(fullNames, contextCode);
+                itemIds = rows.map(r => r.id);
+                const foundNames = new Set(rows.map(r => r.full_name));
+                const notFound = fullNames.filter(n => !foundNames.has(n));
+                if (notFound.length > 0) {
+                    console.warn(`[VECTORIZE-AI-ITEMS] Не найдены ai_item для fullNames: ${notFound.join(', ')} (context: ${contextCode})`);
+                }
+            }
+
+            if (itemIds.length === 0) {
+                return res.status(400).json({
+                    error: 'Укажите aiItemIds (массив id) или fullNames (массив строк). При fullNames передайте context-code в query.'
+                });
+            }
+
+            const results = [];
+            const errors = [];
+            let chunksUpdatedTotal = 0;
+
+            for (const aiItemId of itemIds) {
+                let chunksUpdated = 0;
+                try {
+                    const chunks = await dbService.getAiItemChunks(aiItemId);
+                    for (const chunk of chunks) {
+                        const raw = chunk.chunk_content;
+                        const text = typeof raw === 'string' ? raw : (raw && raw.text ? raw.text : String(raw || ''));
+                        if (!text || text.trim() === '') {
+                            continue;
+                        }
+                        const shouldUpdate = forceRevectorize || !chunk.has_embedding;
+                        if (!shouldUpdate) {
+                            continue;
+                        }
+                        const [embedding] = await embeddings.embedDocuments([text]);
+                        await dbService.updateChunkEmbedding(chunk.id, embedding);
+                        chunksUpdated++;
+                    }
+                    chunksUpdatedTotal += chunksUpdated;
+                    results.push({ aiItemId, chunksUpdated });
+                } catch (err) {
+                    console.error(`[VECTORIZE-AI-ITEMS] Ошибка для ai_item ${aiItemId}:`, err);
+                    errors.push({ aiItemId, message: err.message || String(err) });
+                    results.push({ aiItemId, chunksUpdated: 0 });
+                }
+            }
+
+            res.json({
+                success: true,
+                totalItems: itemIds.length,
+                chunksUpdated: chunksUpdatedTotal,
+                results,
+                ...(errors.length > 0 && { errors })
+            });
+        } catch (error) {
+            console.error('[VECTORIZE-AI-ITEMS] Ошибка:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
     // Сохранение чанка уровня 1 или 2
     router.post('/save-level-chunk-db', async (req, res) => {
         try {

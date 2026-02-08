@@ -3995,6 +3995,88 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
 
+  /vectorize-ai-items:
+    post:
+      tags: [Chunks]
+      summary: Векторизация ai_item по списку id или full_name
+      description: |
+        Создает или обновляет embeddings для всех чанков указанных ai_item.
+        Идентификация — по списку aiItemIds (id записей ai_item) или по fullNames (тогда обязателен query-параметр context-code).
+        force=true перезаписывает уже существующие embedding; по умолчанию чанки с embedding пропускаются.
+      operationId: vectorizeAiItems
+      parameters:
+        - name: context-code
+          in: query
+          required: false
+          description: Обязателен при использовании fullNames в теле запроса. Контекстный код для изоляции данных.
+          schema:
+            type: string
+            example: "CARL"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Либо aiItemIds, либо fullNames (с context-code в query)
+              properties:
+                aiItemIds:
+                  type: array
+                  items: { type: integer }
+                  description: Список id записей из ai_item
+                  example: [1, 5, 12]
+                fullNames:
+                  type: array
+                  items: { type: string }
+                  description: Список full_name (требуется context-code в query)
+                  example: ["schema.users.getById", "schema.orders.create"]
+                force:
+                  type: boolean
+                  default: false
+                  description: true — перевекторизовать все чанки (перезаписать embedding)
+      responses:
+        '200':
+          description: Результат векторизации (возможны частичные ошибки в errors)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  totalItems:
+                    type: integer
+                    description: Количество обработанных ai_item
+                  chunksUpdated:
+                    type: integer
+                    description: Суммарное количество обновленных чанков
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        aiItemId: { type: integer }
+                        chunksUpdated: { type: integer }
+                  errors:
+                    type: array
+                    description: Ошибки по отдельным ai_item (частичный успех)
+                    items:
+                      type: object
+                      properties:
+                        aiItemId: { type: integer }
+                        message: { type: string }
+        '400':
+          description: Не указаны aiItemIds/fullNames или при fullNames отсутствует context-code
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
   # ────────────────────────────────────── DEPRECATED (обратная совместимость)
   /api/files:
     get:
