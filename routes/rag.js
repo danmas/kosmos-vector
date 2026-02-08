@@ -86,7 +86,8 @@ module.exports = (dbService, vectorStore, embeddings) => {
             });
 
         } catch (error) {
-            console.error('[RAG/RETRIEVE] Ошибка:', error);
+            console.error('[RAG/RETRIEVE] Ошибка:', error.message);
+            console.error('[RAG/RETRIEVE] Stack:', error.stack);
             res.status(500).json({
                 success: false,
                 error: error.message || 'Внутренняя ошибка сервера'
@@ -191,7 +192,8 @@ module.exports = (dbService, vectorStore, embeddings) => {
             });
 
         } catch (error) {
-            console.error('[RAG/ASK] Ошибка:', error);
+            console.error('[RAG/ASK] Ошибка:', error.message);
+            console.error('[RAG/ASK] Stack:', error.stack);
             res.status(500).json({
                 success: false,
                 error: error.message || 'Внутренняя ошибка сервера'
@@ -268,7 +270,8 @@ module.exports = (dbService, vectorStore, embeddings) => {
             });
 
         } catch (error) {
-            console.error('[RAG/COMPARE] Ошибка:', error);
+            console.error('[RAG/COMPARE] Ошибка:', error.message);
+            console.error('[RAG/COMPARE] Stack:', error.stack);
             res.status(500).json({
                 success: false,
                 error: error.message

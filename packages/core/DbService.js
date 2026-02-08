@@ -678,7 +678,8 @@ class DbService {
         }
       }));
     } catch (error) {
-      console.error("Ошибка при поиске похожих чанков:", error);
+      console.error("Ошибка при поиске похожих чанков:", error.message);
+      console.error("Ошибка Stack:", error.stack);
       throw error;
     }
   }

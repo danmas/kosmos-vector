@@ -17,17 +17,28 @@ class RAGRetriever {
     
     // Конфигурация по умолчанию
     this.config = {
-      strategy: config.strategy || 'hierarchical',
-      maxChunks: config.maxChunks || 10,
-      maxTokens: config.maxTokens || 4000,
-      levels: config.levels || ['0-исходник', '1-связи', '2-логика'],
-      includeRelations: config.includeRelations !== false,
-      expandGraph: config.expandGraph || false,
-      similarityThreshold: config.similarityThreshold || 0.7,
-      ...config
+      strategy: 'hierarchical',
+      maxChunks: 10,
+      maxTokens: 4000,
+      levels: ['0-исходник', '1-связи', '2-логика'],
+      includeRelations: true,
+      expandGraph: false,
+      similarityThreshold: 0.7,
+      ...config, // Перезаписываем только переданными значениями
     };
     
+    // Обеспечиваем, что levels всегда массив
+    if (!Array.isArray(this.config.levels) || this.config.levels.length === 0) {
+      this.config.levels = ['0-исходник', '1-связи', '2-логика'];
+    }
+    
     console.log('[RAGRetriever] Инициализирован со стратегией:', this.config.strategy);
+    console.log('[RAGRetriever] Конфиг:', {
+      strategy: this.config.strategy,
+      maxChunks: this.config.maxChunks,
+      levels: this.config.levels,
+      includeRelations: this.config.includeRelations
+    });
   }
 
   /**
@@ -83,7 +94,8 @@ class RAGRetriever {
       };
       
     } catch (error) {
-      console.error('[RAGRetriever] Ошибка при поиске контекста:', error);
+      console.error('[RAGRetriever] Ошибка при поиске контекста:', error.message);
+      console.error('[RAGRetriever] Stack:', error.stack);
       throw error;
     }
   }
@@ -95,6 +107,13 @@ class RAGRetriever {
   async _simpleStrategy(queryEmbedding, contextCode, options) {
     const limit = options.maxChunks || this.config.maxChunks;
     const levels = options.levels || this.config.levels;
+    
+    // Защита от undefined/null
+    if (!Array.isArray(levels) || levels.length === 0) {
+      console.warn('[RAGRetriever] levels не массив или пустой, используем дефолтные');
+      const defaultLevels = ['0-исходник', '1-связи', '2-логика'];
+      return this._simpleStrategy(queryEmbedding, contextCode, { ...options, levels: defaultLevels });
+    }
     
     console.log(`[RAGRetriever] Simple Strategy: limit=${limit}, levels=${levels.join(',')}`);
     
