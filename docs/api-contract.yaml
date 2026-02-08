@@ -2,9 +2,15 @@ openapi: 3.0.3
 info:
   title: AiItem RAG Architect API
   info:
-    version: 2.7.0
+    version: 2.7.1
     description: |
       RESTful API для системы RAG-анализа кодовой базы.
+
+      Версия 2.7.1:
+      • Добавлен GET /api/file-content - безопасное получение содержимого файлов для просмотра
+      • Защита от path traversal атак
+      • Ограничение размера файла 5 МБ
+      • Поддержка UTF-8 с обработкой ошибок для бинарных файлов
 
       Версия 2.7.0:
       • Добавлен Advanced RAG API: интеллектуальный поиск контекста с множественными стратегиями
@@ -4488,6 +4494,94 @@ paths:
                         complexity:
                           type: string
                           enum: ["Низкая", "Средняя", "Высокая"]
+
+  /api/file-content:
+    get:
+      tags: [Project]
+      summary: Получить содержимое файла для просмотра
+      description: |
+        Безопасное получение содержимого файла для просмотра на фронтенде.
+        
+        Особенности:
+        - Защита от path traversal атак
+        - Максимальный размер файла: 5 МБ
+        - Кодировка: UTF-8 с обработкой ошибок для бинарных файлов
+        - Поддержка относительных и абсолютных путей
+      operationId: getFileContent
+      parameters:
+        - name: context-code
+          in: query
+          required: true
+          description: Контекстный код для изоляции данных
+          schema:
+            type: string
+            example: "FULL_TEST"
+        - name: path
+          in: query
+          required: true
+          description: Относительный путь к файлу (например, ./components/FileExplorer.tsx)
+          schema:
+            type: string
+            example: "./components/Dashboard.tsx"
+      responses:
+        '200':
+          description: Содержимое файла успешно получено
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: |
+                  import React from 'react';
+                  export function FileExplorer() {
+                    // ... component code
+                  }
+        '400':
+          description: Неверные параметры, файл слишком большой или бинарный
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingPath:
+                  value:
+                    success: false
+                    error: "Missing or invalid query parameter: path"
+                fileTooLarge:
+                  value:
+                    success: false
+                    error: "File is too large: 7.25 MB (max: 5 MB)"
+                binaryFile:
+                  value:
+                    success: false
+                    error: "File is not a valid UTF-8 text file (possibly binary)"
+                notAFile:
+                  value:
+                    success: false
+                    error: "Path is not a file"
+        '403':
+          description: Доступ запрещен (path traversal заблокирован)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Access denied: file is outside of project root path"
+        '404':
+          description: Файл не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "File not found: ./nonexistent.txt"
+        '500':
+          description: Ошибка сервера при чтении файла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ────────────────────────────────────── DEPRECATED (обратная совместимость)
   /api/files:

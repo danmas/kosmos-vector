@@ -1846,6 +1846,150 @@ ${JSON.stringify({
     }
   });
 
+  // === GET /api/file-content - получить содержимое файла для просмотра ===
+  router.get('/file-content', async (req, res) => {
+    try {
+      const { path: filePath } = req.query;
+
+      console.log(`[API/FILE-CONTENT] New request:`);
+      console.log(`  Query params:`, req.query);
+      console.log(`  context-code:`, req.query['context-code']);
+      console.log(`  path param:`, filePath);
+
+      // Валидация параметра path
+      if (!filePath || typeof filePath !== 'string') {
+        console.error(`[API/FILE-CONTENT] Missing or invalid path parameter`);
+        return res.status(400).json({
+          success: false,
+          error: 'Missing or invalid query parameter: path'
+        });
+      }
+
+      // Получаем конфигурацию для определения rootPath
+      const config = await kbConfigService.getConfig(req.contextCode);
+      const { parseRootPaths } = require('../packages/core/kbConfigService');
+      const rootPaths = parseRootPaths(config.rootPath);
+
+      if (rootPaths.length === 0) {
+        return res.status(500).json({
+          success: false,
+          error: 'No root paths configured for this context'
+        });
+      }
+
+      // Expect absolute path
+      // Нормализуем слэши перед проверкой (Windows может получать смешанные пути из URL)
+      const normalizedFilePath = filePath.replace(/\//g, path.sep);
+      
+      // Проверяем, что путь абсолютный (после нормализации слэшей)
+      if (!path.isAbsolute(normalizedFilePath)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Path must be absolute'
+        });
+      }
+      
+      const absolutePath = path.normalize(normalizedFilePath);
+      
+      console.log(`[API/FILE-CONTENT] Request:`);
+      console.log(`  Original path: ${filePath}`);
+      console.log(`  After slash normalization: ${normalizedFilePath}`);
+      console.log(`  Normalized path: ${absolutePath}`);
+      console.log(`  Root paths: ${rootPaths.join(', ')}`);
+      console.log(`  Is absolute: ${path.isAbsolute(normalizedFilePath)}`);
+      console.log(`  Platform separator: ${path.sep}`);
+      
+      // Find matching root path
+      let targetRootPath = null;
+      for (const rootPath of rootPaths) {
+        const normalizedRoot = path.normalize(rootPath);
+              
+        if (absolutePath.startsWith(normalizedRoot)) {
+          targetRootPath = normalizedRoot;
+          break;
+        }
+      }
+      
+      if (!targetRootPath) {
+        console.warn(`[API/FILE-CONTENT] Path outside root paths blocked: ${filePath}`);
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied: file is outside of project root path'
+        });
+      }
+      
+      // Security: path traversal protection
+      const resolvedPath = absolutePath;
+            
+      if (!resolvedPath.startsWith(targetRootPath)) {
+        console.warn(`[API/FILE-CONTENT] Path traversal attempt blocked: ${filePath}`);
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied: file is outside of project root path'
+        });
+      }
+
+      // Проверяем существование файла
+      let fileStats;
+      try {
+        fileStats = fs.statSync(resolvedPath);
+      } catch (err) {
+        if (err.code === 'ENOENT') {
+          return res.status(404).json({
+            success: false,
+            error: `File not found: ${filePath}`
+          });
+        }
+        throw err;
+      }
+
+      // Проверяем, что это файл, а не директория
+      if (!fileStats.isFile()) {
+        return res.status(400).json({
+          success: false,
+          error: 'Path is not a file'
+        });
+      }
+
+      // Проверяем размер файла (максимум 5 МБ)
+      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+      if (fileStats.size > MAX_FILE_SIZE) {
+        return res.status(400).json({
+          success: false,
+          error: `File is too large: ${(fileStats.size / 1024 / 1024).toFixed(2)} MB (max: 5 MB)`
+        });
+      }
+
+      // Читаем файл с обработкой ошибок кодировки
+      let content;
+      try {
+        content = fs.readFileSync(resolvedPath, 'utf-8');
+      } catch (err) {
+        // Если ошибка кодировки, возвращаем соответствующее сообщение
+        if (err.code === 'ERR_INVALID_ARG_VALUE' || err.message.includes('invalid')) {
+          return res.status(400).json({
+            success: false,
+            error: 'File is not a valid UTF-8 text file (possibly binary)'
+          });
+        }
+        throw err;
+      }
+
+      console.log(`[API/FILE-CONTENT] Successfully read file: ${resolvedPath} (${fileStats.size} bytes)`);
+
+      // Возвращаем содержимое файла как plain text
+      res.type('text/plain; charset=utf-8');
+      res.send(content);
+
+    } catch (error) {
+      console.error('[API/FILE-CONTENT] Ошибка:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Internal server error while reading file'
+      });
+    }
+  });
+
   // === Логи сессий выполнения шагов ===
   // GET /api/logs/sessions/{sessionId} - получить логи конкретной сессии
   router.get('/logs/sessions/:sessionId', (req, res) => {

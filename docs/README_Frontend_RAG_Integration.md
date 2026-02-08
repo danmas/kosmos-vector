@@ -17,15 +17,16 @@
 
 ## 🎯 Обзор новых возможностей
 
-### Версия API: 2.7.0
+### Версия API: 2.7.1
 
-В версии 2.7.0 добавлена расширенная система RAG (Retrieval Augmented Generation) с поддержкой:
+В версии 2.7.1 добавлена расширенная система RAG (Retrieval Augmented Generation) с поддержкой:
 
 - **4 стратегии поиска контекста**: Simple, Hierarchical, AI Item, Hybrid
 - **Многоуровневая иерархия чанков**: L0 (код), L1 (зависимости), L2 (описание)
 - **4 стиля форматирования**: Compact, Standard, Full, Markdown
 - **Интеграция со связями**: автоматическое включение связей между элементами
 - **Гибкая настройка**: количество чанков, токенов, включение файлов и связей
+- **Просмотр файлов**: Безопасное получение содержимого файлов проекта
 
 ### Обратная совместимость
 
@@ -225,6 +226,84 @@ interface StrategiesResponse {
     performance: 'Высокая' | 'Средняя' | 'Низкая';
     complexity: 'Низкая' | 'Средняя' | 'Высокая';
   }>;
+}
+```
+
+---
+
+### 5. `GET /api/file-content` - Получение содержимого файла для просмотра
+
+**Назначение**: Получить содержимое файла для просмотра на фронтенде.
+
+**Параметры**:
+```typescript
+interface FileContentRequest {
+  path: string;              // Абсолютный путь: "C:\\Projects\\my-app\\src\\components\\Dashboard.tsx"
+  'context-code': string;    // Контекст: "FULL_TEST"
+}
+```
+
+**Ответ** (успешный, `200 OK`):
+```
+Content-Type: text/plain; charset=utf-8
+
+// Содержимое файла как plain text
+import React from 'react';
+...
+```
+
+**Ответы ошибок**:
+```typescript
+// 400 - Неверные параметры
+{
+  "success": false,
+  "error": "Missing or invalid query parameter: path"
+}
+
+// 400 - Файл слишком большой
+{
+  "success": false,
+  "error": "File is too large: 7.25 MB (max: 5 MB)"
+}
+
+// 400 - Бинарный файл
+{
+  "success": false,
+  "error": "File is not a valid UTF-8 text file (possibly binary)"
+}
+
+// 403 - Path traversal заблокирован
+{
+  "success": false,
+  "error": "Access denied: file is outside of project root path"
+}
+
+// 404 - Файл не найден
+{
+  "success": false,
+  "error": "File not found: ./nonexistent.txt"
+}
+```
+
+**Особенности**:
+- ✅ Безопасность: Защита от path traversal атак
+- ✅ Ограничение размера: Максимум 5 МБ
+- ✅ Кодировка: UTF-8 с обработкой ошибок
+- ✅ Пути: Принимает только абсолютные пути
+
+**Пример использования**:
+```typescript
+// Получение содержимого файла
+const response = await fetch(
+  '/api/file-content?context-code=FULL_TEST&path=C:\\Projects\\my-app\\src\\components\\Dashboard.tsx'
+);
+
+if (response.ok) {
+  const content = await response.text();
+  console.log('File content:', content);
+} else {
+  const error = await response.json();
+  console.error('Error:', error.error);
 }
 ```
 
@@ -871,6 +950,7 @@ const response = await fetch('/api/rag/ask', {
 - [ ] Создать Context Preview компонент
 - [ ] Показывать метаданные (время, чанки, токены)
 - [ ] Добавить Strategy Comparison Dashboard (опционально)
+- [ ] Реализовать File Viewer с использованием `/api/file-content`
 - [ ] Обновить документацию для пользователей
 - [ ] Провести A/B тестирование стратегий
 - [ ] Собрать обратную связь от пользователей
@@ -888,6 +968,6 @@ const response = await fetch('/api/rag/ask', {
 
 ---
 
-**Версия документа**: 1.0.0  
+**Версия документа**: 1.1.0  
 **Дата**: 2026-02-08  
-**API Version**: 2.7.0
+**API Version**: 2.7.1
