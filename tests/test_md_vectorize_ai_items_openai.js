@@ -10,7 +10,7 @@ const EmbeddingsFactory = require('../packages/core/EmbeddingsFactory');
 const { loadMarkdownFromFile } = require('../routes/loaders/mdLoader');
 
 const TEST_CONTEXT = 'TEST_MD_VECTORIZE_OPENAI';
-const TEST_FILE = path.join(__dirname, 'test_data', 'test_md_structure.md');
+const TEST_FILE = path.join(__dirname, 'README_TESTS.md');
 
 async function vectorizeAiItems(dbService, embeddings, aiItemIds, force = false) {
   let totalUpdated = 0;
@@ -96,7 +96,8 @@ async function testApiRoute() {
 
 
 async function testMdVectorizeAiItemsOpenAI() {
-  console.log('=== ТЕСТ ВЕКТОРИЗАЦИИ MD AI_ITEMS (OpenAI Embeddings) ===\n');
+  console.log('=== ТЕСТ ВЕКТОРИЗАЦИИ MD AI_ITEMS (OpenAI Embeddings) ===');
+  console.log('Тестовый файл: README_TESTS.md (реальная документация)\n');
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey || apiKey.trim() === '' || apiKey.startsWith('<')) {

@@ -9,7 +9,7 @@ const EmbeddingsFactory = require('../packages/core/EmbeddingsFactory');
 const { loadMarkdownFromFile } = require('../routes/loaders/mdLoader');
 
 const TEST_CONTEXT = 'TEST_MD_VECTORIZE';
-const TEST_FILE = path.join(__dirname, 'test_data', 'test_md_structure.md');
+const TEST_FILE = path.join(__dirname, 'README_TESTS.md');
 
 async function vectorizeAiItems(dbService, embeddings, aiItemIds, force = false) {
   let totalUpdated = 0;
@@ -35,7 +35,8 @@ async function vectorizeAiItems(dbService, embeddings, aiItemIds, force = false)
 }
 
 async function testMdVectorizeAiItems() {
-  console.log('=== ТЕСТ ВЕКТОРИЗАЦИИ MD AI_ITEMS ===\n');
+  console.log('=== ТЕСТ ВЕКТОРИЗАЦИИ MD AI_ITEMS ===');
+  console.log('Тестовый файл: README_TESTS.md (реальная документация)\n');
 
   const pgClient = new Client({
     host: process.env.PGHOST || 'localhost',

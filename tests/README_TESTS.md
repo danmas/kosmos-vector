@@ -117,6 +117,194 @@ curl -X POST "http://localhost:3200/api/extract-all-columns?context-code=CARL"
 
 Или из full_system_test.js — функция `testColumnExtraction()` автоматически обрабатывает все SQL-функции.
 
+## 7. Markdown Loader Tests
+
+Тесты для проверки загрузки и обработки Markdown файлов с созданием иерархической структуры ai_items и связей.
+
+### 7.1. Direct MD Loader Test (`tests/test_md_loader_direct.js`)
+
+Прямой тест MD загрузчика без использования pipeline API. Проверяет загрузку Markdown файла, создание ai_items и связей.
+
+**ВАЖНО:** Этот тест использует сам файл `README_TESTS.md` в качестве тестового документа, проверяя загрузку реальной документации.
+
+#### Что проверяет:
+- Парсинг структуры Markdown (H1, H2 заголовки)
+- Создание ai_items типов: `md_doc`, `head_level_1`, `head_level_2`
+- Создание L0 чанков для каждой секции
+- Создание связей: `md_includes`, `md_included_in`, `md_follows`, `md_precedes`
+- Иерархическую структуру документа (mdDoc → H1 → H2)
+
+#### Как запустить:
+```bash
+bun tests/test_md_loader_direct.js
+```
+
+**Тестовый файл:** `tests/README_TESTS.md` (этот файл!)
+**Контекст:** `TEST_MD`
+
+### 7.2. MD Loader via Pipeline (`tests/test_md_loader.js`)
+
+Тест загрузки Markdown через pipeline API (HTTP).
+
+#### Что проверяет:
+- Полный цикл через HTTP API
+- Работу Step1 pipeline с MD файлами
+- Конфигурацию kb-config с `md_loading.enabled`
+- Создание ai_items и связей через pipeline
+
+#### Как запустить:
+1. Запустите сервер:
+   ```bash
+   node server.js
+   ```
+2. В отдельном терминале:
+   ```bash
+   node tests/test_md_loader.js
+   ```
+
+Базовый URL: `http://localhost:3200`
+Контекст: `TEST_MD`
+
+### 7.3. MD Types Check (`tests/check_md_types.js`)
+
+Проверка типов созданных ai_items для Markdown документов.
+
+#### Что проверяет:
+- Наличие ai_items типов `md_doc`, `head_level_1`, `head_level_2`
+- Количество созданных элементов каждого типа
+- Корректность full_name для каждого типа
+
+#### Как запустить:
+```bash
+node tests/check_md_types.js
+```
+
+### 7.4. MD Links Check (`tests/check_md_links.js`)
+
+Проверка связей между Markdown секциями.
+
+#### Что проверяет:
+- Связи типа `md_follows` (последовательность H2 внутри одного H1)
+- Связи типа `md_precedes` (обратные к follows)
+- Связи типа `md_includes` (H1 включает H2, mdDoc включает H1)
+- Связи типа `md_included_in` (обратные к includes)
+
+#### Как запустить:
+```bash
+node tests/check_md_links.js
+```
+
+### 7.5. MD Vectorization Tests
+
+#### Simple Embeddings (`tests/test_md_vectorize_ai_items.js`)
+
+Тест векторизации MD ai_items с использованием SimpleEmbeddings.
+
+**ВАЖНО:** Использует `README_TESTS.md` как тестовый файл.
+
+**Что проверяет:**
+- Загрузку MD файла и создание ai_items без embeddings
+- Векторизацию всех L0 чанков
+- Обновление поля embedding в chunk_vector
+
+**Как запустить:**
+```bash
+bun tests/test_md_vectorize_ai_items.js
+```
+
+**Тестовый файл:** `tests/README_TESTS.md`
+**Контекст:** `TEST_MD_VECTORIZE`
+
+#### OpenAI Embeddings (`tests/test_md_vectorize_ai_items_openai.js`)
+
+Тест векторизации с реальной моделью OpenAI (text-embedding-ada-002).
+
+**ВАЖНО:** Использует `README_TESTS.md` как тестовый файл.
+
+**Что проверяет:**
+- Векторизацию с OpenAI API
+- Работу с реальными embeddings (1536 измерений)
+- API маршрут `/api/vectorize-ai-items`
+
+**Требования:**
+- OPENAI_API_KEY в .env файле
+- При отсутствии ключа тест пропускается (exit 0)
+
+**Как запустить:**
+```bash
+bun tests/test_md_vectorize_ai_items_openai.js
+```
+
+**Тестовый файл:** `tests/README_TESTS.md`
+**Контекст:** `TEST_MD_VECTORIZE_OPENAI`
+
+### 7.6. MD Parser Test (`tests/test_md_parser.js`)
+
+Юнит-тест парсера Markdown структуры.
+
+#### Что проверяет:
+- Корректность регулярных выражений для H1 и H2
+- Различение H1 от H2 (# vs ##)
+- Извлечение заголовков и их позиций
+
+#### Как запустить:
+```bash
+node tests/test_md_parser.js
+```
+
+Тестовый файл: `tests/test_data/test_simple.md`
+
+### Конфигурация для MD тестов
+
+Тестовая конфигурация: `kb-configs/TEST_MD.json`
+
+**Ключевые параметры:**
+```json
+{
+  "metadata": {
+    "custom_settings": {
+      "md_loading": {
+        "enabled": true
+      }
+    }
+  },
+  "includeMask": "**/*.{sql,js,ts,php,md}"
+}
+```
+
+### Структура Markdown ai_items
+
+Для файла `guide.md`:
+```markdown
+# Introduction
+Some intro text.
+
+## Getting Started
+First steps.
+```
+
+Создаются ai_items:
+- `doc:guide.md` (md_doc) — пролог/весь документ
+- `doc:guide.md#H1:introduction` (head_level_1) — H1 секция
+- `doc:guide.md##H2:introduction.getting_started` (head_level_2) — H2 секция
+
+### Утилиты очистки
+
+**Очистка TEST_MD данных:**
+```bash
+node temp_cleanup.js
+```
+
+Удаляет из БД все данные для контекста TEST_MD:
+- links
+- chunk_vector
+- ai_item
+- files
+
+### Дополнительная информация
+
+Подробное описание MD загрузки см. в [KB/README_MD_LOADING.md](../KB/README_MD_LOADING.md)
+
 ## Важные замечания
 
 -   Все тесты используют `SimpleEmbeddings` и `SimpleChatModel` из ядра `packages/core`, которые являются "заглушками" и не предназначены для качественной семантической работы. Их цель — проверить работоспособность конвейера, а не качество AI-моделей.

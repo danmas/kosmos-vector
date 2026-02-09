@@ -7,10 +7,11 @@ const DbService = require('../packages/core/DbService');
 const { loadMarkdownFromFile } = require('../routes/loaders/mdLoader');
 
 const TEST_CONTEXT = 'TEST_MD';
-const TEST_FILE = path.join(__dirname, 'test_data', 'test_md_structure.md');
+const TEST_FILE = path.join(__dirname, 'README_TESTS.md');
 
 async function testMdLoaderDirect() {
-  console.log('=== ПРЯМОЙ ТЕСТ MD ЗАГРУЗЧИКА ===\n');
+  console.log('=== ПРЯМОЙ ТЕСТ MD ЗАГРУЗЧИКА ===');
+  console.log('Тестовый файл: README_TESTS.md (реальная документация по тестам)\n');
   
   const pgClient = new Client({
     host: process.env.PGHOST || 'localhost',

@@ -678,18 +678,27 @@ module.exports = (dbService, embeddings) => {
                 let chunksUpdated = 0;
                 try {
                     const chunks = await dbService.getAiItemChunks(aiItemId);
+                    console.log(`[VECTORIZE-AI-ITEMS] AI Item ${aiItemId}: найдено ${chunks.length} чанков, force=${forceRevectorize}`);
+                    
                     for (const chunk of chunks) {
                         const raw = chunk.chunk_content;
                         const text = typeof raw === 'string' ? raw : (raw && raw.text ? raw.text : String(raw || ''));
+                        
+                        console.log(`[VECTORIZE-AI-ITEMS]   Chunk ${chunk.id}: text.length=${text.length}, has_embedding=${chunk.has_embedding}, shouldUpdate=${forceRevectorize || !chunk.has_embedding}`);
+                        
                         if (!text || text.trim() === '') {
+                            console.log(`[VECTORIZE-AI-ITEMS]   Chunk ${chunk.id}: пропущен (пустой текст)`);
                             continue;
                         }
                         const shouldUpdate = forceRevectorize || !chunk.has_embedding;
                         if (!shouldUpdate) {
+                            console.log(`[VECTORIZE-AI-ITEMS]   Chunk ${chunk.id}: пропущен (уже векторизован)`);
                             continue;
                         }
+                        console.log(`[VECTORIZE-AI-ITEMS]   Chunk ${chunk.id}: векторизуем...`);
                         const [embedding] = await embeddings.embedDocuments([text]);
                         await dbService.updateChunkEmbedding(chunk.id, embedding);
+                        console.log(`[VECTORIZE-AI-ITEMS]   Chunk ${chunk.id}: векторизован ✓`);
                         chunksUpdated++;
                     }
                     chunksUpdatedTotal += chunksUpdated;

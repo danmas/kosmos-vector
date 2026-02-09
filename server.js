@@ -241,7 +241,11 @@ const promptsRoutes = require('./routes/prompts');
 const cors = require('cors');
 
 const app = express();
-const port = process.env.PORT || 3001;
+if(process.env.PORT!='3200') {
+  console.log('NOT READ process.env.PORT&! ');
+} 
+
+const port = process.env.PORT || 3200;
 app.use(cors()); // Разрешает всё (удобно для разработки)
 
 // Добавляем middleware для раздачи статических файлов из папки 'public'
@@ -266,14 +270,14 @@ app.use((req, res, next) => {
   const url = req.originalUrl;
   
   // Логируем входящий запрос
-  console.log(`[API] → ${method} ${url}`);
+  // console.log(`[API] → ${method} ${url}`);
   
   // Перехватываем завершение ответа
   res.on('finish', () => {
     const duration = Date.now() - start;
     const status = res.statusCode;
     const statusIcon = status < 400 ? '✓' : '✗';
-    console.log(`[API] ← ${method} ${url} ${statusIcon} ${status} (${duration}ms)`);
+    // console.log(`[API] ← ${method} ${url} ${statusIcon} ${status} (${duration}ms)`);
   });
   
   next();
