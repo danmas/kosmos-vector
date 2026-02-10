@@ -6,9 +6,22 @@ openapi: 3.0.3
 info:
   title: AiItem RAG Architect API
   info:
-    version: 2.8.0
+    version: 2.9.0
     description: |
       RESTful API для системы RAG-анализа кодовой базы.
+
+      Версия 2.9.0:
+      • Добавлен Prompts Config API с историей изменений
+      • GET /api/prompts-config - получить текущую конфигурацию промптов
+      • PATCH /api/prompts-config - обновить с сохранением в историю
+      • GET /api/prompts-config/history - список версий
+      • GET /api/prompts-config/history/{id} - получить конкретную версию
+      • POST /api/prompts-config/restore/{id} - восстановить из истории
+      • POST /api/prompts-config/reset - сбросить к дефолтным значениям
+      • DELETE /api/prompts-config/history/{id} - удалить запись истории
+      • История хранится в PostgreSQL (таблица prompt_config_history)
+      • Автоудаление старых версий (оставляется последние 100)
+      • Валидация структуры prompts.json
 
       Версия 2.8.0:
       • Добавлен App Config API: управление глобальной конфигурацией приложения (config.json)

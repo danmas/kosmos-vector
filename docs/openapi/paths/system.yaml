@@ -204,3 +204,250 @@
           application/json:
             schema:
               $ref: '#/components/schemas/ErrorResponse'
+/api/prompts-config:
+  get:
+    tags:
+      - System
+    summary: Получить текущую конфигурацию промптов
+    operationId: getPromptsConfig
+    description: |
+      Возвращает текущую конфигурацию промптов из prompts.json.
+      Не требует context-code, т.к. конфигурация глобальна.
+    responses:
+      '200':
+        description: Текущая конфигурация промптов
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfigResponse'
+      '500':
+        description: Ошибка чтения конфигурации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  patch:
+    tags:
+      - System
+    summary: Обновить конфигурацию промптов с сохранением в историю
+    operationId: updatePromptsConfig
+    description: |
+      Обновляет конфигурацию промптов в prompts.json и сохраняет версию в историю.
+      Поддерживает полное или частичное обновление секций.
+      
+      **Валидация:**
+      - Проверяется наличие обязательных секций и полей
+      - Проверяются типы данных (string, object)
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PromptsConfigUpdateRequest'
+          examples:
+            updateRagPrompt:
+              summary: Изменить RAG промпт
+              value:
+                updates:
+                  rag:
+                    systemPrompt: "Новый системный промпт"
+                    userPromptTemplate: "Новый шаблон"
+                comment: "Улучшен RAG промпт"
+            updateNaturalQuery:
+              summary: Изменить Natural Query промпты
+              value:
+                updates:
+                  naturalQuery:
+                    scriptGeneration: "Новый промпт для генерации скриптов"
+                    humanize: "Новый промпт для humanize"
+                comment: "Оптимизирован Natural Query"
+    responses:
+      '200':
+        description: Конфигурация успешно обновлена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfigUpdateResponse'
+      '400':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfigValidationError'
+      '500':
+        description: Ошибка сохранения конфигурации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/prompts-config/history:
+  get:
+    tags:
+      - System
+    summary: Получить историю изменений конфигурации промптов
+    operationId: getPromptsConfigHistory
+    description: |
+      Возвращает список версий конфигурации промптов (от новых к старым).
+      Хранится в PostgreSQL таблице prompt_config_history.
+    parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+          maximum: 100
+        description: Количество записей
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+        description: Смещение для пагинации
+    responses:
+      '200':
+        description: Список истории
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfigHistoryResponse'
+      '500':
+        description: Ошибка получения истории
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/prompts-config/history/{id}:
+  get:
+    tags:
+      - System
+    summary: Получить конкретную версию из истории
+    operationId: getPromptsConfigHistoryEntry
+    description: |
+      Возвращает полный snapshot конфигурации для указанной версии.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID записи истории
+    responses:
+      '200':
+        description: Запись истории с полной конфигурацией
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfigHistoryEntryResponse'
+      '404':
+        description: Запись не найдена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Ошибка получения записи
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  delete:
+    tags:
+      - System
+    summary: Удалить запись из истории
+    operationId: deletePromptsConfigHistoryEntry
+    description: |
+      Удаляет конкретную запись из истории.
+      Используйте с осторожностью!
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID записи истории
+    responses:
+      '200':
+        description: Запись удалена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuccessResponse'
+      '404':
+        description: Запись не найдена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Ошибка удаления
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/prompts-config/restore/{id}:
+  post:
+    tags:
+      - System
+    summary: Восстановить конфигурацию из истории
+    operationId: restorePromptsConfig
+    description: |
+      Восстанавливает конфигурацию из указанной версии и создаёт новую запись в истории.
+      Старая версия не удаляется.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID записи истории для восстановления
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PromptsConfigRestoreRequest'
+    responses:
+      '200':
+        description: Конфигурация восстановлена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfigUpdateResponse'
+      '404':
+        description: Запись не найдена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Ошибка восстановления
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/prompts-config/reset:
+  post:
+    tags:
+      - System
+    summary: Сбросить конфигурацию промптов к значениям по умолчанию
+    operationId: resetPromptsConfig
+    description: |
+      Сбрасывает все промпты к значениям по умолчанию и сохраняет новую версию в историю.
+      Используйте с осторожностью!
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PromptsConfigRestoreRequest'
+    responses:
+      '200':
+        description: Конфигурация сброшена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfigUpdateResponse'
+      '500':
+        description: Ошибка сброса
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'

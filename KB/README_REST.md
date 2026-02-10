@@ -5,7 +5,28 @@
 - Контент: JSON (`Content-Type: application/json`)
 - Аутентификация: отсутствует (локальная разработка)
 - Ответы: JSON, коды ошибок: 4xx/5xx
-- **API версия:** 2.8.0
+- **API версия:** 2.9.0
+
+## 🆕 НОВОЕ в версии 2.9.0
+
+### Prompts Config API - Управление конфигурацией промптов с историей
+
+**GET** `/api/prompts-config` - получить текущую конфигурацию промптов  
+**PATCH** `/api/prompts-config` - обновить с сохранением в историю  
+**GET** `/api/prompts-config/history` - список версий  
+**GET** `/api/prompts-config/history/{id}` - получить конкретную версию  
+**POST** `/api/prompts-config/restore/{id}` - восстановить из истории  
+**POST** `/api/prompts-config/reset` - сбросить к дефолтным значениям  
+**DELETE** `/api/prompts-config/history/{id}` - удалить запись из истории
+
+⚠️ **Не требует `context-code`** - промпты глобальные  
+💾 **История** хранится в PostgreSQL (таблица `prompt_config_history`)  
+🗑️ **Автоочистка:** оставляются последние 100 версий
+
+Подробности: см. `KB/README_PROMPTS_CONFIG_API.md`  
+Frontend Integration: см. `docs/README_Frontend_Prompts_Integration.md`
+
+---
 
 ## 🆕 НОВОЕ в версии 2.8.0
 

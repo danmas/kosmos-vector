@@ -4,6 +4,106 @@
 
 ---
 
+## [2.9.0] - 2026-02-08
+
+### ✨ Добавлено
+
+#### Prompts Config API - Управление конфигурацией промптов с историей изменений
+
+**REST API эндпоинты:**
+- **GET /api/prompts-config** - получить текущую конфигурацию промптов из prompts.json
+- **PATCH /api/prompts-config** - обновить конфигурацию с сохранением в историю
+- **GET /api/prompts-config/history** - получить список версий (с пагинацией)
+- **GET /api/prompts-config/history/:id** - получить конкретную версию с полным snapshot
+- **POST /api/prompts-config/restore/:id** - восстановить конфигурацию из истории
+- **POST /api/prompts-config/reset** - сбросить к дефолтным значениям
+- **DELETE /api/prompts-config/history/:id** - удалить запись из истории
+
+#### База данных
+- **Новая таблица:** `prompt_config_history`
+  - `id` (serial) - уникальный идентификатор
+  - `config_snapshot` (jsonb) - полный snapshot конфигурации
+  - `created_at` (timestamp) - дата создания
+  - `version` (integer, unique) - номер версии (автоинкремент)
+  - `comment` (text, nullable) - комментарий к изменению
+- **Индексы:** по `created_at` и `version` для быстрого поиска
+- **Автоочистка:** триггер автоматически удаляет старые версии (оставляется 100 последних)
+
+#### Валидация конфигурации
+- ✅ Проверка наличия всех 4 основных секций: `l1l2Templates`, `rag`, `naturalQuery`, `vectorOperations`
+- ✅ Проверка обязательных полей в `rag`: `systemPrompt`, `userPromptTemplate`
+- ✅ Проверка обязательных полей в `naturalQuery`: `scriptGeneration`, `humanize`
+- ✅ Проверка обязательного поля в `vectorOperations`: `qaPromptTemplate`
+- ✅ Проверка типов данных (string, object)
+
+#### Новые файлы
+- `packages/core/promptsConfigService.js` - сервис для работы с prompts.json и историей
+- `routes/promptsConfig.js` - REST API маршруты для управления промптами
+- `tmp/add_prompt_config_history.sql` - SQL миграция для создания таблицы истории
+- `tests/test_prompts_config.js` - тестовый скрипт (9 сценариев)
+- `KB/README_PROMPTS_CONFIG_API.md` - документация по Backend API (548 строк)
+- `docs/README_Frontend_Prompts_Integration.md` - руководство для фронтенд-разработчиков (1864 строки)
+
+#### OpenAPI Contract обновления
+- Обновлена версия контракта до **2.9.0**
+- **Добавлены схемы** в `docs/openapi/schemas/common.yaml` (+193 строки):
+  - `PromptsConfig` - полная конфигурация промптов
+  - `PromptsConfigResponse` - ответ при получении конфигурации
+  - `PromptsConfigUpdateRequest` - запрос на обновление
+  - `PromptsConfigUpdateResponse` - ответ при обновлении
+  - `PromptsConfigHistoryEntry` - запись истории (краткая)
+  - `PromptsConfigHistoryEntryFull` - запись истории (полная)
+  - `PromptsConfigHistoryResponse` - список истории
+  - `PromptsConfigRestoreRequest` - запрос на восстановление
+  - `PromptsConfigValidationError` - ошибка валидации
+- **Добавлены пути** в `docs/openapi/paths/system.yaml` (+247 строк)
+- Обновлён главный контракт `docs/api-contract.yaml`
+
+#### Документация
+- Обновлён `README.md` - добавлены ссылки на новую документацию
+- Обновлён `KB/README_REST.md` - добавлена секция версии 2.9.0
+- Создан `KB/README_PROMPTS_CONFIG_API.md` - полная backend документация
+- Создан `docs/README_Frontend_Prompts_Integration.md` - гайд для фронтенда с React и Vue примерами
+
+### 📝 Особенности
+
+- **Не требует `context-code`** - промпты глобальные для всего приложения
+- **История в PostgreSQL** - все изменения сохраняются в БД с версионированием
+- **Комментарии** - каждое изменение можно прокомментировать
+- **Восстановление** - можно откатиться к любой версии из истории
+- **Автоочистка** - хранится только последние 100 версий
+- **Открытый endpoint** - нет авторизации/аутентификации (для локальной разработки)
+
+### 🔧 Технические детали
+
+- Сервис реализован по аналогии с `appConfigService` (версия 2.8.0)
+- Полная замена секций при обновлении (не deep merge)
+- Роуты подключены ПЕРЕД middleware валидации `context-code`
+- Используется `dbService.pgClient.query()` для работы с БД
+- TypeScript интерфейсы для фронтенда включены в документацию
+- React Hook и Vue 3 Composable примеры в документации
+
+### ✅ Тестирование
+
+Все 9 тестовых сценариев успешно пройдены:
+1. ✅ Получение текущей конфигурации
+2. ✅ Обновление с комментарием
+3. ✅ Получение истории
+4. ✅ Получение конкретной версии
+5. ✅ Создание нескольких версий
+6. ✅ Восстановление из истории
+7. ✅ Валидация невалидной конфигурации
+8. ✅ Сброс к дефолтным значениям
+9. ✅ Проверка финальной истории
+
+### 🔗 Связанные изменения
+
+- Переименован старый эндпоинт `/api/config` в `/api/ui-config` в `server.js` (избежание конфликта)
+- Добавлен импорт `promptsConfigService` в `routes/api.js`
+- Создан отдельный файл `routes/promptsConfig.js` для изоляции маршрутов
+
+---
+
 ## [2.8.0] - 2026-02-08
 
 ### ✨ Добавлено

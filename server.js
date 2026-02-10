@@ -316,6 +316,10 @@ const vectorStore = new PostgresVectorStore(embeddings, dbService);
 const agentScriptRoutes = require('./routes/agentScript');
 app.use('/api', agentScriptRoutes(dbService, embeddings));
 
+// Подключаем роуты для Prompts Config ПЕРЕД apiRouter (не требует context-code)
+const promptsConfigRoutes = require('./routes/promptsConfig');
+app.use('/api', promptsConfigRoutes(dbService));
+
 const apiRouter = require('./routes/api')(dbService, serverLogs);
 app.use('/api', apiRouter);
 
@@ -355,8 +359,8 @@ app.use('/api', chatRoutes(dbService, vectorStore, embeddings));
 const ragRoutes = require('./routes/rag');
 app.use('/api/rag', ragRoutes(dbService, vectorStore, embeddings));
 
-// Конфигурация для UI
-app.get('/api/config', (req, res) => {
+// Конфигурация моделей для UI (DEPRECATED - используйте /api/config из routes/api.js)
+app.get('/api/ui-config', (req, res) => {
   try {
     const config = {
       models: [

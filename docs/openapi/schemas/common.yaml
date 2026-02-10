@@ -781,3 +781,196 @@ AppConfigValidationError:
       example:
         - "KOSMOS_BASE_URL must be a valid URL"
         - "LOG_LEVEL must be one of: debug, info, warn, error"
+PromptsConfig:
+  type: object
+  required:
+    - l1l2Templates
+    - rag
+    - naturalQuery
+    - vectorOperations
+  properties:
+    l1l2Templates:
+      type: object
+      description: Промпты для генерации L1/L2 чанков по типу файла и объекта
+      additionalProperties: true
+    rag:
+      type: object
+      required:
+        - systemPrompt
+        - userPromptTemplate
+      properties:
+        systemPrompt:
+          type: string
+          description: Системный промпт для RAG-чата
+        userPromptTemplate:
+          type: string
+          description: Шаблон промпта пользователя с плейсхолдерами {context} и {question}
+    naturalQuery:
+      type: object
+      required:
+        - scriptGeneration
+        - humanize
+      properties:
+        scriptGeneration:
+          type: string
+          description: Промпт для генерации JS-скриптов Natural Query Engine
+        humanize:
+          type: string
+          description: Промпт для преобразования сырых данных в человекочитаемый текст
+    vectorOperations:
+      type: object
+      required:
+        - qaPromptTemplate
+      properties:
+        qaPromptTemplate:
+          type: string
+          description: Шаблон промпта для QA операций
+PromptsConfigResponse:
+  type: object
+  required:
+    - success
+    - config
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    config:
+      $ref: '#/PromptsConfig'
+PromptsConfigUpdateRequest:
+  type: object
+  required:
+    - updates
+  properties:
+    updates:
+      $ref: '#/PromptsConfig'
+      description: Полная или частичная конфигурация промптов для обновления
+    comment:
+      type: string
+      nullable: true
+      description: Опциональный комментарий к изменению
+      example: "Улучшил промпт для SQL функций"
+PromptsConfigUpdateResponse:
+  type: object
+  required:
+    - success
+    - config
+    - historyEntry
+    - message
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    config:
+      $ref: '#/PromptsConfig'
+    historyEntry:
+      $ref: '#/PromptsConfigHistoryEntry'
+    message:
+      type: string
+      example: Prompts configuration updated successfully
+PromptsConfigHistoryEntry:
+  type: object
+  required:
+    - id
+    - version
+    - createdAt
+  properties:
+    id:
+      type: integer
+      description: ID записи истории
+    version:
+      type: integer
+      description: Номер версии конфигурации
+    createdAt:
+      type: string
+      format: date-time
+      description: Дата и время создания версии
+    comment:
+      type: string
+      nullable: true
+      description: Комментарий к изменению
+PromptsConfigHistoryResponse:
+  type: object
+  required:
+    - success
+    - history
+    - count
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    history:
+      type: array
+      items:
+        $ref: '#/PromptsConfigHistoryEntry'
+    count:
+      type: integer
+      description: Количество записей в ответе
+PromptsConfigHistoryEntryFull:
+  type: object
+  required:
+    - id
+    - version
+    - createdAt
+    - config
+  properties:
+    id:
+      type: integer
+      description: ID записи истории
+    version:
+      type: integer
+      description: Номер версии конфигурации
+    createdAt:
+      type: string
+      format: date-time
+      description: Дата и время создания версии
+    comment:
+      type: string
+      nullable: true
+      description: Комментарий к изменению
+    config:
+      $ref: '#/PromptsConfig'
+      description: Полный snapshot конфигурации
+PromptsConfigHistoryEntryResponse:
+  type: object
+  required:
+    - success
+    - historyEntry
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    historyEntry:
+      $ref: '#/PromptsConfigHistoryEntryFull'
+PromptsConfigRestoreRequest:
+  type: object
+  properties:
+    comment:
+      type: string
+      nullable: true
+      description: Опциональный комментарий к восстановлению
+      example: "Restored from version 5"
+PromptsConfigValidationError:
+  type: object
+  required:
+    - success
+    - error
+    - validationErrors
+  properties:
+    success:
+      type: boolean
+      enum:
+        - false
+    error:
+      type: string
+      example: Configuration validation failed
+    validationErrors:
+      type: array
+      items:
+        type: string
+      example:
+        - "rag.systemPrompt must be a non-empty string"
+        - "naturalQuery.scriptGeneration must be a non-empty string"

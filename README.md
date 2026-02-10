@@ -75,12 +75,14 @@ bun run start:v2
 
 - **REST API:** см. `KB/README_REST.md`
 - **App Config API (управление настройками):** см. `KB/README_APP_CONFIG_API.md` ⭐ НОВОЕ
+- **Prompts Config API (управление промптами с историей):** см. `KB/README_PROMPTS_CONFIG_API.md` ⭐ НОВОЕ в 2.9.0
 - **Frontend Integration (RAG):** см. `docs/README_Frontend_RAG_Integration.md`
 - **Frontend Integration (App Config):** см. `docs/README_Frontend_Config_Integration.md` ⭐ НОВОЕ
+- **Frontend Integration (Prompts Config):** см. `docs/README_Frontend_Prompts_Integration.md` ⭐ НОВОЕ в 2.9.0
 - **Тесты:** см. `tests/README_TESTS.md`
 - **Технические детали/архитектура:** см. `KB/README_TECH.md`
 - **Knowledge Base Configuration (multi-root):** см. раздел в `KB/README_TECH.md`
-- **OpenAPI Contract:** см. `docs/api-contract.yaml` (версия 2.8.0)
+- **OpenAPI Contract:** см. `docs/api-contract.yaml` (версия 2.9.0)
 - **История изменений:** см. `CHANGELOG.md` 📋
 
 ## Ключевые возможности
