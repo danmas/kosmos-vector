@@ -26,13 +26,13 @@
 ### Шаг 1: Конфигурация (`env.ts`)
 
 В .env добавьте ключ
- LLM_API_KEY=<KOSMOS_MODEL_KEY>
+ KOSMOS_API_KEY=<KOSMOS_MODEL_KEY>
 
 Создайте config.json
 ```json
 {
-  "LLM_BASE_URL": "http://localhost:3002/v1",
-  "LLM_MODEL": "FAST",
+  "KOSMOS_BASE_URL": "http://localhost:3002/v1",
+  "KOSMOS_MODEL": "FAST",
   "LOG_LEVEL": "info",
 }
 ```
@@ -57,9 +57,9 @@ if (existsSync(configPath)) {
   }
 }
 
-export const LLM_BASE_URL = config.LLM_BASE_URL || process.env.LLM_BASE_URL || "http://localhost:1234/v1"; // Пример для LM Studio
-export const LLM_API_KEY = process.env.LLM_API_KEY || ""; 
-export const LLM_MODEL = config.LLM_MODEL || process.env.LLM_MODEL || "local-model"; // Имя модели
+export const KOSMOS_BASE_URL = config.KOSMOS_BASE_URL || process.env.KOSMOS_BASE_URL || "http://localhost:1234/v1"; // Пример для LM Studio
+export const KOSMOS_API_KEY = process.env.KOSMOS_API_KEY || ""; 
+export const KOSMOS_MODEL = config.KOSMOS_MODEL || process.env.KOSMOS_MODEL || "local-model"; // Имя модели
 ```
 
 ### Шаг 2: Клиент API (`llm.ts`)
@@ -68,7 +68,7 @@ export const LLM_MODEL = config.LLM_MODEL || process.env.LLM_MODEL || "local-mod
 
 ```typescript
 // llm.ts
-import { LLM_BASE_URL, LLM_API_KEY, LLM_MODEL } from "./env";
+import { KOSMOS_BASE_URL, KOSMOS_API_KEY, KOSMOS_MODEL } from "./env";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
 
@@ -107,21 +107,21 @@ function saveHistory(entry: HistoryEntry) {
 }
 
 // === ОСНОВНАЯ ФУНКЦИЯ ===
-export async function callLLM(messages: Message[], model = LLM_MODEL): Promise<string> {
+export async function callLLM(messages: Message[], model = KOSMOS_MODEL): Promise<string> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
   
-  if (LLM_API_KEY) {
-    headers["Authorization"] = `Bearer ${LLM_API_KEY}`;
+  if (KOSMOS_API_KEY) {
+    headers["Authorization"] = `Bearer ${KOSMOS_API_KEY}`;
   }
 
   const timestamp = new Date().toISOString();
   
   try {
-    console.log(`📡 Отправка запроса к ${LLM_BASE_URL} (Model: ${model})...`);
+    console.log(`📡 Отправка запроса к ${KOSMOS_BASE_URL} (Model: ${model})...`);
     
-    const res = await fetch(`${LLM_BASE_URL}/chat/completions`, {
+    const res = await fetch(`${KOSMOS_BASE_URL}/chat/completions`, {
       method: "POST",
       headers,
       body: JSON.stringify({

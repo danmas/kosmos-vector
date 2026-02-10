@@ -1,0 +1,411 @@
+# Paths: pipeline (start, list, by id, progress, stream), steps/status, steps/history, context-definition, context-config; /api/contexts; /api/logs/stream.
+---
+/api/pipeline/start:
+  post:
+    tags:
+      - Pipeline
+    summary: Запустить pipeline
+    description: |
+      Использует текущую конфигурацию из /api/kb-config.
+      Если fileSelection не пуст — используется только он.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              forceRescan:
+                type: boolean
+                default: false
+    responses:
+      '200':
+        description: Pipeline запущен
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    pipeline:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            - running
+                            - completed
+                            - error
+                            - cancelled
+                        startTime:
+                          type: string
+                          format: date-time
+      '428':
+        description: Нет выбранных файлов
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+            example:
+              success: false
+              error: No files configured. Set up project via /api/kb-config or /api/project/selection
+/api/pipeline:
+  get:
+    tags:
+      - Pipeline
+    summary: Список всех pipeline
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        description: OK
+/api/pipeline/{id}:
+  get:
+    tags:
+      - Pipeline
+    summary: Статус pipeline
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  delete:
+    tags:
+      - Pipeline
+    summary: Отменить pipeline
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+/api/pipeline/{id}/progress:
+  get:
+    tags:
+      - Pipeline
+    summary: Детальный прогресс
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+/api/pipeline/steps/status:
+  get:
+    tags:
+      - Pipeline
+    summary: Статус всех шагов pipeline
+    description: |
+      Возвращает глобальное состояние всех шагов pipeline.
+      Используется для мониторинга прогресса независимо от конкретного экземпляра pipeline.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        description: Статус всех шагов
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PipelineStepsStatusResponse'
+      '500':
+        description: Внутренняя ошибка
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/pipeline/steps/history:
+  get:
+    tags:
+      - Pipeline
+    summary: История выполнения всех шагов pipeline
+    description: |
+      Возвращает историю выполнения всех шагов pipeline.
+      История содержит записи о каждом изменении статуса шагов с временными метками.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: limit
+        in: query
+        required: false
+        description: Максимальное количество записей истории на шаг (по умолчанию 100)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+      - name: stepId
+        in: query
+        required: false
+        description: Фильтр по ID шага (1-7). Если не указан, возвращается история всех шагов
+        schema:
+          type: integer
+          enum:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 6
+            - 7
+    responses:
+      '200':
+        description: История выполнения шагов
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PipelineStepsHistoryResponse'
+      '500':
+        description: Внутренняя ошибка
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/pipeline/step/{id}/history:
+  get:
+    tags:
+      - Pipeline
+    summary: История выполнения конкретного шага pipeline
+    description: |
+      Возвращает историю выполнения конкретного шага pipeline.
+      История содержит записи о каждом изменении статуса шага с временными метками.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID шага (1-7)
+        schema:
+          type: integer
+          enum:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 6
+            - 7
+      - name: limit
+        in: query
+        required: false
+        description: Максимальное количество записей истории (по умолчанию 100)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+    responses:
+      '200':
+        description: История выполнения шага
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PipelineStepHistoryResponse'
+      '404':
+        description: Шаг не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Внутренняя ошибка
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/pipeline/context-definition:
+  get:
+    tags:
+      - Pipeline
+    summary: Получить определения шагов для контекста
+    description: |
+      Возвращает список доступных шагов, их описания и схемы настроек для текущего context-code.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        description: Определения шагов
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PipelineContextDefinition'
+/api/pipeline/context-config:
+  get:
+    tags:
+      - Pipeline
+    summary: Получить текущую конфигурацию шагов для контекста
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        description: Конфигурация шагов
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PipelineContextConfig'
+  post:
+    tags:
+      - Pipeline
+    summary: Обновить конфигурацию шагов для контекста
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PipelineContextConfig'
+    responses:
+      '200':
+        description: Конфигурация обновлена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PipelineContextConfig'
+/api/contexts:
+  get:
+    tags:
+      - System
+    summary: Получить список доступных context codes
+    description: |
+      Возвращает список всех доступных context codes из конфигураций pipeline.
+      Используется для построения списка выбора контекста в UI.
+    responses:
+      '200':
+        description: Список context codes
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - success
+                - contexts
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                contexts:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - CARL
+                    - PROJECT_A
+                    - TEST
+                  description: Список доступных context codes
+/api/logs/stream:
+  get:
+    tags:
+      - Streaming
+    summary: SSE поток логов
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        content:
+          text/event-stream:
+            schema:
+              type: string
+/api/pipeline/{id}/stream:
+  get:
+    tags:
+      - Streaming
+    summary: SSE прогресс pipeline
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        content:
+          text/event-stream:
+            schema:
+              type: string

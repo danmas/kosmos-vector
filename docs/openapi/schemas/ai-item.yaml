@@ -1,0 +1,96 @@
+# Схемы: AiItem, AiItemSummary, AiItemType, Language — основные типы элементов кодовой базы (Core).
+---
+AiItemType:
+  type: string
+  enum:
+    - function
+    - class
+    - method
+    - module
+    - interface
+    - struct
+    - table
+    - table_column
+    - view
+    - procedure
+    - trigger
+    - index
+    - sequence
+    - type
+    - domain
+    - schema
+    - role
+    - grant
+Language:
+  type: string
+  nullable: true
+  description: 'Язык кода, определённый по расширению файла (например: python, javascript, sql, unknown и т.д.)'
+  example: sql
+AiItem:
+  type: object
+  required:
+    - id
+    - type
+    - language
+    - l0_code
+    - l1_in
+    - l1_out
+    - l2_desc
+    - filePath
+  properties:
+    id:
+      type: string
+      example: utils.fetchData
+    type:
+      $ref: '#/components/schemas/AiItemType'
+    language:
+      $ref: '#/components/schemas/Language'
+    l0_code:
+      type: string
+    l1_in:
+      type: array
+      items:
+        $ref: '#/components/schemas/L1LinkIn'
+      description: 'Входящие связи с типом: кто вызывает/использует этот элемент'
+    l1_out:
+      type: array
+      items:
+        $ref: '#/components/schemas/L1Link'
+      description: 'Исходящие связи с типом: что вызывает/использует этот элемент'
+    l2_desc:
+      type: string
+    filePath:
+      type: string
+      example: ./src/utils/api.ts
+    isVectorized:
+      type: boolean
+      description: Флаг наличия хотя бы одного embedding для чанков этого ai_item
+      default: false
+AiItemSummary:
+  type: object
+  required:
+    - id
+    - type
+    - language
+    - filePath
+  properties:
+    id:
+      type: string
+      example: utils.fetchData
+    type:
+      $ref: '#/components/schemas/AiItemType'
+    language:
+      $ref: '#/components/schemas/Language'
+    filePath:
+      type: string
+      example: ./src/utils/api.ts
+    tags:
+      type: array
+      description: Список тегов, связанных с элементом (опционально)
+      items:
+        $ref: '#/components/schemas/TagSummary'
+      default: []
+    isVectorized:
+      type: boolean
+      description: Флаг наличия хотя бы одного embedding для чанков этого ai_item
+      default: false

@@ -1,0 +1,60 @@
+# Paths: /api/chat, /api/ask — RAG-чат и простой запрос к LLM.
+---
+/api/chat:
+  post:
+    tags:
+      - RAG Chat
+    summary: Задать вопрос по коду
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ChatRequest'
+    responses:
+      '200':
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatResponse'
+/api/ask:
+  post:
+    tags:
+      - RAG Chat
+    summary: Прямой запрос к LLM
+    description: |
+      Отправляет запрос напрямую к LLM без использования RAG/векторизации.
+      Используется для простых вопросов, не требующих контекста из кодовой базы.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AskRequest'
+    responses:
+      '200':
+        description: Ответ от LLM
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskResponse'
+      '400':
+        description: Неверный запрос
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Ошибка сервера или LLM недоступен
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'

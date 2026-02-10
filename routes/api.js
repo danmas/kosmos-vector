@@ -9,6 +9,7 @@ const pipelineStateManager = require('./pipelineState');
 const pipelineHistoryManager = require('./pipelineHistory');
 const kbConfigService = require('../packages/core/kbConfigService');
 const pipelineConfigService = require('../packages/core/pipelineConfigService');
+const appConfigService = require('../packages/core/appConfigService');
 
 // Импортируем serverLogs, logsSseConnections и функции для работы с сессиями
 const { serverLogs, logsSseConnections, getLogsBySession, saveSessionLogs } = require('../server');
@@ -116,6 +117,82 @@ module.exports = (dbService, logBuffer) => {
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to get context codes list'
+      });
+    }
+  });
+
+  // === Маршруты для управления глобальной конфигурацией приложения (БЕЗ валидации context-code) ===
+  
+  // GET /api/config - получить текущую конфигурацию
+  router.get('/config', (req, res) => {
+    try {
+      const config = appConfigService.getConfig();
+      res.json({
+        success: true,
+        config: config
+      });
+    } catch (error) {
+      console.error('[API/CONFIG] Ошибка получения конфига:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to get application configuration'
+      });
+    }
+  });
+
+  // PATCH /api/config - частично обновить конфигурацию
+  router.patch('/config', (req, res) => {
+    try {
+      const updates = req.body;
+      
+      if (!updates || Object.keys(updates).length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Request body must contain configuration updates'
+        });
+      }
+
+      const updatedConfig = appConfigService.saveConfig(updates);
+      
+      res.json({
+        success: true,
+        config: updatedConfig,
+        message: 'Configuration updated successfully'
+      });
+    } catch (error) {
+      console.error('[API/CONFIG] Ошибка обновления конфига:', error);
+      
+      // Если ошибка валидации - возвращаем 400 с деталями
+      if (error.validationErrors) {
+        return res.status(400).json({
+          success: false,
+          error: error.message,
+          validationErrors: error.validationErrors
+        });
+      }
+      
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to update application configuration'
+      });
+    }
+  });
+
+  // POST /api/config/reset - сбросить конфигурацию к дефолтным значениям
+  router.post('/config/reset', (req, res) => {
+    try {
+      const defaultConfig = appConfigService.resetConfig();
+      
+      res.json({
+        success: true,
+        config: defaultConfig,
+        message: 'Configuration reset to defaults'
+      });
+    } catch (error) {
+      console.error('[API/CONFIG] Ошибка сброса конфига:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to reset application configuration'
       });
     }
   });
@@ -732,7 +809,7 @@ ${JSON.stringify({
       // 4. Вызываем LLM с JSON mode
       const { callLLM, getConfig } = require('../packages/core/llmClient');
       const config = getConfig();
-      const model = config.LLM_LOGIC_ARHITECT_MODEL || config.LLM_MODEL;
+      const model = config.KOSMOS_LOGIC_ARHITECT_MODEL || config.KOSMOS_MODEL;
 
       console.log(`[API] Calling LLM with model: ${model}`);
 

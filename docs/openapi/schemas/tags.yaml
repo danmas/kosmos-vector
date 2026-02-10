@@ -1,0 +1,228 @@
+# Схемы: Tag, TagSummary, CRUD-запросы/ответы для тегов и массовые операции (BulkTags*, AiItemTags*).
+---
+Tag:
+  type: object
+  required:
+    - id
+    - code
+    - name
+    - created_at
+  properties:
+    id:
+      type: integer
+      description: Уникальный идентификатор тега
+      example: 1
+    code:
+      type: string
+      description: Уникальный код тега в рамках context-code
+      example: deprecated
+    name:
+      type: string
+      description: Название тега
+      example: Устаревший код
+    description:
+      type: string
+      nullable: true
+      description: Описание тега
+      example: Код, который планируется удалить или переработать
+    created_at:
+      type: string
+      format: date-time
+      description: Время создания тега
+    updated_at:
+      type: string
+      format: date-time
+      nullable: true
+      description: Время последнего обновления тега
+TagSummary:
+  type: object
+  description: Упрощённая информация о теге для списков
+  required:
+    - id
+    - code
+    - name
+  properties:
+    id:
+      type: integer
+      example: 1
+    code:
+      type: string
+      example: deprecated
+    name:
+      type: string
+      example: Устаревший код
+TagCreateRequest:
+  type: object
+  required:
+    - code
+    - name
+  properties:
+    code:
+      type: string
+      minLength: 1
+      maxLength: 50
+      description: Уникальный код тега (латиница, числа, дефисы, подчёркивания)
+      example: deprecated
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Название тега
+      example: Устаревший код
+    description:
+      type: string
+      maxLength: 500
+      nullable: true
+      description: Описание тега
+      example: Код, который планируется удалить или переработать
+TagUpdateRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Новое название тега
+    description:
+      type: string
+      maxLength: 500
+      nullable: true
+      description: Новое описание тега
+  minProperties: 1
+TagListResponse:
+  type: object
+  required:
+    - success
+    - tags
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    tags:
+      type: array
+      items:
+        $ref: '#/components/schemas/Tag'
+      description: Список всех тегов для указанного context-code
+TagResponse:
+  type: object
+  required:
+    - success
+    - tag
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    tag:
+      $ref: '#/components/schemas/Tag'
+TagItemsResponse:
+  type: object
+  required:
+    - success
+    - tag
+    - items
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    tag:
+      $ref: '#/components/schemas/Tag'
+    items:
+      type: array
+      items:
+        $ref: '#/components/schemas/AiItemSummary'
+      description: Список AiItems с данным тегом
+AiItemTagsResponse:
+  type: object
+  required:
+    - success
+    - itemId
+    - tags
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    itemId:
+      type: string
+      description: ID AiItem (full_name)
+      example: utils.fetchData
+    tags:
+      type: array
+      items:
+        $ref: '#/components/schemas/Tag'
+      description: Список тегов, связанных с AiItem
+AiItemTagsRequest:
+  type: object
+  required:
+    - tagCodes
+  properties:
+    tagCodes:
+      type: array
+      items:
+        type: string
+      minItems: 1
+      description: Массив кодов тегов для добавления/удаления
+      example:
+        - deprecated
+        - needs-review
+        - critical
+BulkTagsRequest:
+  type: object
+  required:
+    - itemIds
+    - tagCodes
+  properties:
+    itemIds:
+      type: array
+      items:
+        type: string
+      minItems: 1
+      description: Массив ID элементов для массовой операции с тегами
+      example:
+        - utils.fetchData
+        - api.createUser
+        - db.saveRecord
+    tagCodes:
+      type: array
+      items:
+        type: string
+      minItems: 1
+      description: Массив кодов тегов для добавления/удаления
+      example:
+        - deprecated
+        - needs-review
+BulkTagsResponse:
+  type: object
+  required:
+    - success
+    - processedItems
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    processedItems:
+      type: integer
+      minimum: 0
+      description: Количество успешно обработанных элементов
+      example: 15
+    failedItems:
+      type: array
+      items:
+        type: object
+        required:
+          - itemId
+          - error
+        properties:
+          itemId:
+            type: string
+            description: ID элемента, при обработке которого возникла ошибка
+            example: utils.fetchData
+          error:
+            type: string
+            description: Описание ошибки
+            example: Item not found
+      description: Список элементов с ошибками (присутствует только при наличии ошибок)

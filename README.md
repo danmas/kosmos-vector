@@ -71,10 +71,17 @@ bun run start:v2
 
 ## Документация
 
-- REST API: см. `KB/README_REST.md`
-- Тесты: см. `tests/README_TESTS.md`
-- Технические детали/архитектура: см. `KB/README_TECH.md`
-- Knowledge Base Configuration (multi-root): см. раздел в `KB/README_TECH.md`
+📖 **Полный индекс документации:** `KB/README_INDEX.md`
+
+- **REST API:** см. `KB/README_REST.md`
+- **App Config API (управление настройками):** см. `KB/README_APP_CONFIG_API.md` ⭐ НОВОЕ
+- **Frontend Integration (RAG):** см. `docs/README_Frontend_RAG_Integration.md`
+- **Frontend Integration (App Config):** см. `docs/README_Frontend_Config_Integration.md` ⭐ НОВОЕ
+- **Тесты:** см. `tests/README_TESTS.md`
+- **Технические детали/архитектура:** см. `KB/README_TECH.md`
+- **Knowledge Base Configuration (multi-root):** см. раздел в `KB/README_TECH.md`
+- **OpenAPI Contract:** см. `docs/api-contract.yaml` (версия 2.8.0)
+- **История изменений:** см. `CHANGELOG.md` 📋
 
 ## Ключевые возможности
 

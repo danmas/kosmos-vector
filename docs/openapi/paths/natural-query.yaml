@@ -1,0 +1,408 @@
+# Paths: /api/v1/natural-query, suggest; /api/agent-scripts (CRUD), embed, execute — Natural Query Engine.
+---
+/api/v1/natural-query:
+  post:
+    tags:
+      - Natural Query
+    summary: Запрос на естественном языке с автогенерацией скрипта
+    description: |
+      Natural Query Engine — интеллектуальный слой для анализа кодовой базы.
+
+      Пользователь задаёт вопрос на естественном языке, система:
+      1. Проверяет точное совпадение вопроса в кэше
+      2. Если не найдено — выполняет векторный поиск по эмбеддингам вопросов
+         - Если similarity >= 0.95 — возвращает suggestion с high_confidence: true
+         - Если similarity >= threshold (0.8) — возвращает список suggestions
+      3. Если векторный поиск не дал результатов — использует FTS (Full Text Search)
+      4. Если не найден — генерирует новый async JS-скрипт через LLM
+      5. Выполняет скрипт в sandbox (только SELECT запросы к БД)
+      6. Превращает raw данные в человекочитаемый текст через LLM
+      7. Сохраняет скрипт в кэш и векторизует вопрос для будущего поиска
+
+      Скрипты кэшируются в таблице agent_script с колонкой question_embedding 
+      для быстрого векторного поиска похожих вопросов.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NaturalQueryRequest'
+    responses:
+      '200':
+        description: Успешный ответ с результатами выполнения скрипта
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NaturalQueryResponse'
+      '400':
+        description: Неверный запрос (отсутствуют обязательные поля)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Ошибка генерации или выполнения скрипта
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NaturalQueryErrorResponse'
+/api/v1/natural-query/suggest:
+  post:
+    tags:
+      - Natural Query
+    summary: Получить список похожих вопросов из кэша
+    description: |
+      Векторный поиск похожих вопросов по эмбеддингам. Возвращает список сохранённых
+      вопросов, отсортированных по similarity (cosine similarity).
+
+      Используется для предложения пользователю готовых вопросов перед выполнением скрипта.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NaturalQueryRequest'
+    parameters:
+      - name: limit
+        in: query
+        required: false
+        description: Максимальное количество результатов (по умолчанию из config.json)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 5
+      - name: threshold
+        in: query
+        required: false
+        description: Минимальный порог similarity (0.0 - 1.0, по умолчанию из config.json)
+        schema:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.8
+    responses:
+      '200':
+        description: Список похожих вопросов
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NaturalQuerySuggestResponse'
+      '400':
+        description: Неверный запрос (отсутствуют обязательные поля)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Ошибка векторного поиска
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/agent-scripts:
+  get:
+    tags:
+      - Natural Query
+    summary: Список всех сохранённых скриптов
+    description: |
+      Возвращает список всех скриптов для указанного context-code с пагинацией.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных
+        schema:
+          type: string
+          example: CARL
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+          minimum: 1
+          maximum: 1000
+        description: Количество скриптов на странице
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+          minimum: 0
+        description: Смещение для пагинации
+    responses:
+      '200':
+        description: Список скриптов
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentScriptListResponse'
+      '400':
+        description: Отсутствует context-code
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Внутренняя ошибка
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/agent-scripts/{id}:
+  get:
+    tags:
+      - Natural Query
+    summary: Получить детали скрипта
+    description: |
+      Возвращает полную информацию о скрипте, включая его код.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID скрипта
+        schema:
+          type: integer
+          example: 42
+    responses:
+      '200':
+        description: Детали скрипта
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentScriptDetailResponse'
+      '400':
+        description: Отсутствует context-code
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Скрипт не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  put:
+    tags:
+      - Natural Query
+    summary: Обновить скрипт
+    description: |
+      Обновляет скрипт: можно изменить код скрипта и/или флаг is_valid.
+      При обновлении кода выполняется валидация на безопасность.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID скрипта
+        schema:
+          type: integer
+          example: 42
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AgentScriptUpdateRequest'
+    responses:
+      '200':
+        description: Скрипт успешно обновлён
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentScriptDetailResponse'
+      '400':
+        description: Неверный запрос (нет полей для обновления или скрипт невалиден)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Скрипт не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  delete:
+    tags:
+      - Natural Query
+    summary: Удалить скрипт
+    description: |
+      Удаляет скрипт из кэша. Это действие нельзя отменить.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID скрипта
+        schema:
+          type: integer
+          example: 42
+    responses:
+      '200':
+        description: Скрипт успешно удалён
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Script deleted
+      '400':
+        description: Отсутствует context-code
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Скрипт не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/agent-scripts/{id}/embed:
+  post:
+    tags:
+      - Natural Query
+    summary: Векторизовать вопрос скрипта
+    description: |
+      Создаёт или обновляет эмбеддинг вопроса для указанного скрипта.
+      Используется для добавления векторного поиска к существующим скриптам.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID скрипта для векторизации
+        schema:
+          type: integer
+          example: 17
+    responses:
+      '200':
+        description: Эмбеддинг успешно создан/обновлён
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - success
+                - message
+                - scriptId
+                - question
+                - embedding_length
+              properties:
+                success:
+                  type: boolean
+                  enum:
+                    - true
+                message:
+                  type: string
+                  enum:
+                    - Embedding created
+                    - Embedding updated
+                scriptId:
+                  type: integer
+                  example: 17
+                question:
+                  type: string
+                  example: Какие функции вызывают carl_auct._createNewAuction
+                embedding_length:
+                  type: integer
+                  example: 1536
+      '400':
+        description: Неверный ID скрипта или отсутствует context-code
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Скрипт не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Ошибка векторизации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/agent-scripts/{id}/execute:
+  post:
+    tags:
+      - Natural Query
+    summary: Выполнить существующий скрипт
+    description: |
+      Выполняет существующий скрипт по его ID. Скрипт загружается из кэша,
+      выполняется в sandbox, результат humanize'ится через LLM и сохраняется в last_result.
+      Также инкрементируется счётчик использования скрипта.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID скрипта для выполнения
+        schema:
+          type: integer
+          example: 42
+    responses:
+      '200':
+        description: Скрипт успешно выполнен
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NaturalQueryResponse'
+      '400':
+        description: Отсутствует context-code
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Скрипт не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Ошибка выполнения скрипта
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NaturalQueryErrorResponse'

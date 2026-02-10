@@ -1,0 +1,20 @@
+# Reusable responses: BadRequest (400), NotFound (404), InternalError (500) — ссылаются на ErrorResponse.
+---
+BadRequest:
+  description: Неверный запрос
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/ErrorResponse'
+NotFound:
+  description: Не найдено
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/ErrorResponse'
+InternalError:
+  description: Внутренняя ошибка
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/ErrorResponse'

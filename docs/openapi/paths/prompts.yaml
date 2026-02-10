@@ -1,0 +1,431 @@
+# Paths: /api/prompts (CRUD), l1l2/{fileType}/{objectType}/{level}, reload, validate, export, import.
+---
+/api/prompts:
+  get:
+    tags:
+      - Prompts
+    summary: Получить все промпты
+    description: Возвращает полную конфигурацию промптов из prompts.json
+    operationId: getPrompts
+    responses:
+      '200':
+        description: Полная конфигурация промптов
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfigResponse'
+      '500':
+        $ref: '#/components/responses/InternalError'
+  put:
+    tags:
+      - Prompts
+    summary: Обновить все промпты
+    description: Полностью заменяет конфигурацию промптов и сохраняет в prompts.json
+    operationId: updatePrompts
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PromptsConfig'
+    responses:
+      '200':
+        description: Промпты успешно обновлены
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfigResponse'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalError'
+/api/prompts/{category}:
+  get:
+    tags:
+      - Prompts
+    summary: Получить категорию промптов
+    operationId: getPromptsCategory
+    parameters:
+      - name: category
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/PromptCategoryEnum'
+    responses:
+      '200':
+        description: Промпты категории
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - success
+                - category
+                - data
+              properties:
+                success:
+                  type: boolean
+                  enum:
+                    - true
+                category:
+                  $ref: '#/components/schemas/PromptCategoryEnum'
+                data:
+                  type: object
+      '404':
+        $ref: '#/components/responses/NotFound'
+  patch:
+    tags:
+      - Prompts
+    summary: Частично обновить категорию промптов
+    operationId: patchPromptsCategory
+    parameters:
+      - name: category
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/PromptCategoryEnum'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      '200':
+        description: Категория успешно обновлена
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - success
+                - category
+                - data
+              properties:
+                success:
+                  type: boolean
+                  enum:
+                    - true
+                category:
+                  $ref: '#/components/schemas/PromptCategoryEnum'
+                data:
+                  type: object
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+/api/prompts/l1l2/{fileType}/{objectType}/{level}:
+  get:
+    tags:
+      - Prompts
+    summary: Получить конкретный L1/L2 промпт
+    operationId: getL1L2Prompt
+    parameters:
+      - name: fileType
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/FileTypeEnum'
+      - name: objectType
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ObjectTypeEnum'
+      - name: level
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/LevelEnum'
+    responses:
+      '200':
+        description: Промпт найден
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - success
+                - fileType
+                - objectType
+                - level
+                - data
+              properties:
+                success:
+                  type: boolean
+                  enum:
+                    - true
+                fileType:
+                  $ref: '#/components/schemas/FileTypeEnum'
+                objectType:
+                  $ref: '#/components/schemas/ObjectTypeEnum'
+                level:
+                  $ref: '#/components/schemas/LevelEnum'
+                data:
+                  $ref: '#/components/schemas/PromptTemplate'
+      '404':
+        $ref: '#/components/responses/NotFound'
+  put:
+    tags:
+      - Prompts
+    summary: Обновить конкретный L1/L2 промпт
+    operationId: updateL1L2Prompt
+    parameters:
+      - name: fileType
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/FileTypeEnum'
+      - name: objectType
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ObjectTypeEnum'
+      - name: level
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/LevelEnum'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PromptTemplate'
+    responses:
+      '200':
+        description: Промпт успешно обновлен
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - success
+                - fileType
+                - objectType
+                - level
+                - data
+              properties:
+                success:
+                  type: boolean
+                  enum:
+                    - true
+                fileType:
+                  $ref: '#/components/schemas/FileTypeEnum'
+                objectType:
+                  $ref: '#/components/schemas/ObjectTypeEnum'
+                level:
+                  $ref: '#/components/schemas/LevelEnum'
+                data:
+                  $ref: '#/components/schemas/PromptTemplate'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+  delete:
+    tags:
+      - Prompts
+    summary: Удалить L1/L2 промпт
+    operationId: deleteL1L2Prompt
+    parameters:
+      - name: fileType
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/FileTypeEnum'
+      - name: objectType
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ObjectTypeEnum'
+      - name: level
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/LevelEnum'
+    responses:
+      '200':
+        description: Промпт удален
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuccessResponse'
+      '404':
+        $ref: '#/components/responses/NotFound'
+/api/prompts/l1l2/{fileType}:
+  post:
+    tags:
+      - Prompts
+    summary: Добавить новый тип объекта
+    description: Добавляет новый тип объекта с L1/L2 промптами для указанного типа файла
+    operationId: addL1L2ObjectType
+    parameters:
+      - name: fileType
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/FileTypeEnum'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - objectType
+              - templates
+            properties:
+              objectType:
+                type: string
+                example: trigger
+              templates:
+                $ref: '#/components/schemas/L1L2TemplateLevel'
+    responses:
+      '201':
+        description: Тип объекта добавлен
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - success
+                - fileType
+                - objectType
+                - data
+              properties:
+                success:
+                  type: boolean
+                  enum:
+                    - true
+                fileType:
+                  type: string
+                objectType:
+                  type: string
+                data:
+                  $ref: '#/components/schemas/L1L2TemplateLevel'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+/api/prompts/reload:
+  post:
+    tags:
+      - Prompts
+    summary: Перезагрузить промпты из файла
+    description: Сбрасывает кэш и перезагружает промпты из prompts.json
+    operationId: reloadPrompts
+    responses:
+      '200':
+        description: Промпты перезагружены
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfigResponse'
+      '500':
+        $ref: '#/components/responses/InternalError'
+/api/prompts/validate:
+  post:
+    tags:
+      - Prompts
+    summary: Валидировать структуру промптов
+    description: Проверяет структуру без сохранения
+    operationId: validatePrompts
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PromptsConfig'
+    responses:
+      '200':
+        description: Структура валидна
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - success
+                - valid
+              properties:
+                success:
+                  type: boolean
+                  enum:
+                    - true
+                valid:
+                  type: boolean
+                  enum:
+                    - true
+                message:
+                  type: string
+      '400':
+        description: Структура невалидна
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - success
+                - valid
+                - errors
+              properties:
+                success:
+                  type: boolean
+                  enum:
+                    - false
+                valid:
+                  type: boolean
+                  enum:
+                    - false
+                errors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      path:
+                        type: string
+                      message:
+                        type: string
+/api/prompts/export:
+  get:
+    tags:
+      - Prompts
+    summary: Экспортировать промпты
+    operationId: exportPrompts
+    parameters:
+      - name: format
+        in: query
+        schema:
+          type: string
+          enum:
+            - json
+            - yaml
+          default: json
+    responses:
+      '200':
+        description: Файл промптов
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfig'
+          application/x-yaml:
+            schema:
+              type: string
+/api/prompts/import:
+  post:
+    tags:
+      - Prompts
+    summary: Импортировать промпты
+    operationId: importPrompts
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PromptsConfig'
+        application/x-yaml:
+          schema:
+            type: string
+    responses:
+      '200':
+        description: Промпты импортированы
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptsConfigResponse'
+      '400':
+        $ref: '#/components/responses/BadRequest'

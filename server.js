@@ -232,7 +232,7 @@ console.log('Server started — log buffer initialized');
 const express = require('express');
 const { Client } = require('pg');
 const { DbService, EmbeddingsFactory, PostgresVectorStore } = require('./packages/core');
-const { checkLLMAvailability, LLM_BASE_URL, LLM_MODEL, callLLM } = require('./packages/core/llmClient');
+const { checkLLMAvailability, KOSMOS_BASE_URL, KOSMOS_MODEL, callLLM } = require('./packages/core/llmClient');
 const aiRoutes = require('./routes/ai');
 const filesRoutes = require('./routes/files');
 const chatRoutes = require('./routes/chat');
@@ -432,7 +432,7 @@ const server = app.listen(port, async () => {
       
       // Логируем детали запроса для отладки
       const requestBody = {
-        model: LLM_MODEL(),
+        model: KOSMOS_MODEL(),
         messages: [
           { role: 'user', content: 'Какая ты модель? Ответь коротко.' }
         ],
@@ -443,12 +443,12 @@ const server = app.listen(port, async () => {
         "Content-Type": "application/json"
       };
       
-      if (process.env.LLM_API_KEY) {
+      if (process.env.KOSMOS_API_KEY) {
         requestHeaders["Authorization"] = "Bearer [скрыто]";
       }
       
       console.error('📤 Отправленный запрос к LLM:');
-      console.error(`   URL: ${LLM_BASE_URL()}/chat/completions`);
+      console.error(`   URL: ${KOSMOS_BASE_URL()}/chat/completions`);
       console.error(`   Method: POST`);
       console.error(`   Headers:`, JSON.stringify(requestHeaders, null, 2));
       console.error(`   Body:`, JSON.stringify(requestBody, null, 2));
@@ -456,7 +456,7 @@ const server = app.listen(port, async () => {
   } else {
     console.warn('⚠️  LLM сервер (kosmos-model) недоступен!');
     console.warn('⚠️  Маршрут /api/chat может не работать корректно.');
-    console.warn(`⚠️  Проверьте настройки LLM_BASE_URL (текущее: ${LLM_BASE_URL()})`);
+    console.warn(`⚠️  Проверьте настройки KOSMOS_BASE_URL (текущее: ${KOSMOS_BASE_URL()})`);
   }
 });
 

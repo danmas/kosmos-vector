@@ -1,0 +1,132 @@
+# Схемы: промпты LLM (PromptTemplate, L1L2*, RagPrompts, NaturalQueryPrompts, PromptsConfig) и enum для fileType/objectType/level.
+---
+PromptTemplate:
+  type: object
+  required:
+    - prompt
+    - inputText
+  properties:
+    prompt:
+      type: string
+      description: Основной промпт (инструкция для LLM)
+      example: Проанализируй эту SQL функцию и опиши её зависимости.
+    inputText:
+      type: string
+      description: Дополнительный текст/вопрос для уточнения контекста
+      example: Какие другие функции или таблицы использует этот код?
+L1L2TemplateLevel:
+  type: object
+  properties:
+    l1:
+      $ref: '#/components/schemas/PromptTemplate'
+      description: Промпт для уровня 1 (зависимости/связи)
+    l2:
+      $ref: '#/components/schemas/PromptTemplate'
+      description: Промпт для уровня 2 (бизнес-логика)
+L1L2ObjectTemplates:
+  type: object
+  additionalProperties:
+    $ref: '#/components/schemas/L1L2TemplateLevel'
+  description: Промпты для типов объектов (function, table, class, section и т.д.)
+L1L2Templates:
+  type: object
+  properties:
+    sql:
+      $ref: '#/components/schemas/L1L2ObjectTemplates'
+      description: Промпты для SQL объектов (function, table, view)
+    js:
+      $ref: '#/components/schemas/L1L2ObjectTemplates'
+      description: Промпты для JavaScript объектов (function, class)
+    md:
+      $ref: '#/components/schemas/L1L2ObjectTemplates'
+      description: Промпты для Markdown (section)
+RagPrompts:
+  type: object
+  required:
+    - systemPrompt
+    - userPromptTemplate
+  properties:
+    systemPrompt:
+      type: string
+      description: Системный промпт для RAG-чата
+    userPromptTemplate:
+      type: string
+      description: 'Шаблон пользовательского промпта. Плейсхолдеры: {context}, {question}'
+NaturalQueryPrompts:
+  type: object
+  required:
+    - scriptGeneration
+    - humanize
+  properties:
+    scriptGeneration:
+      type: string
+      description: 'Промпт для генерации JS-скриптов. Плейсхолдер: {question}'
+    humanize:
+      type: string
+      description: 'Промпт для humanize. Плейсхолдеры: {question}, {rawData}'
+VectorOperationsPrompts:
+  type: object
+  required:
+    - qaPromptTemplate
+  properties:
+    qaPromptTemplate:
+      type: string
+      description: 'Шаблон QA промпта. Плейсхолдеры: {context}, {question}'
+PromptsConfig:
+  type: object
+  required:
+    - l1l2Templates
+    - rag
+    - naturalQuery
+    - vectorOperations
+  properties:
+    l1l2Templates:
+      $ref: '#/components/schemas/L1L2Templates'
+    rag:
+      $ref: '#/components/schemas/RagPrompts'
+    naturalQuery:
+      $ref: '#/components/schemas/NaturalQueryPrompts'
+    vectorOperations:
+      $ref: '#/components/schemas/VectorOperationsPrompts'
+PromptsConfigResponse:
+  type: object
+  required:
+    - success
+    - prompts
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    prompts:
+      $ref: '#/components/schemas/PromptsConfig'
+    savedAt:
+      type: string
+      format: date-time
+      nullable: true
+PromptCategoryEnum:
+  type: string
+  enum:
+    - l1l2Templates
+    - rag
+    - naturalQuery
+    - vectorOperations
+FileTypeEnum:
+  type: string
+  enum:
+    - sql
+    - js
+    - md
+ObjectTypeEnum:
+  type: string
+  enum:
+    - function
+    - table
+    - view
+    - class
+    - section
+LevelEnum:
+  type: string
+  enum:
+    - l1
+    - l2

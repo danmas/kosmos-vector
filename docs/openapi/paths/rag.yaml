@@ -1,0 +1,441 @@
+# Paths: /api/rag/retrieve, /api/rag/ask, /api/rag/compare-strategies, /api/rag/strategies — Advanced RAG API.
+---
+/api/rag/retrieve:
+  post:
+    tags:
+      - Advanced RAG
+    summary: Получение структурированного контекста без LLM
+    description: |
+      Интеллектуальный поиск релевантного контекста по запросу с использованием различных стратегий.
+      Возвращает отформатированный контекст без обращения к LLM - используется для превью или отладки.
+
+      Стратегии поиска:
+      - simple: Базовый векторный поиск по всем уровням чанков
+      - hierarchical: Поиск L0-чанков с автоматической подгрузкой L1/L2
+      - aiitem: Поиск через AI Items с полным контекстом
+      - hybrid: Комбинированный подход (экспериментальная)
+    operationId: ragRetrieve
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - query
+              - contextCode
+            properties:
+              query:
+                type: string
+                description: Поисковый запрос на естественном языке
+                example: Как работает функция validateEmployee?
+              contextCode:
+                type: string
+                description: Контекст для изоляции данных
+                example: FULL_TEST
+              strategy:
+                type: string
+                enum:
+                  - simple
+                  - hierarchical
+                  - aiitem
+                  - hybrid
+                default: hierarchical
+                description: Стратегия поиска контекста
+              maxChunks:
+                type: integer
+                default: 5
+                minimum: 1
+                maximum: 20
+                description: Максимальное количество чанков для поиска
+              levels:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - 0-исходник
+                    - 1-связи
+                    - 2-логика
+                description: Уровни чанков для включения (только для simple стратегии)
+                example:
+                  - 0-исходник
+                  - 2-логика
+              includeRelations:
+                type: boolean
+                default: true
+                description: Включить связи из таблицы link
+              formatting:
+                type: object
+                description: Настройки форматирования контекста
+                properties:
+                  style:
+                    type: string
+                    enum:
+                      - compact
+                      - standard
+                      - full
+                      - markdown
+                    default: standard
+                    description: |
+                      Стиль форматирования:
+                      - compact: минимальный, только код
+                      - standard: код + описание + зависимости
+                      - full: всё включено с деталями
+                      - markdown: структурированный с заголовками
+                  includeFileNames:
+                    type: boolean
+                    default: true
+                    description: Показывать имена файлов
+                  includeRelations:
+                    type: boolean
+                    default: true
+                    description: Показывать связи между элементами
+                  maxTokens:
+                    type: integer
+                    default: 4000
+                    description: Максимальное количество токенов в контексте
+    responses:
+      '200':
+        description: Контекст успешно получен
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                context:
+                  type: object
+                  properties:
+                    formatted:
+                      type: string
+                      description: Отформатированный текст контекста для LLM
+                    sections:
+                      type: array
+                      description: Структурированные секции контекста
+                      items:
+                        type: object
+                        properties:
+                          aiItem:
+                            type: object
+                            description: Информация об AI Item
+                          source:
+                            type: object
+                            description: L0 чанк (исходный код)
+                          description:
+                            type: object
+                            description: L2 чанк (описание логики)
+                          dependencies:
+                            type: array
+                            description: L1 чанки (зависимости)
+                          relations:
+                            type: array
+                            description: Связи с другими элементами
+                    metadata:
+                      type: object
+                      properties:
+                        totalChunks:
+                          type: integer
+                          description: Всего найдено чанков
+                        totalTokens:
+                          type: integer
+                          description: Оценка токенов
+                        usedChunkIds:
+                          type: array
+                          items:
+                            type: string
+                          description: ID использованных чанков
+                        strategy:
+                          type: string
+                          description: Использованная стратегия
+                        formattingStyle:
+                          type: string
+                          description: Стиль форматирования
+                retrievalTime:
+                  type: number
+                  description: Время поиска в миллисекундах
+                  example: 1234
+                timestamp:
+                  type: string
+                  format: date-time
+      '400':
+        description: Неверные параметры запроса
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Контекст не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Внутренняя ошибка сервера
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/rag/ask:
+  post:
+    tags:
+      - Advanced RAG
+    summary: Получить ответ LLM с использованием RAG
+    description: |
+      Полный цикл RAG: поиск контекста + генерация ответа LLM.
+      Использует настраиваемые стратегии поиска для оптимального качества ответов.
+    operationId: ragAsk
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - query
+              - contextCode
+            properties:
+              query:
+                type: string
+                description: Вопрос на естественном языке
+                example: Какие методы есть в EmployeeService?
+              contextCode:
+                type: string
+                description: Контекст для изоляции данных
+                example: FULL_TEST
+              ragConfig:
+                type: object
+                description: Настройки RAG (опционально, используются значения по умолчанию)
+                properties:
+                  strategy:
+                    type: string
+                    enum:
+                      - simple
+                      - hierarchical
+                      - aiitem
+                      - hybrid
+                    default: hierarchical
+                  maxChunks:
+                    type: integer
+                    default: 10
+                  formatting:
+                    type: object
+                    properties:
+                      style:
+                        type: string
+                        enum:
+                          - compact
+                          - standard
+                          - full
+                          - markdown
+                        default: standard
+                      maxTokens:
+                        type: integer
+                        default: 4000
+              llmConfig:
+                type: object
+                description: Настройки LLM (опционально)
+                properties:
+                  model:
+                    type: string
+                    description: Модель для генерации ответа
+                    example: RICH
+                  temperature:
+                    type: number
+                    minimum: 0
+                    maximum: 2
+                    default: 0.3
+                    description: Температура генерации
+                  systemPrompt:
+                    type: string
+                    description: Кастомный системный промпт
+    responses:
+      '200':
+        description: Ответ успешно сгенерирован
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                answer:
+                  type: string
+                  description: Ответ LLM на вопрос
+                context:
+                  type: object
+                  description: Метаданные использованного контекста
+                  properties:
+                    totalChunks:
+                      type: integer
+                    totalTokens:
+                      type: integer
+                    usedChunkIds:
+                      type: array
+                      items:
+                        type: string
+                    strategy:
+                      type: string
+                    formattingStyle:
+                      type: string
+                retrievalTime:
+                  type: number
+                  description: Время поиска контекста в мс
+                timestamp:
+                  type: string
+                  format: date-time
+      '400':
+        description: Неверные параметры запроса
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Ошибка при генерации ответа
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/rag/compare-strategies:
+  post:
+    tags:
+      - Advanced RAG
+    summary: Сравнение эффективности различных стратегий RAG
+    description: |
+      Выполняет поиск контекста с использованием нескольких стратегий одновременно.
+      Полезно для отладки и выбора оптимальной стратегии для конкретных случаев.
+    operationId: ragCompareStrategies
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - query
+              - contextCode
+            properties:
+              query:
+                type: string
+                description: Поисковый запрос
+                example: Опиши процесс создания сотрудника
+              contextCode:
+                type: string
+                description: Контекст для изоляции данных
+                example: FULL_TEST
+              strategies:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - simple
+                    - hierarchical
+                    - aiitem
+                    - hybrid
+                description: Список стратегий для сравнения
+                example:
+                  - simple
+                  - hierarchical
+                  - aiitem
+                default:
+                  - simple
+                  - hierarchical
+                  - aiitem
+              maxChunks:
+                type: integer
+                default: 5
+    responses:
+      '200':
+        description: Результаты сравнения
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                results:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      strategy:
+                        type: string
+                      totalChunks:
+                        type: integer
+                      totalTokens:
+                        type: integer
+                      retrievalTime:
+                        type: number
+                        description: Время в миллисекундах
+                      chunksPreview:
+                        type: array
+                        description: Превью найденных чанков
+                timestamp:
+                  type: string
+                  format: date-time
+      '400':
+        description: Неверные параметры
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Ошибка сервера
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/rag/strategies:
+  get:
+    tags:
+      - Advanced RAG
+    summary: Получить список доступных RAG-стратегий
+    description: |
+      Возвращает информацию о всех поддерживаемых стратегиях поиска:
+      их описание, случаи использования и характеристики производительности.
+    operationId: ragGetStrategies
+    responses:
+      '200':
+        description: Список стратегий
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                strategies:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: hierarchical
+                      description:
+                        type: string
+                        example: Иерархический поиск с автоматической подгрузкой L1/L2 чанков
+                      useCases:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                          - Глубокий анализ функций
+                          - Понимание зависимостей
+                      performance:
+                        type: string
+                        enum:
+                          - Высокая
+                          - Средняя
+                          - Низкая
+                      complexity:
+                        type: string
+                        enum:
+                          - Низкая
+                          - Средняя
+                          - Высокая

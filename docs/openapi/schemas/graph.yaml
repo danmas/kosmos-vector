@@ -1,0 +1,177 @@
+# Схемы: граф зависимостей (GraphNode, GraphLink, GraphData) и Logic Graph для визуализации (LogicNode, LogicEdge, LogicGraph и ответы).
+---
+GraphNode:
+  type: object
+  required:
+    - id
+    - type
+    - language
+    - filePath
+    - l2_desc
+  properties:
+    id:
+      type: string
+    type:
+      $ref: '#/components/schemas/AiItemType'
+    language:
+      $ref: '#/components/schemas/Language'
+    filePath:
+      type: string
+    l2_desc:
+      type: string
+GraphLink:
+  type: object
+  required:
+    - source
+    - target
+  properties:
+    source:
+      type: string
+    target:
+      type: string
+    label:
+      type: string
+      nullable: true
+      description: |
+        Тип связи между элементами:
+        - calls: вызов функции
+        - reads from: чтение из таблицы (SELECT)
+        - updates: обновление таблицы (UPDATE)
+        - inserts into: вставка в таблицу (INSERT)
+        - depends on: зависимость/импорт
+        - reads_column: чтение колонки в SELECT
+        - updates_column: обновление колонки в SET
+        - inserts_column: вставка в колонку
+GraphData:
+  type: object
+  required:
+    - nodes
+    - links
+  properties:
+    nodes:
+      type: array
+      items:
+        $ref: '#/components/schemas/GraphNode'
+    links:
+      type: array
+      items:
+        $ref: '#/components/schemas/GraphLink'
+LogicNodeType:
+  type: string
+  enum:
+    - start
+    - end
+    - decision
+    - process
+    - db_call
+    - exception
+  description: Тип узла в графе логики функции
+LogicNode:
+  type: object
+  required:
+    - id
+    - type
+    - label
+  properties:
+    id:
+      type: string
+      description: Уникальный идентификатор узла
+      example: node_1
+    type:
+      $ref: '#/components/schemas/LogicNodeType'
+    label:
+      type: string
+      description: Краткая метка узла
+      example: Проверка условия
+    details:
+      type: string
+      nullable: true
+      description: Детальное описание узла
+      example: Проверяет, превышает ли доход пороговое значение
+    x:
+      type: number
+      nullable: true
+      description: Координата X для визуализации
+    'y':
+      type: number
+      nullable: true
+      description: Координата Y для визуализации
+LogicEdge:
+  type: object
+  required:
+    - id
+    - from
+    - to
+  properties:
+    id:
+      type: string
+      description: Уникальный идентификатор связи
+      example: edge_1
+    from:
+      type: string
+      description: ID узла-источника
+      example: node_1
+    to:
+      type: string
+      description: ID узла-цели
+      example: node_2
+    label:
+      type: string
+      nullable: true
+      description: Метка связи (например, "True", "False", "Да", "Нет")
+      example: 'True'
+LogicGraph:
+  type: object
+  required:
+    - nodes
+    - edges
+  properties:
+    nodes:
+      type: array
+      items:
+        $ref: '#/components/schemas/LogicNode'
+      description: Массив узлов графа логики
+    edges:
+      type: array
+      items:
+        $ref: '#/components/schemas/LogicEdge'
+      description: Массив связей между узлами
+LogicAnalysisResponse:
+  type: object
+  required:
+    - logic
+    - graph
+  properties:
+    logic:
+      type: string
+      description: Текстовое описание логики функции на русском языке
+      example: Функция проверяет условие и возвращает результат в зависимости от значения
+    graph:
+      $ref: '#/components/schemas/LogicGraph'
+LogicGraphResponse:
+  type: object
+  required:
+    - success
+    - itemId
+    - logicGraph
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    itemId:
+      type: string
+      description: ID AiItem, к которому привязан анализ логики
+      example: utils.fetchData
+    logicGraph:
+      $ref: '#/components/schemas/LogicAnalysisResponse'
+      description: Полный результат анализа, содержащий и текстовое описание логики (logic), и граф потока управления (graph)
+    savedAt:
+      type: string
+      format: date-time
+      description: Время сохранения анализа
+    updatedAt:
+      type: string
+      format: date-time
+      nullable: true
+      description: Время последнего обновления анализа

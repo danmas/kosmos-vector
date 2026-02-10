@@ -1,0 +1,331 @@
+# Схемы: Natural Query Engine — запрос/ответ, подсказки, ошибки; AgentScript и CRUD-ответы для кэша скриптов.
+---
+NaturalQueryRequest:
+  type: object
+  required:
+    - question
+    - contextCode
+  properties:
+    question:
+      type: string
+      description: Вопрос на естественном языке для анализа кодовой базы
+      example: Какие типы связей используются в проекте?
+    contextCode:
+      type: string
+      description: Контекстный код для изоляции данных
+      example: CARL
+NaturalQueryResponse:
+  type: object
+  required:
+    - success
+    - human
+    - raw
+    - scriptId
+    - cached
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    human:
+      type: string
+      description: Человекочитаемый ответ на русском языке, сгенерированный из raw данных
+      example: 'В проекте используются следующие типы связей: calls, reads_from, updates, inserts_into, imports'
+    raw:
+      description: Сырые данные, возвращённые скриптом (массив или объект)
+      oneOf:
+        - type: array
+          items: {}
+        - type: object
+      example:
+        - code: calls
+          label: calls
+          description: Function calls another function
+    scriptId:
+      type: integer
+      description: ID сохранённого скрипта в таблице agent_script
+      example: 42
+    cached:
+      type: boolean
+      description: true если скрипт был найден в кэше (точное совпадение или FTS), false если был сгенерирован заново
+      example: false
+    last_result:
+      type: object
+      nullable: true
+      description: Последний сохранённый результат выполнения скрипта (если есть). Содержит raw, human и executed_at.
+      properties:
+        raw:
+          description: Сырые данные последнего выполнения
+          oneOf:
+            - type: array
+              items: {}
+            - type: object
+        human:
+          type: string
+          description: Человекочитаемый текст последнего выполнения
+        executed_at:
+          type: string
+          format: date-time
+          description: Время последнего выполнения скрипта
+      example:
+        raw:
+          - code: calls
+            label: calls
+        human: В проекте используются следующие типы связей...
+        executed_at: '2024-01-15T10:30:00.000Z'
+NaturalQueryErrorResponse:
+  type: object
+  required:
+    - success
+    - error
+  properties:
+    success:
+      type: boolean
+      enum:
+        - false
+    error:
+      type: string
+      description: Техническое описание ошибки (для разработчиков)
+      example: 'Script execution failed: rows is not defined'
+    human:
+      type: string
+      description: Человекочитаемое описание ошибки на русском языке
+      example: 'Произошла ошибка при выполнении скрипта: переменная ''rows'' не определена. Проверьте сгенерированный скрипт и исправьте ошибку.'
+    scriptId:
+      type: integer
+      nullable: true
+      description: ID скрипта, который пытались выполнить (null если скрипт не был сохранён)
+      example: 42
+    script:
+      type: string
+      nullable: true
+      description: Код сгенерированного скрипта (для отладки)
+      example: async function execute(contextCode) { const rows = ... }
+    cached:
+      type: boolean
+      description: true если скрипт был из кэша, false если был сгенерирован
+      example: false
+NaturalQuerySuggestion:
+  type: object
+  required:
+    - id
+    - question
+    - similarity
+    - usage_count
+    - is_valid
+  properties:
+    id:
+      type: integer
+      description: ID скрипта
+      example: 42
+    question:
+      type: string
+      description: Текст вопроса из кэша
+      example: Какие типы связей используются в проекте?
+    similarity:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Коэффициент похожести (cosine similarity) между вопросом пользователя и сохранённым вопросом
+      example: 0.92
+    usage_count:
+      type: integer
+      description: Количество использований скрипта
+      example: 15
+    is_valid:
+      type: boolean
+      description: Валидность скрипта (false если скрипт вызывал ошибки)
+      example: true
+    last_result:
+      type: object
+      nullable: true
+      description: Последний сохранённый результат выполнения скрипта (если есть)
+      properties:
+        raw:
+          description: Сырые данные последнего выполнения
+          oneOf:
+            - type: array
+              items: {}
+            - type: object
+        human:
+          type: string
+          description: Человекочитаемый текст последнего выполнения
+        executed_at:
+          type: string
+          format: date-time
+          description: Время последнего выполнения скрипта
+NaturalQuerySuggestResponse:
+  type: object
+  required:
+    - success
+    - high_confidence
+    - suggestions
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    high_confidence:
+      type: boolean
+      description: |
+        true если найден 1 результат с similarity >= 0.95 (рекомендация к использованию),
+        false если найдено несколько результатов с similarity < 0.95 (пользователь выбирает)
+      example: true
+    suggestions:
+      type: array
+      items:
+        $ref: '#/components/schemas/NaturalQuerySuggestion'
+      description: Список похожих вопросов из кэша
+      example:
+        - id: 42
+          question: Какие типы связей используются в проекте?
+          similarity: 0.97
+          usage_count: 15
+          is_valid: true
+          last_result:
+            raw:
+              - code: calls
+                label: calls
+            human: В проекте используются следующие типы связей...
+            executed_at: '2024-01-15T10:30:00.000Z'
+AgentScript:
+  type: object
+  required:
+    - id
+    - question
+    - script
+    - usage_count
+    - is_valid
+    - created_at
+    - updated_at
+  properties:
+    id:
+      type: integer
+      description: Уникальный идентификатор скрипта
+      example: 42
+    question:
+      type: string
+      description: Вопрос, для которого был сгенерирован скрипт
+      example: Какие типы связей используются в проекте?
+    script:
+      type: string
+      description: Код async функции execute(contextCode) для выполнения запроса
+      example: async function execute(contextCode) { const rows = await DbService.queryRaw(`SELECT ...`, [contextCode]); return rows; }
+    usage_count:
+      type: integer
+      description: Количество раз, сколько скрипт был использован
+      example: 5
+    is_valid:
+      type: boolean
+      description: Флаг валидности скрипта (true если скрипт успешно выполнился, false если был ошибка)
+      example: true
+    last_result:
+      type: object
+      nullable: true
+      description: Последний сохранённый результат выполнения скрипта (если есть). Содержит raw, human и executed_at.
+      properties:
+        raw:
+          description: Сырые данные последнего выполнения
+          oneOf:
+            - type: array
+              items: {}
+            - type: object
+        human:
+          type: string
+          description: Человекочитаемый текст последнего выполнения
+        executed_at:
+          type: string
+          format: date-time
+          description: Время последнего выполнения скрипта
+      example:
+        raw:
+          - code: calls
+            label: calls
+        human: В проекте используются следующие типы связей...
+        executed_at: '2024-01-15T10:30:00.000Z'
+    created_at:
+      type: string
+      format: date-time
+      description: Время создания скрипта
+    updated_at:
+      type: string
+      format: date-time
+      description: Время последнего обновления скрипта
+AgentScriptListResponse:
+  type: object
+  required:
+    - success
+    - scripts
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    scripts:
+      type: array
+      items:
+        type: object
+        required:
+          - id
+          - question
+          - usage_count
+          - is_valid
+          - created_at
+          - updated_at
+        properties:
+          id:
+            type: integer
+          question:
+            type: string
+          usage_count:
+            type: integer
+          is_valid:
+            type: boolean
+          last_result:
+            type: object
+            nullable: true
+            description: Последний сохранённый результат выполнения скрипта
+            properties:
+              raw:
+                description: Сырые данные последнего выполнения
+                oneOf:
+                  - type: array
+                    items: {}
+                  - type: object
+              human:
+                type: string
+              executed_at:
+                type: string
+                format: date-time
+          created_at:
+            type: string
+            format: date-time
+          updated_at:
+            type: string
+            format: date-time
+AgentScriptDetailResponse:
+  type: object
+  required:
+    - success
+    - script
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    script:
+      $ref: '#/components/schemas/AgentScript'
+AgentScriptUpdateRequest:
+  type: object
+  description: Поля для обновления скрипта
+  properties:
+    script:
+      type: string
+      description: Новый код скрипта (опционально)
+      example: async function execute(contextCode) { ... }
+    is_valid:
+      type: boolean
+      description: Новое значение флага валидности (опционально)
+      example: true
+  minProperties: 1

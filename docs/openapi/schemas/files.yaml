@@ -1,0 +1,40 @@
+# Схема: ProjectFile — дерево файлов проекта (path, name, type, selected, children, language).
+---
+ProjectFile:
+  type: object
+  required:
+    - path
+    - name
+    - type
+    - size
+    - selected
+  properties:
+    path:
+      type: string
+      description: Относительный путь от корня проекта (всегда с ./)
+      example: ./src/utils/api.ts
+    name:
+      type: string
+    type:
+      type: string
+      enum:
+        - file
+        - directory
+    size:
+      type: integer
+    selected:
+      type: boolean
+      default: true
+    children:
+      type: array
+      items:
+        $ref: '#/components/schemas/ProjectFile'
+    language:
+      $ref: '#/components/schemas/Language'
+      description: Язык файла (nullable для папок и неизвестных)
+    error:
+      type: boolean
+      default: false
+    errorMessage:
+      type: string
+      nullable: true

@@ -1,0 +1,26 @@
+# Схемы: L1Link, L1LinkIn — типы связей между элементами (вызовы, чтение/запись таблиц и т.д.).
+---
+L1Link:
+  type: object
+  required:
+    - target
+    - type
+  properties:
+    target:
+      type: string
+      description: full_name целевого элемента
+    type:
+      type: string
+      description: 'Тип связи (код из link_type: calls, reads_from, updates, inserts_into, etc.)'
+L1LinkIn:
+  type: object
+  required:
+    - source
+    - type
+  properties:
+    source:
+      type: string
+      description: full_name исходного элемента
+    type:
+      type: string
+      description: 'Тип связи (код из link_type: calls, reads_from, updates, inserts_into, etc.)'

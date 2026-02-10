@@ -1,0 +1,918 @@
+# Paths: items, project/tree, project/selection, stats, graph; item by id (comment, tags, logic-graph, extract-columns, analyze-logic); extract-all-columns.
+---
+/api/vector-db:
+  delete:
+    tags:
+      - Knowledge Base
+    summary: Очистить векторную базу данных
+    description: |
+      Удаляет все векторы и индексы для текущего context-code.
+      Это действие нельзя отменить. Все данные векторной БД будут удалены.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        description: Векторная БД успешно очищена
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Vector database cleared successfully
+      '500':
+        description: Ошибка при очистке
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/project/tree:
+  get:
+    tags:
+      - Project
+    summary: Получить дерево файлов проекта
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: rootPath
+        in: query
+        required: true
+        description: Абсолютный путь к проекту на бэкенде
+        schema:
+          type: string
+        example: /app/projects/my-app
+      - name: depth
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 12
+    responses:
+      '200':
+        description: Дерево файлов
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProjectFile'
+/api/project/selection:
+  post:
+    tags:
+      - Project
+    summary: Сохранить точную выборку файлов (синхронизируется с KB config)
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FileSelectionRequest'
+    responses:
+      '200':
+        description: Выборка сохранена → KB config обновлён
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    config:
+                      $ref: '#/components/schemas/KnowledgeBaseConfig'
+/api/items:
+  get:
+    tags:
+      - Core
+    summary: Все AiItems
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AiItem'
+/api/items-list:
+  get:
+    tags:
+      - Core
+    summary: Список метаданных AiItems
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AiItemSummary'
+/api/items/{id}:
+  get:
+    tags:
+      - Core
+    summary: Получить AiItem по ID
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiItem'
+      '404':
+        $ref: '#/components/responses/NotFound'
+/api/items/{id}/comment:
+  get:
+    tags:
+      - Core
+    summary: Получить комментарий для AiItem
+    description: |
+      Возвращает комментарий для указанного AiItem.
+      Комментарий может быть создан автоматически при сохранении L0 чанка или вручную через API.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem (full_name)
+        schema:
+          type: string
+        example: utils.fetchData
+    responses:
+      '200':
+        description: Комментарий найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiCommentResponse'
+      '404':
+        description: Комментарий не найден для данного AiItem
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+            example:
+              success: false
+              error: 'Comment not found for item: utils.fetchData'
+  post:
+    tags:
+      - Core
+    summary: Создать комментарий для AiItem
+    description: |
+      Создает или обновляет комментарий для указанного AiItem.
+      Если комментарий уже существует, он будет обновлен.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem (full_name)
+        schema:
+          type: string
+        example: utils.fetchData
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AiCommentRequest'
+          example:
+            comment: Этот метод обрабатывает HTTP запросы и возвращает JSON ответ
+    responses:
+      '200':
+        description: Комментарий успешно создан или обновлен
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiCommentResponse'
+      '400':
+        description: Неверный формат данных
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  put:
+    tags:
+      - Core
+    summary: Обновить комментарий для AiItem
+    description: |
+      Обновляет существующий комментарий для указанного AiItem.
+      Если комментарий не существует, возвращает ошибку 404.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem (full_name)
+        schema:
+          type: string
+        example: utils.fetchData
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AiCommentRequest'
+    responses:
+      '200':
+        description: Комментарий успешно обновлен
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiCommentResponse'
+      '404':
+        description: Комментарий не найден для данного AiItem
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  delete:
+    tags:
+      - Core
+    summary: Удалить комментарий для AiItem
+    description: |
+      Удаляет комментарий для указанного AiItem.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem (full_name)
+        schema:
+          type: string
+        example: utils.fetchData
+    responses:
+      '200':
+        description: Комментарий успешно удален
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    message:
+                      type: string
+                      example: 'Comment deleted successfully for item: utils.fetchData'
+      '404':
+        description: Комментарий не найден для данного AiItem
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/items/{id}/tags:
+  get:
+    tags:
+      - Tags
+    summary: Получить теги для AiItem
+    description: |
+      Возвращает список всех тегов, связанных с указанным AiItem.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem (full_name)
+        schema:
+          type: string
+        example: utils.fetchData
+    responses:
+      '200':
+        description: Список тегов найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiItemTagsResponse'
+      '404':
+        description: AiItem не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  post:
+    tags:
+      - Tags
+    summary: Добавить теги к AiItem (bulk)
+    description: |
+      Добавляет один или несколько тегов к указанному AiItem.
+      Если тег уже связан с AiItem, он будет проигнорирован (idempotent).
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem (full_name)
+        schema:
+          type: string
+        example: utils.fetchData
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AiItemTagsRequest'
+          example:
+            tagCodes:
+              - deprecated
+              - needs-review
+    responses:
+      '200':
+        description: Теги успешно добавлены
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiItemTagsResponse'
+      '400':
+        description: Неверный запрос (пустой массив или некорректные коды тегов)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: AiItem или один из тегов не найдены
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  delete:
+    tags:
+      - Tags
+    summary: Удалить теги у AiItem (bulk)
+    description: |
+      Удаляет один или несколько тегов у указанного AiItem.
+      Если тег не связан с AiItem, он будет проигнорирован (idempotent).
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem (full_name)
+        schema:
+          type: string
+        example: utils.fetchData
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AiItemTagsRequest'
+          example:
+            tagCodes:
+              - deprecated
+              - needs-review
+    responses:
+      '200':
+        description: Теги успешно удалены
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiItemTagsResponse'
+      '400':
+        description: Неверный запрос (пустой массив)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: AiItem не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  put:
+    tags:
+      - Tags
+    summary: Синхронизировать теги AiItem (заменить все)
+    description: |
+      Полностью заменяет все теги AiItem на указанный список.
+      Если массив пуст, все теги будут удалены.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem (full_name)
+        schema:
+          type: string
+        example: utils.fetchData
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AiItemTagsRequest'
+          example:
+            tagCodes:
+              - critical
+              - reviewed
+    responses:
+      '200':
+        description: Теги успешно синхронизированы
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiItemTagsResponse'
+      '400':
+        description: Неверный запрос (некорректные коды тегов)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: AiItem или один из тегов не найдены
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/items/{id}/logic-graph:
+  get:
+    tags:
+      - Core
+    summary: Получить сохраненный анализ логики для AiItem
+    description: |
+      Возвращает полный результат анализа логики для указанного AiItem:
+      - Текстовое описание логики функции (поле `logic`)
+      - Граф потока управления (поле `graph`) с узлами и связями
+
+      Анализ создан через Logic Architect и содержит как текстовое описание, так и визуализацию графа.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem
+        schema:
+          type: string
+        example: utils.fetchData
+    responses:
+      '200':
+        description: Анализ логики найден (содержит и описание, и граф)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogicGraphResponse'
+      '404':
+        description: Анализ логики не найден для данного AiItem
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+            example:
+              success: false
+              error: 'Logic analysis not found for item: utils.fetchData'
+  post:
+    tags:
+      - Core
+    summary: Сохранить анализ логики для AiItem
+    description: |
+      Сохраняет полный результат анализа логики для указанного AiItem:
+      - Текстовое описание логики функции (поле `logic`)
+      - Граф потока управления (поле `graph`) с узлами и связями
+
+      Если анализ уже существует для данного AiItem, он будет перезаписан.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem
+        schema:
+          type: string
+        example: utils.fetchData
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LogicAnalysisResponse'
+          example:
+            logic: Функция проверяет условие и возвращает результат в зависимости от значения
+            graph:
+              nodes:
+                - id: start_1
+                  type: start
+                  label: Начало
+                - id: decision_1
+                  type: decision
+                  label: Проверка условия
+                  details: Проверяет, превышает ли значение порог
+                - id: process_1
+                  type: process
+                  label: Вычисление результата
+                - id: end_1
+                  type: end
+                  label: Конец
+              edges:
+                - id: e1
+                  from: start_1
+                  to: decision_1
+                - id: e2
+                  from: decision_1
+                  to: process_1
+                  label: 'True'
+                - id: e3
+                  from: process_1
+                  to: end_1
+    responses:
+      '200':
+        description: Анализ логики успешно сохранен (и описание, и граф)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogicGraphResponse'
+      '400':
+        description: Неверный формат данных анализа (должны быть и logic, и graph)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: AiItem не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  put:
+    tags:
+      - Core
+    summary: Обновить анализ логики для AiItem
+    description: |
+      Обновляет существующий анализ логики для указанного AiItem.
+      Обновляет и текстовое описание логики, и граф потока управления.
+      Если анализ не существует для данного AiItem, возвращает ошибку 404.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem
+        schema:
+          type: string
+        example: utils.fetchData
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LogicAnalysisResponse'
+    responses:
+      '200':
+        description: Анализ логики успешно обновлен (и описание, и граф)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogicGraphResponse'
+      '404':
+        description: Анализ логики не найден для данного AiItem
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  delete:
+    tags:
+      - Core
+    summary: Удалить анализ логики для AiItem
+    description: |
+      Удаляет сохраненный анализ логики (и текстовое описание, и граф) для указанного AiItem.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem
+        schema:
+          type: string
+        example: utils.fetchData
+    responses:
+      '200':
+        description: Анализ логики успешно удален (и описание, и граф)
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    message:
+                      type: string
+                      example: 'Logic analysis deleted successfully for item: utils.fetchData'
+      '404':
+        description: Анализ логики не найден для данного AiItem
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/items/{id}/extract-columns:
+  post:
+    tags:
+      - Core
+    summary: Извлечение колонок таблиц из SQL-функции
+    description: |
+      Парсит тело SQL-функции и извлекает использование колонок таблиц:
+      1. Получает ai_item функции по full_name из БД
+      2. Берёт l0_code (тело функции) из chunk_vector
+      3. Парсит алиасы таблиц из FROM/JOIN
+      4. Извлекает колонки из SELECT, UPDATE SET, INSERT
+      5. Резолвит полные имена колонок через загруженные таблицы
+      6. Создаёт ai_item типа table_column для каждой уникальной колонки
+      7. Создаёт связи function→column в таблице link
+
+      Типы связей:
+      - reads_column: колонка используется в SELECT
+      - updates_column: колонка обновляется в UPDATE SET
+      - inserts_column: в колонку вставляются данные
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem функции (full_name)
+        schema:
+          type: string
+        example: hr.get_employee_skills
+    responses:
+      '200':
+        description: Колонки успешно извлечены
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColumnExtractionResponse'
+      '400':
+        description: AiItem не является функцией
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: AiItem не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Ошибка извлечения колонок
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/extract-all-columns:
+  post:
+    tags:
+      - Core
+    summary: Пакетное извлечение колонок из всех SQL-функций
+    description: |
+      Извлекает колонки из всех SQL-функций в контексте за один вызов:
+      1. Находит все ai_item с type='function' из .sql файлов
+      2. Для каждой функции вызывает extractColumnsFromFunction
+      3. Создаёт ai_item типа table_column и связи function→column
+      4. Возвращает суммарный отчёт со статистикой
+
+      Долгая операция — рекомендуется запускать после загрузки всех таблиц и функций.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        description: Пакетное извлечение завершено
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchColumnExtractionResponse'
+      '500':
+        description: Ошибка пакетного извлечения
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/items/{id}/analyze-logic:
+  post:
+    tags:
+      - Core
+    summary: Анализ логики функции через серверный LLM
+    description: |
+      Сервер загружает l0_code из БД по full_name (id),
+      вызывает LLM для анализа и возвращает { logic, graph }.
+      Результат НЕ сохраняется автоматически (для сохранения используйте POST /api/items/{id}/logic-graph).
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem (full_name)
+        schema:
+          type: string
+        example: utils.fetchData
+    responses:
+      '200':
+        description: Анализ логики успешно выполнен
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogicAnalysisResponse'
+      '404':
+        description: AiItem не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Ошибка анализа (LLM недоступен или ошибка обработки)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/stats:
+  get:
+    tags:
+      - Core
+    summary: Статистика дашборда
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardStats'
+/api/graph:
+  get:
+    tags:
+      - Core
+    summary: Граф зависимостей
+    operationId: getGraph
+    description: Возвращает весь граф зависимостей между AiItems в виде узлов и связей
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        description: Граф зависимостей
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphData'
+            example:
+              nodes:
+                - id: routes/api.registerFile
+                  type: function
+                  language: javascript
+                  filePath: C:\ERV\projects-ex\aiitem-rag-architect\docs\api.js
+                  l2_desc: Регистрирует информацию о файле в базе данных
+                - id: DbService.saveFileInfo
+                  type: method
+                  language: javascript
+                  filePath: C:\ERV\projects-ex\aiitem-rag-architect\docs\DbService.js
+                  l2_desc: Сохраняет метаданные файла и его содержимое
+              links:
+                - source: routes/api.registerFile
+                  target: DbService.saveFileInfo
+                  label: saveFileInfo

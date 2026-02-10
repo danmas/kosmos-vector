@@ -1,10 +1,24 @@
 # REST API для AIAN Vector (LangChain RAG + PostgreSQL)
 
-Базовый URL: `http://localhost:{PORT}` (по умолчанию `3005`)
+Базовый URL: `http://localhost:{PORT}` (по умолчанию `3200`)
 
 - Контент: JSON (`Content-Type: application/json`)
 - Аутентификация: отсутствует (локальная разработка)
 - Ответы: JSON, коды ошибок: 4xx/5xx
+- **API версия:** 2.8.0
+
+## 🆕 НОВОЕ в версии 2.8.0
+
+### App Config API - Управление глобальной конфигурацией приложения
+
+**GET** `/api/config` - получить текущую конфигурацию  
+**PATCH** `/api/config` - частично обновить конфигурацию  
+**POST** `/api/config/reset` - сбросить к дефолтным значениям
+
+⚠️ **Не требует `context-code`** - настройки глобальные
+
+Подробности: см. `KB/README_APP_CONFIG_API.md`  
+Frontend Integration: см. `docs/README_Frontend_Config_Integration.md`
 
 ## Конвенции
 

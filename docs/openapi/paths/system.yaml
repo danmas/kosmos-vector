@@ -1,0 +1,206 @@
+# Paths: /api/health, /api/contract, /api/logs — системные эндпоинты (health check, OpenAPI spec, логи).
+---
+/api/health:
+  get:
+    tags:
+      - System
+    summary: Health Check
+    operationId: getHealth
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        description: API работает
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthResponse'
+/api/contract:
+  get:
+    tags:
+      - System
+    summary: Получить OpenAPI спецификацию
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: format
+        in: query
+        schema:
+          type: string
+          enum:
+            - yaml
+            - json
+          default: yaml
+    responses:
+      '200':
+        description: Контракт
+        content:
+          application/x-yaml:
+            schema:
+              type: string
+          application/json:
+            schema:
+              type: object
+/api/logs:
+  get:
+    tags:
+      - System
+    summary: Серверные логи
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 100
+          maximum: 1000
+      - name: level
+        in: query
+        schema:
+          type: string
+          enum:
+            - INFO
+            - WARN
+            - ERROR
+      - name: since
+        in: query
+        schema:
+          type: string
+          format: date-time
+    responses:
+      '200':
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  level:
+                    type: string
+                  message:
+                    type: string
+/api/config:
+  get:
+    tags:
+      - System
+    summary: Получить текущую конфигурацию приложения
+    operationId: getAppConfig
+    description: |
+      Возвращает глобальные настройки приложения из config.json.
+      Не требует context-code, т.к. конфигурация глобальна.
+    responses:
+      '200':
+        description: Текущая конфигурация
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppConfigResponse'
+      '500':
+        description: Ошибка чтения конфигурации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  patch:
+    tags:
+      - System
+    summary: Частично обновить конфигурацию приложения
+    operationId: updateAppConfig
+    description: |
+      Обновляет глобальные настройки приложения в config.json.
+      Поддерживает частичное обновление - можно передать только изменяемые поля.
+      
+      **Валидация:**
+      - KOSMOS_BASE_URL: проверка формата URL
+      - LOG_LEVEL: enum (debug, info, warn, error)
+      - KOSMOS_MODEL: TODO согласовать с проектом kosmos-model
+      - KOSMOS_LOGIC_ARHITECT_MODEL: TODO согласовать с проектом kosmos-model
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AppConfigUpdateRequest'
+          examples:
+            updateModel:
+              summary: Изменить модель
+              value:
+                KOSMOS_MODEL: RICH
+            updateUrl:
+              summary: Изменить URL
+              value:
+                KOSMOS_BASE_URL: http://usa:3002/v1
+            updateLogLevel:
+              summary: Изменить уровень логирования
+              value:
+                LOG_LEVEL: debug
+            updateMultiple:
+              summary: Изменить несколько полей
+              value:
+                KOSMOS_BASE_URL: http://usa:3002/v1
+                KOSMOS_MODEL: RICH
+                LOG_LEVEL: info
+    responses:
+      '200':
+        description: Конфигурация успешно обновлена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppConfigUpdateResponse'
+      '400':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppConfigValidationError'
+      '500':
+        description: Ошибка сохранения конфигурации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/config/reset:
+  post:
+    tags:
+      - System
+    summary: Сбросить конфигурацию к значениям по умолчанию
+    operationId: resetAppConfig
+    description: |
+      Сбрасывает все настройки к значениям по умолчанию.
+      Используйте с осторожностью!
+    responses:
+      '200':
+        description: Конфигурация сброшена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppConfigUpdateResponse'
+      '500':
+        description: Ошибка сброса конфигурации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'

@@ -10,7 +10,7 @@ const configPath = join(process.cwd(), 'config.json');
 /**
  * Чтение конфигурации из config.json (динамически, каждый раз)
  * Приоритет: config.json > process.env > значения по умолчанию
- * @returns {Object} { LLM_BASE_URL, LLM_API_KEY, LLM_MODEL, LLM_LOGIC_ARHITECT_MODEL }
+ * @returns {Object} { KOSMOS_BASE_URL, KOSMOS_API_KEY, KOSMOS_MODEL, KOSMOS_LOGIC_ARHITECT_MODEL }
  */
 function getConfig() {
   let config = {};
@@ -25,20 +25,20 @@ function getConfig() {
   }
   
   return {
-    LLM_BASE_URL: config.LLM_BASE_URL || process.env.LLM_BASE_URL || "http://localhost:3002/v1",
-    LLM_API_KEY: process.env.LLM_API_KEY || "",
-    LLM_MODEL: config.LLM_MODEL || process.env.LLM_MODEL || "FAST",
-    LLM_LOGIC_ARHITECT_MODEL: config.LLM_LOGIC_ARHITECT_MODEL || process.env.LLM_LOGIC_ARHITECT_MODEL || null
+    KOSMOS_BASE_URL: config.KOSMOS_BASE_URL || process.env.KOSMOS_BASE_URL || "http://localhost:3002/v1",
+    KOSMOS_API_KEY: process.env.KOSMOS_API_KEY || "",
+    KOSMOS_MODEL: config.KOSMOS_MODEL || process.env.KOSMOS_MODEL || "FAST",
+    KOSMOS_LOGIC_ARHITECT_MODEL: config.KOSMOS_LOGIC_ARHITECT_MODEL || process.env.KOSMOS_LOGIC_ARHITECT_MODEL || null
   };
 }
 
 // Экспортируем геттеры для обратной совместимости
-function getLLM_BASE_URL() {
-  return getConfig().LLM_BASE_URL;
+function getKOSMOS_BASE_URL() {
+  return getConfig().KOSMOS_BASE_URL;
 }
 
-function getLLM_MODEL() {
-  return getConfig().LLM_MODEL;
+function getKOSMOS_MODEL() {
+  return getConfig().KOSMOS_MODEL;
 }
 
 // === ТИПЫ ===
@@ -62,18 +62,18 @@ async function callLLM(messages, model = null, options = {}) {
   
   // Читаем конфиг каждый раз
   const config = getConfig();
-  const actualModel = model || config.LLM_MODEL;
+  const actualModel = model || config.KOSMOS_MODEL;
   
   const headers = {
     "Content-Type": "application/json",
   };
   
-  if (config.LLM_API_KEY) {
-    headers["Authorization"] = `Bearer ${config.LLM_API_KEY}`;
+  if (config.KOSMOS_API_KEY) {
+    headers["Authorization"] = `Bearer ${config.KOSMOS_API_KEY}`;
   }
 
   try {
-    console.log(`📡 Отправка запроса к ${config.LLM_BASE_URL} (Model: ${actualModel})...`);
+    console.log(`📡 Отправка запроса к ${config.KOSMOS_BASE_URL} (Model: ${actualModel})...`);
     console.log('Headers:', headers);
     console.log('Messages:', messages);
     console.log('Model:', actualModel);
@@ -91,7 +91,7 @@ async function callLLM(messages, model = null, options = {}) {
       requestBody.response_format = { type: 'json_object' };
     }
     
-    const res = await fetch(`${config.LLM_BASE_URL}/chat/completions`, {
+    const res = await fetch(`${config.KOSMOS_BASE_URL}/chat/completions`, {
       method: "POST",
       headers,
       body: JSON.stringify(requestBody),
@@ -167,17 +167,17 @@ async function checkLLMAvailability(timeout = 5000) {
       "Content-Type": "application/json",
     };
     
-    if (config.LLM_API_KEY) {
-      headers["Authorization"] = `Bearer ${config.LLM_API_KEY}`;
+    if (config.KOSMOS_API_KEY) {
+      headers["Authorization"] = `Bearer ${config.KOSMOS_API_KEY}`;
     }
 
     // Отправляем минимальный тестовый запрос
-    const res = await fetch(`${config.LLM_BASE_URL}/chat/completions`, {
+    const res = await fetch(`${config.KOSMOS_BASE_URL}/chat/completions`, {
       method: "POST",
       headers,
       signal: controller.signal,
       body: JSON.stringify({
-        model: config.LLM_MODEL,
+        model: config.KOSMOS_MODEL,
         messages: [{ role: "user", content: "test" }],
         max_tokens: 5, // Минимальный ответ для проверки
       }),
@@ -200,17 +200,17 @@ async function checkLLMAvailability(timeout = 5000) {
 }
 
 // Экспорт модуля
-// Для обратной совместимости LLM_BASE_URL и LLM_MODEL доступны как функции
+// Для обратной совместимости KOSMOS_BASE_URL и KOSMOS_MODEL доступны как функции
 // Используйте getConfig() для получения всех значений сразу
 module.exports = {
   callLLM,
   checkLLMAvailability,
   getConfig,
-  getLLM_BASE_URL,
-  getLLM_MODEL,
+  getKOSMOS_BASE_URL,
+  getKOSMOS_MODEL,
   // Для обратной совместимости - свойства как функции
-  // В коде используйте: LLM_BASE_URL() вместо LLM_BASE_URL
-  LLM_BASE_URL: getLLM_BASE_URL,
-  LLM_MODEL: getLLM_MODEL
+  // В коде используйте: KOSMOS_BASE_URL() вместо KOSMOS_BASE_URL
+  KOSMOS_BASE_URL: getKOSMOS_BASE_URL,
+  KOSMOS_MODEL: getKOSMOS_MODEL
 };
 

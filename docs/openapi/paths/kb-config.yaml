@@ -1,0 +1,76 @@
+# Paths: /api/kb-config — конфигурация базы знаний (GET/POST/DELETE).
+---
+/api/kb-config:
+  get:
+    tags:
+      - Knowledge Base
+    summary: Получить текущую конфигурацию базы знаний
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        description: Текущая конфигурация
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SuccessResponse'
+                - type: object
+                  required:
+                    - config
+                  properties:
+                    config:
+                      $ref: '#/components/schemas/KnowledgeBaseConfig'
+  post:
+    tags:
+      - Knowledge Base
+    summary: Обновить конфигурацию базы знаний
+    description: |
+      Можно обновлять любые поля. Поле `fileSelection` имеет наивысший приоритет.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных (произвольная строка)
+        schema:
+          type: string
+          example: CARL
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              rootPath:
+                type: string
+              includeMask:
+                type: string
+              ignorePatterns:
+                type: string
+              fileSelection:
+                type: array
+                items:
+                  type: string
+              metadata:
+                type: object
+    responses:
+      '200':
+        description: Конфигурация обновлена
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SuccessResponse'
+                - type: object
+                  required:
+                    - config
+                  properties:
+                    config:
+                      $ref: '#/components/schemas/KnowledgeBaseConfig'
