@@ -12,7 +12,7 @@ module.exports = (dbService) => {
       const config = promptsConfigService.getPromptsConfig();
       res.json({
         success: true,
-        config: config
+        prompts: config
       });
     } catch (error) {
       console.error('[API/PROMPTS-CONFIG] Ошибка получения конфига промптов:', error);

@@ -16,8 +16,8 @@ async function testPromptsConfigAPI() {
     
     if (getResult.success) {
       console.log('✅ Конфигурация получена');
-      console.log(`   - Секций: ${Object.keys(getResult.config).length}`);
-      console.log(`   - RAG systemPrompt: ${getResult.config.rag?.systemPrompt?.substring(0, 50)}...`);
+      console.log(`   - Секций: ${Object.keys(getResult.prompts).length}`);
+      console.log(`   - RAG systemPrompt: ${getResult.prompts.rag?.systemPrompt?.substring(0, 50)}...`);
     } else {
       console.error('❌ Ошибка получения конфигурации:', getResult.error);
       return;
@@ -29,11 +29,11 @@ async function testPromptsConfigAPI() {
       updates: {
         rag: {
           systemPrompt: "Тестовый системный промпт для RAG",
-          userPromptTemplate: getResult.config.rag.userPromptTemplate
+          userPromptTemplate: getResult.prompts.rag.userPromptTemplate
         },
-        naturalQuery: getResult.config.naturalQuery,
-        l1l2Templates: getResult.config.l1l2Templates,
-        vectorOperations: getResult.config.vectorOperations
+        naturalQuery: getResult.prompts.naturalQuery,
+        l1l2Templates: getResult.prompts.l1l2Templates,
+        vectorOperations: getResult.prompts.vectorOperations
       },
       comment: "Тестовое обновление RAG промпта"
     };
@@ -99,11 +99,11 @@ async function testPromptsConfigAPI() {
       updates: {
         rag: {
           systemPrompt: "Ещё один тестовый промпт",
-          userPromptTemplate: getResult.config.rag.userPromptTemplate
+          userPromptTemplate: getResult.prompts.rag.userPromptTemplate
         },
-        naturalQuery: getResult.config.naturalQuery,
-        l1l2Templates: getResult.config.l1l2Templates,
-        vectorOperations: getResult.config.vectorOperations
+        naturalQuery: getResult.prompts.naturalQuery,
+        l1l2Templates: getResult.prompts.l1l2Templates,
+        vectorOperations: getResult.prompts.vectorOperations
       },
       comment: "Второе тестовое обновление"
     };
@@ -147,9 +147,9 @@ async function testPromptsConfigAPI() {
           systemPrompt: "Промпт есть"
           // userPromptTemplate отсутствует - должна быть ошибка
         },
-        naturalQuery: getResult.config.naturalQuery,
-        l1l2Templates: getResult.config.l1l2Templates,
-        vectorOperations: getResult.config.vectorOperations
+        naturalQuery: getResult.prompts.naturalQuery,
+        l1l2Templates: getResult.prompts.l1l2Templates,
+        vectorOperations: getResult.prompts.vectorOperations
       }
     };
     

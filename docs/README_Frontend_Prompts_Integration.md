@@ -58,7 +58,7 @@ const response = await fetch('/api/prompts-config');
 const data = await response.json();
 
 if (data.success) {
-  console.log('Текущие промпты:', data.config);
+  console.log('Текущие промпты:', data.prompts);
 }
 ```
 
@@ -211,7 +211,7 @@ interface PromptsConfigUpdateRequest {
  */
 interface PromptsConfigResponse {
   success: true;
-  config: PromptsConfig;
+  prompts: PromptsConfig;
 }
 
 /**
@@ -288,8 +288,8 @@ async function getPromptsConfig(): Promise<PromptsConfigResponse> {
 }
 
 // Использование
-const { config } = await getPromptsConfig();
-console.log('RAG systemPrompt:', config.rag.systemPrompt);
+const { prompts } = await getPromptsConfig();
+console.log('RAG systemPrompt:', prompts.rag.systemPrompt);
 ```
 
 ### 2. PATCH /api/prompts-config
@@ -512,7 +512,7 @@ export function usePromptsConfig(): UsePromptsConfigReturn {
         throw new Error(data.error);
       }
       
-      setConfig(data.config);
+      setConfig(data.prompts);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load config');
     } finally {
@@ -835,7 +835,7 @@ export function usePromptsConfig() {
         throw new Error(data.error);
       }
       
-      config.value = data.config;
+      config.value = data.prompts;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to load config';
     } finally {

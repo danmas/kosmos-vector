@@ -112,7 +112,7 @@ API проверяет:
 ```json
 {
   "success": true,
-  "config": {
+  "prompts": {
     "l1l2Templates": { ... },
     "rag": { ... },
     "naturalQuery": { ... },
