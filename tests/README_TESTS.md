@@ -117,7 +117,52 @@ curl -X POST "http://localhost:3200/api/extract-all-columns?context-code=CARL"
 
 Или из full_system_test.js — функция `testColumnExtraction()` автоматически обрабатывает все SQL-функции.
 
-## 7. Markdown Loader Tests
+## 7. Chat API Test (`tests/test_chat_api.js`)
+
+Тест для маршрута `POST /api/chat` — основного эндпоинта для RAG-чата с кодовой базой.
+
+### Что проверяет:
+- Валидацию обязательного параметра `context-code` (query parameter)
+- Валидацию обязательного поля `message` в теле запроса
+- Валидацию типа поля `message` (должно быть строкой)
+- Успешный запрос с корректными параметрами
+- Структуру ответа согласно схеме `ChatResponse` из api-contract.yaml:
+  - `response` (string, required) — ответ от LLM
+  - `timestamp` (string, required) — время ответа
+  - `usedContextIds` (array, optional) — ID использованных чанков контекста
+- Альтернативный формат параметра `contextCode` (camelCase)
+- Работу с несуществующим context-code (система должна отвечать без контекста)
+
+### Как запустить:
+1. Запустите сервер:
+   ```bash
+   bun start
+   # или
+   node server.js
+   ```
+2. В отдельном терминале выполните:
+   ```bash
+   node tests/test_chat_api.js
+   ```
+
+**Базовый URL:** `http://localhost:3200`
+**Тестовый контекст:** `TEST`
+
+### Примеры тестовых сценариев:
+1. **Ошибка 400** — отсутствие `context-code`
+2. **Ошибка 400** — отсутствие `message` в теле
+3. **Ошибка 400** — `message` не является строкой
+4. **Успех 200** — корректный запрос, проверка структуры ответа
+5. **Успех 200** — запрос с `contextCode` (camelCase)
+6. **Успех 200** — запрос с несуществующим контекстом
+
+### Связанные маршруты:
+- `POST /api/chat` — RAG чат с контекстом из кодовой базы
+- `POST /api/ask` — прямой запрос к LLM без RAG
+
+См. также [docs/api-contract.yaml](../docs/api-contract.yaml) строки 2478-2499 для спецификации API.
+
+## 8. Markdown Loader Tests
 
 Тесты для проверки загрузки и обработки Markdown файлов с созданием иерархической структуры ai_items и связей.
 

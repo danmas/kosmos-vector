@@ -1,14 +1,14 @@
 {
   "rootPath": "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api",
-  "includeMask": "**/api*.sql",
+  "includeMask": "**/api_par*.sql",
   "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
   "fileSelection": [],
-  "lastUpdated": "2026-02-05T06:26:51.847Z",
+  "lastUpdated": "2026-02-09T15:56:31.318Z",
   "metadata": {
     "projectName": "New Project",
     "description": "RAG knowledge base",
     "tags": [],
-    "custom_settings": "functions_loading:\n  enabled: false\ntable_loading:\n  enabled: true\n  schema: carl_inspect, carl_dict, carl_car, carl_wf, carl_comm\n  __schema: carl_data, carl_amo\n  include_patterns:\n    - \"%%\"\n  exclude_patterns:\n    - \"\\\\_%\"\n  exclude_names:\n    - \"a\"\n    - \"auction_b20210519\"\n    - \"test_table\""
+    "custom_settings": "functions_loading:\n  enabled: true\ntable_loading:\n  enabled: false\n  schema: carl_inspect, carl_dict, carl_car, carl_wf, carl_comm\n  __schema: carl_data, carl_amo\n  include_patterns:\n    - \"%%\"\n  exclude_patterns:\n    - \"\\\\_%\"\n  exclude_names:\n    - \"a\"\n    - \"auction_b20210519\"\n    - \"test_table\""
   },
   "pipelineConfig": {
     "parsing": {},

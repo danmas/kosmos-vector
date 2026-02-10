@@ -12,7 +12,7 @@ const TEST_CONTEXT = 'TEST_API_VECTORIZE';
 async function testApiVectorizeAiItems() {
   console.log('=== ТЕСТ API МАРШРУТА /vectorize-ai-items ===\n');
   
-  const apiUrl = `http://localhost:${process.env.PORT || 3001}`;
+  const apiUrl = `http://localhost:${process.env.PORT || 3200}`;
   console.log(`Тестируем API на: ${apiUrl}`);
   
   const pgClient = new Client({
