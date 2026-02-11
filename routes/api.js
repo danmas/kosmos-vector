@@ -1296,6 +1296,9 @@ ${JSON.stringify({
   // === 7. Запуск шага 1 pipeline ===
   router.post('/pipeline/step/1/run', async (req, res) => {
     const contextCode = req.contextCode;
+    const mode = (req.body?.mode || req.query?.mode || 'incremental');
+    const validModes = ['incremental', 'full'];
+    const effectiveMode = validModes.includes(mode) ? mode : 'incremental';
 
     try {
       // Проверка, не запущен ли уже шаг 1
@@ -1329,7 +1332,7 @@ ${JSON.stringify({
       // Запускаем шаг 1 асинхронно (не блокируем ответ)
       const { runStep1 } = require('./pipeline/step1Runner');
 
-      runStep1(contextCode, sessionId, dbService, pipelineStateManager, pipelineHistoryManager)
+      runStep1(contextCode, sessionId, dbService, pipelineStateManager, pipelineHistoryManager, effectiveMode)
         .then(() => {
           // Шаг завершён успешно - сохраняем сессию
           const stepData = pipelineStateManager.getStep(1);
@@ -1387,6 +1390,9 @@ ${JSON.stringify({
   // === 7.1 Запуск шага 2 pipeline ===
   router.post('/pipeline/step/2/run', async (req, res) => {
     const contextCode = req.contextCode;
+    const mode = (req.body?.mode || req.query?.mode || 'incremental');
+    const validModes = ['incremental', 'full'];
+    const effectiveMode = validModes.includes(mode) ? mode : 'incremental';
 
     try {
       // Проверка, не запущен ли уже шаг 2
@@ -1420,7 +1426,7 @@ ${JSON.stringify({
       // Запускаем шаг 2 асинхронно (не блокируем ответ)
       const { runStep2 } = require('./pipeline/step2Runner');
 
-      runStep2(contextCode, sessionId, dbService, pipelineStateManager, pipelineHistoryManager)
+      runStep2(contextCode, sessionId, dbService, pipelineStateManager, pipelineHistoryManager, effectiveMode)
         .then(() => {
           // Шаг завершён успешно - сохраняем сессию
           const stepData = pipelineStateManager.getStep(2);
@@ -1479,6 +1485,9 @@ ${JSON.stringify({
   router.post('/pipeline/start', async (req, res) => {
     const contextCode = req.contextCode;
     const { forceRescan = false } = req.body || {};
+    const mode = (req.body?.mode || req.query?.mode || 'incremental');
+    const validModes = ['incremental', 'full'];
+    const effectiveMode = validModes.includes(mode) ? mode : 'incremental';
 
     try {
       // Проверяем конфигурацию
@@ -1528,7 +1537,7 @@ ${JSON.stringify({
       pipelineHistoryManager.addHistoryEntry(contextCode, 1, pipelineStateManager.getStep(1));
 
       // Запускаем шаг 1, после его завершения запустим шаг 2
-      runStep1(contextCode, sessionId1, dbService, pipelineStateManager, pipelineHistoryManager)
+      runStep1(contextCode, sessionId1, dbService, pipelineStateManager, pipelineHistoryManager, effectiveMode)
         .then(() => {
           // Сохраняем сессию шага 1
           const step1Data = pipelineStateManager.getStep(1);
@@ -1553,7 +1562,7 @@ ${JSON.stringify({
 
           pipelineHistoryManager.addHistoryEntry(contextCode, 2, pipelineStateManager.getStep(2));
 
-          return runStep2(contextCode, sessionId2, dbService, pipelineStateManager, pipelineHistoryManager)
+          return runStep2(contextCode, sessionId2, dbService, pipelineStateManager, pipelineHistoryManager, effectiveMode)
             .then(() => {
               // Сохраняем сессию шага 2
               const step2Data = pipelineStateManager.getStep(2);

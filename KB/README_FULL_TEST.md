@@ -72,12 +72,12 @@ node tests/full_system_test.js
 ## Этапы теста
 
 ### 1. Cleanup
-Удаление данных предыдущего запуска:
+Удаление данных предыдущего запуска. Порядок важен: сначала link и ai_item, затем files (chunk_vector удалится по CASCADE от files). У таблицы `chunk_vector` нет колонки `context_code`.
 ```sql
-DELETE FROM chunk_vector WHERE context_code = 'FULL_TEST';
-DELETE FROM ai_item WHERE context_code = 'FULL_TEST';
-DELETE FROM link WHERE context_code = 'FULL_TEST';
-DELETE FROM files WHERE context_code = 'FULL_TEST';
+DELETE FROM public.link WHERE context_code = 'FULL_TEST';
+DELETE FROM public.ai_item WHERE context_code = 'FULL_TEST';
+DELETE FROM public.files WHERE context_code = 'FULL_TEST';
+-- chunk_vector удаляется автоматически (ON DELETE CASCADE у file_id)
 ```
 
 ### 2. Step1 (Parsing + Loading)
@@ -86,14 +86,16 @@ DELETE FROM files WHERE context_code = 'FULL_TEST';
 - Создание ai_item и chunk_vector записей
 - Сохранение L1 связей в таблицу link
 
-**API:** `POST /api/pipeline/step/1/run?context-code=FULL_TEST`
+**API:** `POST /api/pipeline/step/1/run?context-code=FULL_TEST`  
+По умолчанию используется режим **инкрементальной** загрузки (`mode=incremental`). Для полной перезагрузки: `POST ...&mode=full` или тело `{ "mode": "full" }`.
 
 ### 3. Step2 (L1 Fix)
 - Резолвинг коротких имён в полные (schema.name)
 - Обновление chunk_vector.chunk_content
 - Обновление link.target
 
-**API:** `POST /api/pipeline/step/2/run?context-code=FULL_TEST`
+**API:** `POST /api/pipeline/step/2/run?context-code=FULL_TEST`  
+В режиме `incremental` обрабатываются только ai_item с `needs_rebuild = true`.
 
 ### 4. Проверки
 
@@ -103,7 +105,7 @@ DELETE FROM files WHERE context_code = 'FULL_TEST';
 - `hr_test_project_php` — PHP
 
 #### Проверка 1: ai_items
-- Ожидаемое количество: 28-36 записей
+- Ожидаемое количество: 35-50 записей (зависит от парсеров и DDL)
 - DDL/SQL элементы (`hr.*`) имеют схему в full_name
 - JS/TS функции могут быть без схемы (это нормально)
 
@@ -145,6 +147,14 @@ DELETE FROM files WHERE context_code = 'FULL_TEST';
 2. "Какие классы есть в проекте?" → `EmployeeService`, `DepartmentService`
 3. "Расскажи про HR схему базы данных" → `employees`, `departments`
 
+#### Проверка 4: Инкрементальное обновление (Step 1)
+После первой полной загрузки повторный запуск Step 1 в режиме по умолчанию (`mode=incremental`) должен почти ничего не менять:
+- Файлы без изменений пропускаются по mtime или по хешу содержимого.
+- Сущности без изменений пропускаются по `content_hash`.
+В отчёте шага 1 ожидаются `skippedFiles` ≥ 1 и/или `skippedEntities` ≥ 1 при повторном запуске без изменения файлов.
+
+**API:** второй вызов `POST /api/pipeline/step/1/run?context-code=FULL_TEST` (без `mode=full`). После завершения отчёт доступен в статусе шага (например, через `GET /api/pipeline/steps/status`).
+
 ## Ожидаемые результаты
 
 ```
@@ -159,6 +169,7 @@ Multi-root: ✅
 Проверка L1 связей: ✅
 Извлечение колонок: ✅
 Logic Architect: ✅
+Инкрементальное обновление (повторный Step1): ✅
 Natural Query тесты:
   1. ✅ "Какие функции работают с таблицей employees..."
   2. ✅ "Какие классы есть в проекте..."
@@ -174,7 +185,7 @@ Natural Query тесты:
 ### Проверка ai_items вручную
 ```sql
 SELECT type, COUNT(*) 
-FROM ai_item 
+FROM public.ai_item 
 WHERE context_code = 'FULL_TEST' 
 GROUP BY type;
 ```
@@ -182,8 +193,8 @@ GROUP BY type;
 ### Проверка связей
 ```sql
 SELECT lt.code, COUNT(*) 
-FROM link l
-JOIN link_type lt ON l.link_type_id = lt.id
+FROM public.link l
+JOIN public.link_type lt ON l.link_type_id = lt.id
 WHERE l.context_code = 'FULL_TEST'
 GROUP BY lt.code;
 ```
@@ -191,7 +202,7 @@ GROUP BY lt.code;
 ### Проверка файлов из разных rootPath
 ```sql
 SELECT file_url, filename 
-FROM files 
+FROM public.files 
 WHERE context_code = 'FULL_TEST';
 ```
 
@@ -199,27 +210,23 @@ WHERE context_code = 'FULL_TEST';
 ```sql
 -- Получить все сохранённые анализы логики
 SELECT ai.full_name, lg.logic, lg.graph
-FROM logic_graph lg
-JOIN ai_item ai ON lg.ai_item_id = ai.id
+FROM public.logic_graph lg
+JOIN public.ai_item ai ON lg.ai_item_id = ai.id
 WHERE ai.context_code = 'FULL_TEST';
 ```
 
 ### Проверка извлечённых колонок
+В таблице `link` связи задаются полями `source` и `target` (full_name), а не id ai_item.
 ```sql
 -- Все ai_item типа table_column
 SELECT full_name, s_name 
-FROM ai_item 
+FROM public.ai_item 
 WHERE context_code = 'FULL_TEST' AND type = 'table_column';
 
--- Связи function→column
-SELECT 
-  src.full_name AS function_name,
-  lt.code AS link_type,
-  tgt.full_name AS column_name
-FROM link l
-JOIN ai_item src ON l.source_ai_item_id = src.id
-JOIN ai_item tgt ON l.target_ai_item_id = tgt.id
-JOIN link_type lt ON l.link_type_id = lt.id
+-- Связи function→column (source/target — full_name)
+SELECT l.source AS function_name, lt.code AS link_type, l.target AS column_name
+FROM public.link l
+JOIN public.link_type lt ON l.link_type_id = lt.id
 WHERE l.context_code = 'FULL_TEST'
   AND lt.code IN ('reads_column', 'updates_column', 'inserts_column');
 ```

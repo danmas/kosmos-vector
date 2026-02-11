@@ -315,7 +315,7 @@ function parseDdlLoadingConfig(customSettingsYaml) {
  * @param {PipelineStateManager} pipelineState
  * @param {PipelineHistoryManager} pipelineHistory
  */
-async function runStep1(contextCode, sessionId, dbService, pipelineState, pipelineHistory = null) {
+async function runStep1(contextCode, sessionId, dbService, pipelineState, pipelineHistory = null, mode = 'incremental') {
   // Создаём логгер для сбора логов с sessionId
   const logger = createStepLogger('[Step1]', sessionId);
   
@@ -921,7 +921,12 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
       totalAiItems: 0,
       totalChunks: 0,
       errors: 0,
-      skipped: 0
+      skipped: 0,
+      skippedFiles: 0,
+      skippedEntities: 0,
+      deletedEntities: 0,
+      updatedEntities: 0,
+      createdEntities: 0
     },
     details: {
       sqlFiles: [],
@@ -940,7 +945,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     const task = tasks[i];
     try {
       if (task.type === 'sql') {
-        const fileReport = await loadSqlFunctionsFromFile(task.path, contextCode, dbService, pipelineState);
+        const fileReport = await loadSqlFunctionsFromFile(task.path, contextCode, dbService, pipelineState, mode);
 
         if (fileReport) {
           report.details.sqlFiles.push(fileReport);
@@ -948,6 +953,13 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
           if (fileReport.fileId) {
             report.summary.totalFiles++;
             report.summary.totalFunctions += fileReport.functionsProcessed || 0;
+            if (fileReport.skipped) report.summary.skippedFiles += 1;
+            if (fileReport.entityReport) {
+              report.summary.skippedEntities += fileReport.entityReport.unchanged || 0;
+              report.summary.deletedEntities += fileReport.entityReport.deleted || 0;
+              report.summary.updatedEntities += fileReport.entityReport.updated || 0;
+              report.summary.createdEntities += fileReport.entityReport.created || 0;
+            }
 
             fileReport.functions.forEach(func => {
               if (func.aiItemId) report.summary.totalAiItems++;
@@ -972,7 +984,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
           report.summary.skipped++;
         }
       } else if (task.type === 'js') {
-        const fileReport = await loadJsFunctionsFromFile(task.path, contextCode, dbService, pipelineState);
+        const fileReport = await loadJsFunctionsFromFile(task.path, contextCode, dbService, pipelineState, mode);
 
         if (fileReport) {
           report.details.jsFiles.push(fileReport);
@@ -980,6 +992,13 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
           if (fileReport.fileId) {
             report.summary.totalFiles++;
             report.summary.totalFunctions += fileReport.functionsProcessed || 0;
+            if (fileReport.skipped) report.summary.skippedFiles += 1;
+            if (fileReport.entityReport) {
+              report.summary.skippedEntities += fileReport.entityReport.unchanged || 0;
+              report.summary.deletedEntities += fileReport.entityReport.deleted || 0;
+              report.summary.updatedEntities += fileReport.entityReport.updated || 0;
+              report.summary.createdEntities += fileReport.entityReport.created || 0;
+            }
 
             fileReport.functions.forEach(func => {
               if (func.aiItemId) report.summary.totalAiItems++;
@@ -1004,7 +1023,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
           report.summary.skipped++;
         }
       } else if (task.type === 'ts') {
-        const fileReport = await loadTsFunctionsFromFile(task.path, contextCode, dbService, pipelineState);
+        const fileReport = await loadTsFunctionsFromFile(task.path, contextCode, dbService, pipelineState, mode);
 
         if (fileReport) {
           report.details.tsFiles.push(fileReport);
@@ -1012,6 +1031,13 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
           if (fileReport.fileId) {
             report.summary.totalFiles++;
             report.summary.totalFunctions += fileReport.functionsProcessed || 0;
+            if (fileReport.skipped) report.summary.skippedFiles += 1;
+            if (fileReport.entityReport) {
+              report.summary.skippedEntities += fileReport.entityReport.unchanged || 0;
+              report.summary.deletedEntities += fileReport.entityReport.deleted || 0;
+              report.summary.updatedEntities += fileReport.entityReport.updated || 0;
+              report.summary.createdEntities += fileReport.entityReport.created || 0;
+            }
 
             fileReport.functions.forEach(func => {
               if (func.aiItemId) report.summary.totalAiItems++;
@@ -1036,7 +1062,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
           report.summary.skipped++;
         }
       } else if (task.type === 'php') {
-        const fileReport = await loadPhpFunctionsFromFile(task.path, contextCode, dbService, pipelineState);
+        const fileReport = await loadPhpFunctionsFromFile(task.path, contextCode, dbService, pipelineState, mode);
 
         if (fileReport) {
           report.details.phpFiles.push(fileReport);
@@ -1044,6 +1070,13 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
           if (fileReport.fileId) {
             report.summary.totalFiles++;
             report.summary.totalFunctions += fileReport.functionsProcessed || 0;
+            if (fileReport.skipped) report.summary.skippedFiles += 1;
+            if (fileReport.entityReport) {
+              report.summary.skippedEntities += fileReport.entityReport.unchanged || 0;
+              report.summary.deletedEntities += fileReport.entityReport.deleted || 0;
+              report.summary.updatedEntities += fileReport.entityReport.updated || 0;
+              report.summary.createdEntities += fileReport.entityReport.created || 0;
+            }
 
             fileReport.functions.forEach(func => {
               if (func.aiItemId) report.summary.totalAiItems++;
@@ -1068,7 +1101,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
           report.summary.skipped++;
         }
       } else if (task.type === 'md') {
-        const fileReport = await loadMarkdownFromFile(task.path, contextCode, dbService, pipelineState);
+        const fileReport = await loadMarkdownFromFile(task.path, contextCode, dbService, pipelineState, mode);
 
         if (fileReport) {
           report.details.mdFiles.push(fileReport);
@@ -1076,6 +1109,13 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
           if (fileReport.fileId) {
             report.summary.totalFiles++;
             report.summary.totalAiItems += fileReport.sectionsProcessed || 0;
+            if (fileReport.skipped) report.summary.skippedFiles += 1;
+            if (fileReport.entityReport) {
+              report.summary.skippedEntities += fileReport.entityReport.unchanged || 0;
+              report.summary.deletedEntities += fileReport.entityReport.deleted || 0;
+              report.summary.updatedEntities += fileReport.entityReport.updated || 0;
+              report.summary.createdEntities += fileReport.entityReport.created || 0;
+            }
 
             fileReport.sections.forEach(section => {
               if (section.aiItemId) report.summary.totalAiItems++;
@@ -1117,7 +1157,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
           report.summary.skipped++;
         }
       } else if (task.type === 'ddl') {
-        const fileReport = await loadDdlFromFile(task.path, contextCode, dbService, pipelineState);
+        const fileReport = await loadDdlFromFile(task.path, contextCode, dbService, pipelineState, mode);
 
         if (fileReport) {
           report.details.ddlFiles.push(fileReport);
@@ -1125,6 +1165,13 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
           if (fileReport.fileId) {
             report.summary.totalFiles++;
             report.summary.totalTables += fileReport.tablesProcessed || 0;
+            if (fileReport.skipped) report.summary.skippedFiles += 1;
+            if (fileReport.entityReport) {
+              report.summary.skippedEntities += fileReport.entityReport.unchanged || 0;
+              report.summary.deletedEntities += fileReport.entityReport.deleted || 0;
+              report.summary.updatedEntities += fileReport.entityReport.updated || 0;
+              report.summary.createdEntities += fileReport.entityReport.created || 0;
+            }
 
             fileReport.tables.forEach(table => {
               if (table.aiItemId) report.summary.totalAiItems++;
@@ -1150,7 +1197,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
         }
       } else if (task.type === 'table') {
         logger.log(`----${task.name}-----`);
-        const tableReport = await loadTableSchema(task.name, contextCode, dbService, pipelineState);
+        const tableReport = await loadTableSchema(task.name, contextCode, dbService, pipelineState, mode);
         logger.log(`---------------------`);
 
         if (tableReport) {

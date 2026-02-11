@@ -13,11 +13,11 @@ const { createStepLogger } = require('./stepLogger');
  * @param {PipelineStateManager} pipelineState
  * @param {PipelineHistoryManager} pipelineHistory
  */
-async function runStep2(contextCode, sessionId, dbService, pipelineState, pipelineHistory = null) {
+async function runStep2(contextCode, sessionId, dbService, pipelineState, pipelineHistory = null, mode = 'incremental') {
     // Создаём логгер для сбора логов с sessionId
     const logger = createStepLogger('[Step2]', sessionId);
     
-    logger.log(`Запуск анализа и исправления зависимостей для контекста "${contextCode}"`);
+    logger.log(`Запуск анализа и исправления зависимостей для контекста "${contextCode}" (mode=${mode})`);
 
     // Обновляем статус
     pipelineState.updateStep(2, {
@@ -90,12 +90,18 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
 
         // 3. Анализ и исправление L1 зависимостей
         // Получаем все чанки уровня 1
-        const l1Chunks = await client.query(`
-      SELECT fv.id AS chunk_id, fv.chunk_content, fv.full_name AS parent_func, f.filename
+        let l1ChunksQuery = `
+      SELECT fv.id AS chunk_id, fv.chunk_content, fv.full_name AS parent_func, f.filename, fv.ai_item_id
       FROM public.chunk_vector fv
       JOIN public.files f ON fv.file_id = f.id
-      WHERE f.context_code = $1 AND fv.level LIKE '1-%'
-    `, [contextCode]);
+      JOIN public.ai_item ai ON fv.ai_item_id = ai.id
+      WHERE f.context_code = $1 AND fv.level LIKE '1-%'`;
+        
+        if (mode === 'incremental') {
+          l1ChunksQuery += ` AND ai.needs_rebuild = true`;
+        }
+        
+        const l1Chunks = await client.query(l1ChunksQuery, [contextCode]);
 
         report.summary.l1ChunksAnalyzed = l1Chunks.rows.length;
         pipelineState.updateStep(2, { totalItems: l1Chunks.rows.length });
@@ -186,6 +192,11 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
                     [content, chunk.chunk_id]
                 );
             }
+            
+            // Reset needs_rebuild flag for this ai_item after processing
+            if (mode === 'incremental' && chunk.ai_item_id) {
+                await dbService.clearNeedsRebuild(chunk.ai_item_id);
+            }
 
             // Обновляем прогресс
             pipelineState.incrementItemsProcessed(2);
@@ -202,12 +213,18 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
         logger.log(`Анализ таблицы link...`);
 
         // Получаем все связи без схемы в target
-        const linksNoSchema = await client.query(`
-            SELECT id, source, target, link_type_id
-            FROM public.link
-            WHERE context_code = $1
-              AND target NOT LIKE '%.%'
-        `, [contextCode]);
+        let linksQuery = `
+            SELECT l.id, l.source, l.target, l.link_type_id, ai.needs_rebuild
+            FROM public.link l
+            JOIN public.ai_item ai ON l.source = ai.full_name AND l.context_code = ai.context_code
+            WHERE l.context_code = $1
+              AND l.target NOT LIKE '%.%'`;
+              
+        if (mode === 'incremental') {
+          linksQuery += ` AND ai.needs_rebuild = true`;
+        }
+        
+        const linksNoSchema = await client.query(linksQuery, [contextCode]);
 
         report.summary.linksAnalyzed = linksNoSchema.rows.length;
 

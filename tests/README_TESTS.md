@@ -91,6 +91,29 @@ node tests/full_system_test.js
 
 Подробнее см. [KB/README_FULL_TEST.md](../KB/README_FULL_TEST.md)
 
+## 4.1 Тест инкрементального обновления (`tests/test_incremental_update.js`)
+
+Проверяет все сценарии инкрементального Step 1: пропуск по mtime/hash, неизменённые/изменённые/новые/удалённые сущности.
+
+### Что проверяет:
+1. **Первая загрузка** — копируется `version_a.sql` (3 функции: fa, fb, fd), запускается Step1. Ожидаются созданные сущности.
+2. **Вторая загрузка** — копируется `version_b.sql` (fa без изменений, fb с изменённым телом, fc новая, fd удалена). Ожидаются: `skippedEntities` ≥ 1 (fa), `updatedEntities` ≥ 1 (fb), `createdEntities` ≥ 1 (fc), `deletedEntities` ≥ 1 (fd).
+3. **Повтор без изменений** — Step1 запускается снова без смены файла. Ожидаются `skippedFiles` ≥ 1 или `skippedEntities` ≥ 1.
+
+### Фикстуры:
+- `tests/fixtures/incremental/version_a.sql` — первая версия файла
+- `tests/fixtures/incremental/version_b.sql` — вторая версия (частичные изменения)
+- Рабочий файл: `tests/incremental_test_project/incr_functions.sql` (перезаписывается тестом)
+
+### Требования:
+- Сервер запущен (по умолчанию `http://localhost:3200`, можно задать `TEST_BASE_URL` в .env)
+- БД из .env
+
+### Как запустить:
+```bash
+node tests/test_incremental_update.js
+```
+
 ## 5. Column Extractor Test (`tests/test_column_extractor.js`)
 
 Тест извлечения колонок таблиц из SQL-функций.

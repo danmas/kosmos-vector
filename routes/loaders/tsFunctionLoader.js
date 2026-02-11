@@ -3,6 +3,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const { checkFileChanged } = require('../../packages/core/fileChangeDetector');
+const { processEntitiesIncremental } = require('../../packages/core/entityProcessor');
 
 /**
  * Поиск конца блока кода (с учётом вложенных скобок)
@@ -471,9 +473,9 @@ async function parseTsFunctionL1(code) {
 /**
  * Загрузка TypeScript сущностей из файла
  */
-async function loadTsFunctionsFromFile(filePath, contextCode, dbService, pipelineState = null) {
+async function loadTsFunctionsFromFile(filePath, contextCode, dbService, pipelineState = null, mode = 'incremental') {
     const filename = path.basename(filePath);
-    console.log(`[TS-Loader] Обработка файла: ${filename}`);
+    console.log(`[TS-Loader] Обработка файла: ${filename} (mode=${mode})`);
 
     const report = {
         filename: filename,
@@ -482,17 +484,43 @@ async function loadTsFunctionsFromFile(filePath, contextCode, dbService, pipelin
         functionsFound: 0,
         functionsProcessed: 0,
         functions: [],
-        errors: []
+        errors: [],
+        skipped: false,
+        skipReason: null,
+        entityReport: null
     };
 
     let tsContent;
-    try {
-        tsContent = fs.readFileSync(filePath, 'utf8');
-    } catch (err) {
-        const errorMsg = `Не удалось прочитать файл ${filename}: ${err.message}`;
-        console.error(`[TS-Loader] ${errorMsg}`);
-        report.errors.push(errorMsg);
-        return report;
+    let fileHash = null;
+
+    if (mode === 'incremental') {
+        try {
+            const changeResult = await checkFileChanged(filePath, contextCode, dbService);
+            if (!changeResult.changed) {
+                console.log(`[TS-Loader] Файл ${filename} не изменился (${changeResult.status}), пропускаем`);
+                report.skipped = true;
+                report.skipReason = changeResult.status;
+                report.fileId = changeResult.fileId;
+                return report;
+            }
+            tsContent = changeResult.content;
+            fileHash = changeResult.newHash;
+            report.fileId = changeResult.fileId;
+        } catch (err) {
+            console.warn(`[TS-Loader] Ошибка инкрементальной проверки: ${err.message}`);
+            tsContent = null;
+        }
+    }
+
+    if (!tsContent) {
+        try {
+            tsContent = fs.readFileSync(filePath, 'utf8');
+        } catch (err) {
+            const errorMsg = `Не удалось прочитать файл ${filename}: ${err.message}`;
+            console.error(`[TS-Loader] ${errorMsg}`);
+            report.errors.push(errorMsg);
+            return report;
+        }
     }
 
     const entities = parseTsEntitiesFromContent(tsContent, filePath);
@@ -507,7 +535,7 @@ async function loadTsFunctionsFromFile(filePath, contextCode, dbService, pipelin
 
     // Регистрация файла
     try {
-        const { id: fileId, isNew } = await dbService.saveFileInfo(filename, tsContent, filePath, contextCode);
+        const { id: fileId, isNew } = await dbService.saveFileInfo(filename, tsContent, filePath, contextCode, fileHash);
         report.fileId = fileId;
         report.isNew = isNew;
         console.log(`[TS-Loader] Файл зарегистрирован: fileId = ${fileId}, isNew = ${isNew}`);
@@ -541,6 +569,60 @@ async function loadTsFunctionsFromFile(filePath, contextCode, dbService, pipelin
         }
     }
 
+    // === Инкрементальная обработка сущностей ===
+    if (mode === 'incremental' && report.fileId) {
+        try {
+            const entityReport = await processEntitiesIncremental(entities, report.fileId, contextCode, dbService, {
+                loaderTag: '[TS-Loader]',
+                createChunksAndLinks: async (entity, aiItem, fId) => {
+                    const chunkContentL0 = { full_name: entity.full_name, s_name: entity.sname, signature: entity.signature, body: entity.body };
+                    const chunkContent = { text: chunkContentL0 };
+                    if (entity.comment && typeof entity.comment === 'string' && entity.comment.trim()) {
+                        chunkContent.comment = entity.comment.trim();
+                    }
+                    const chunkIdL0 = await dbService.saveChunkVector(fId, chunkContent, null,
+                        { type: entity.type, level: '0-исходник', full_name: entity.full_name, s_name: entity.sname }, null, contextCode);
+                    await dbService.pgClient.query('UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2', [aiItem.id, chunkIdL0]);
+
+                    if (['function', 'method', 'arrow', 'class'].includes(entity.type)) {
+                        try {
+                            const l1Result = await parseTsFunctionL1(entity.body);
+                            const chunkIdL1 = await dbService.saveChunkVector(fId, { text: l1Result }, null,
+                                { type: 'json', level: '1-связи', full_name: entity.full_name, s_name: entity.sname }, chunkIdL0, contextCode);
+                            await dbService.pgClient.query('UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2', [aiItem.id, chunkIdL1]);
+
+                            for (const [key, code] of Object.entries(linkTypeMap)) {
+                                const typeId = linkTypeIds[code];
+                                if (!typeId) continue;
+                                const targets = (l1Result[key] || []).filter(t => typeof t === 'string' && t.trim().length > 0);
+                                for (const target of targets) {
+                                    try {
+                                        await dbService.pgClient.query(
+                                            `INSERT INTO public.link (context_code, source, target, link_type_id, file_id)
+                                             VALUES ($1, $2, $3, $4, $5)
+                                             ON CONFLICT (context_code, source, target, link_type_id) DO NOTHING`,
+                                            [contextCode, entity.full_name, target, typeId, fId || null]);
+                                    } catch (err) {
+                                        console.error(`[TS-Loader] Ошибка link ${entity.full_name} -> ${target}:`, err.message);
+                                    }
+                                }
+                            }
+                        } catch (err) {
+                            console.error(`[TS-Loader] Ошибка парсинга L1 для ${entity.full_name}: ${err.message}`);
+                        }
+                    }
+                }
+            });
+            report.entityReport = entityReport;
+            report.functionsProcessed = entityReport.created + entityReport.updated;
+            console.log(`[TS-Loader] Инкрементальный итог: created=${entityReport.created}, updated=${entityReport.updated}, unchanged=${entityReport.unchanged}, deleted=${entityReport.deleted}`);
+            return report;
+        } catch (err) {
+            console.error(`[TS-Loader] Ошибка инкрементальной обработки: ${err.message}`);
+        }
+    }
+
+    // === Полный режим ===
     // Загрузка каждой сущности
     for (const entity of entities) {
         console.log(`[TS-Loader] → Сущность: ${entity.full_name} (${entity.sname}, тип: ${entity.type})`);

@@ -2,6 +2,7 @@
 // routes/loaders/tableSchemaLoader.js
 
 const path = require('path');
+const { computeFileHash } = require('../../packages/core/hashUtils');
 
 // Динамический импорт pgMcp (TypeScript модуль)
 let pgMcp = null;
@@ -127,7 +128,7 @@ function getVirtualFilename() {
  * @param {PipelineStateManager} pipelineState - Менеджер состояния pipeline (опционально)
  * @returns {Promise<Object>} Отчет о загрузке таблицы
  */
-async function loadTableSchema(fullTableName, contextCode, dbService, pipelineState = null) {
+async function loadTableSchema(fullTableName, contextCode, dbService, pipelineState = null, mode = 'incremental') {
   console.log(`[Table-Loader] Обработка таблицы: ${fullTableName}`);
 
   // Инициализация отчета
@@ -142,13 +143,6 @@ async function loadTableSchema(fullTableName, contextCode, dbService, pipelineSt
   };
 
   try {
-    // 1. Регистрация виртуального файла
-    const virtualFilename = getVirtualFilename();
-    const { id: fileId, isNew } = await dbService.saveFileInfo(virtualFilename, null, null, contextCode);
-    report.fileId = fileId;
-    report.isNew = isNew;
-    console.log(`[Table-Loader] Файл зарегистрирован: ${virtualFilename} (fileId = ${fileId})`);
-
     // 2. Получение схемы таблицы через MCP
     const pgMcpInstance = await getPgMcp();
     let schemaText;
@@ -166,6 +160,59 @@ async function loadTableSchema(fullTableName, contextCode, dbService, pipelineSt
       report.errors.push(errorMsg);
       return report;
     }
+
+    // 1. Проверка изменений для виртуального файла (таблица)
+    const virtualFilename = getVirtualFilename();
+    let fileHash = null;
+    let fileId = null;
+    let isNew = true;
+
+    if (mode === 'incremental') {
+      try {
+        // Calculate hash of schema text
+        fileHash = computeFileHash(schemaText);
+        
+        // Check if we have this virtual file in DB
+        const dbFile = await dbService.pgClient.query(
+          'SELECT id, file_hash FROM public.files WHERE filename = $1 AND context_code = $2',
+          [virtualFilename, contextCode]
+        );
+        
+        if (dbFile.rows.length > 0) {
+          const existingFile = dbFile.rows[0];
+          fileId = existingFile.id;
+          isNew = false;
+          
+          // If hash matches, skip processing
+          if (existingFile.file_hash === fileHash) {
+            console.log(`[Table-Loader] Схема таблицы ${fullTableName} не изменилась, пропускаем`);
+            report.skipped = true;
+            report.skipReason = 'hash_match';
+            report.fileId = fileId;
+            return report;
+          }
+        }
+      } catch (err) {
+        console.warn(`[Table-Loader] Ошибка инкрементальной проверки: ${err.message}`);
+      }
+    }
+    
+    if (!fileId) {
+      // Register virtual file
+      const result = await dbService.saveFileInfo(virtualFilename, schemaText, null, contextCode, fileHash);
+      fileId = result.id;
+      isNew = result.isNew;
+    } else {
+      // Update file hash and content if changed
+      await dbService.pgClient.query(
+        'UPDATE public.files SET content = $1, file_hash = $2, modified_at = NOW() WHERE id = $3',
+        [schemaText, fileHash, fileId]
+      );
+    }
+    
+    report.fileId = fileId;
+    report.isNew = isNew;
+    console.log(`[Table-Loader] Файл зарегистрирован: ${virtualFilename} (fileId = ${fileId}, isNew = ${isNew})`);
 
     report.schemaLines = schemaText.split('\n').length;
     console.log(`[Table-Loader] Схема получена (${report.schemaLines} строк)`);

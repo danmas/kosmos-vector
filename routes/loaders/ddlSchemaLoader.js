@@ -3,6 +3,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const { checkFileChanged } = require('../../packages/core/fileChangeDetector');
+const { processEntitiesIncremental } = require('../../packages/core/entityProcessor');
 
 /**
  * Парсинг CREATE TABLE из SQL контента
@@ -409,7 +411,7 @@ function parseTableL1(tableData) {
 /**
  * Загрузка DDL схем из файла
  */
-async function loadDdlFromFile(filePath, contextCode, dbService, pipelineState = null) {
+async function loadDdlFromFile(filePath, contextCode, dbService, pipelineState = null, mode = 'incremental') {
     const filename = path.basename(filePath);
     console.log(`[DDL-Loader] Обработка файла: ${filename}`);
     
@@ -426,13 +428,36 @@ async function loadDdlFromFile(filePath, contextCode, dbService, pipelineState =
     };
     
     let sqlContent;
-    try {
-        sqlContent = fs.readFileSync(filePath, 'utf8');
-    } catch (err) {
-        const errorMsg = `Не удалось прочитать файл ${filename}: ${err.message}`;
-        console.error(`[DDL-Loader] ${errorMsg}`);
-        report.errors.push(errorMsg);
-        return report;
+    let fileHash = null;
+
+    if (mode === 'incremental') {
+        try {
+            const changeResult = await checkFileChanged(filePath, contextCode, dbService);
+            if (!changeResult.changed) {
+                console.log(`[DDL-Loader] Файл ${filename} не изменился (${changeResult.status}), пропускаем`);
+                report.skipped = true;
+                report.skipReason = changeResult.status;
+                report.fileId = changeResult.fileId;
+                return report;
+            }
+            sqlContent = changeResult.content;
+            fileHash = changeResult.newHash;
+            report.fileId = changeResult.fileId;
+        } catch (err) {
+            console.warn(`[DDL-Loader] Ошибка инкрементальной проверки: ${err.message}`);
+            sqlContent = null;
+        }
+    }
+
+    if (!sqlContent) {
+        try {
+            sqlContent = fs.readFileSync(filePath, 'utf8');
+        } catch (err) {
+            const errorMsg = `Не удалось прочитать файл ${filename}: ${err.message}`;
+            console.error(`[DDL-Loader] ${errorMsg}`);
+            report.errors.push(errorMsg);
+            return report;
+        }
     }
     
     // Парсинг таблиц
@@ -453,7 +478,7 @@ async function loadDdlFromFile(filePath, contextCode, dbService, pipelineState =
     
     // Регистрация файла
     try {
-        const { id: fileId, isNew } = await dbService.saveFileInfo(filename, sqlContent, filePath, contextCode);
+        const { id: fileId, isNew } = await dbService.saveFileInfo(filename, sqlContent, filePath, contextCode, fileHash);
         report.fileId = fileId;
         report.isNew = isNew;
         console.log(`[DDL-Loader] Файл зарегистрирован: fileId = ${fileId}, isNew = ${isNew}`);
@@ -464,6 +489,41 @@ async function loadDdlFromFile(filePath, contextCode, dbService, pipelineState =
         return report;
     }
     
+    // === Инкрементальная обработка сущностей ===
+    if (mode === 'incremental' && report.fileId) {
+        try {
+            const entityReport = await processEntitiesIncremental(tables, report.fileId, contextCode, dbService, {
+                loaderTag: '[DDL-Loader]',
+                createChunksAndLinks: async (table, aiItem, fId) => {
+                    const chunkContentL0 = { full_name: table.full_name, schema: table.schema, s_name: table.sname, columns: table.columns, constraints: table.constraints, body: table.body };
+                    const chunkContent = { text: chunkContentL0 };
+                    if (table.comment) {
+                        chunkContent.comment = table.comment;
+                    }
+                    const chunkIdL0 = await dbService.saveChunkVector(fId, chunkContent, null,
+                        { type: 'table', level: '0-исходник', full_name: table.full_name, s_name: table.sname }, null, contextCode);
+                    await dbService.pgClient.query('UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2', [aiItem.id, chunkIdL0]);
+
+                    // L1 связи (FK)
+                    const l1Result = parseTableL1(table);
+                    
+                    if (l1Result.foreign_keys.length > 0) {
+                        const chunkIdL1 = await dbService.saveChunkVector(fId, { text: l1Result }, null,
+                            { type: 'json', level: '1-связи', full_name: table.full_name, s_name: table.sname }, chunkIdL0, contextCode);
+                        await dbService.pgClient.query('UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2', [aiItem.id, chunkIdL1]);
+                    }
+                }
+            });
+            report.entityReport = entityReport;
+            report.tablesProcessed = entityReport.created + entityReport.updated;
+            console.log(`[DDL-Loader] Инкрементальный итог: created=${entityReport.created}, updated=${entityReport.updated}, unchanged=${entityReport.unchanged}, deleted=${entityReport.deleted}`);
+            return report;
+        } catch (err) {
+            console.error(`[DDL-Loader] Ошибка инкрементальной обработки: ${err.message}`);
+        }
+    }
+
+    // === Полный режим ===
     // Обработка каждой таблицы
     for (const table of tables) {
         console.log(`[DDL-Loader] → Таблица: ${table.full_name}`);

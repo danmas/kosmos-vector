@@ -209,6 +209,35 @@ class DbService {
       `);
       console.log("Индексы для ai_comment созданы или уже существуют");
 
+      // === Инкрементальное обновление: миграция новых колонок ===
+      // files: file_hash уже в CREATE TABLE, но для существующих БД:
+      await this.pgClient.query(`
+        ALTER TABLE public.files ADD COLUMN IF NOT EXISTS file_hash TEXT
+      `);
+      // Убираем старый UNIQUE(filename) и добавляем UNIQUE(filename, context_code)
+      await this.pgClient.query(`
+        ALTER TABLE public.files DROP CONSTRAINT IF EXISTS files_filename_key
+      `);
+      await this.pgClient.query(`
+        DO $$ BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'files_filename_context_code_unique'
+          ) THEN
+            ALTER TABLE public.files ADD CONSTRAINT files_filename_context_code_unique UNIQUE (filename, context_code);
+          END IF;
+        END $$;
+      `);
+
+      // ai_item: content_hash и needs_rebuild
+      await this.pgClient.query(`
+        ALTER TABLE public.ai_item ADD COLUMN IF NOT EXISTS content_hash TEXT;
+        ALTER TABLE public.ai_item ADD COLUMN IF NOT EXISTS needs_rebuild BOOLEAN DEFAULT false;
+      `);
+      await this.pgClient.query(`
+        CREATE INDEX IF NOT EXISTS idx_ai_item_needs_rebuild ON public.ai_item (context_code, needs_rebuild) WHERE needs_rebuild = true
+      `);
+      console.log("Миграция инкрементального обновления выполнена");
+
       console.log("Инициализация схемы базы данных завершена");
       return true;
     } catch (error) {
@@ -269,8 +298,9 @@ class DbService {
    * @param {string|null} fileContent - Содержимое файла
    * @param {string|null} filePath - Путь к файлу
    * @param {string|null} contextCode - Код контекста для сохранения (опционально)
+   * @param {string|null} fileHash - SHA-256 хеш содержимого файла (опционально)
    */
-  async saveFileInfo(fileName, fileContent, filePath, contextCode = null) {
+  async saveFileInfo(fileName, fileContent, filePath, contextCode = null, fileHash = null) {
     try {
       // Получение информации о файле из файловой системы
       const absolutePath = filePath || path.join(this.docsDir, fileName);
@@ -287,43 +317,35 @@ class DbService {
         // file doesn't exist locally, use current time
       }
 
+      // Поиск по filename + context_code
+      const finalContextCode = contextCode || 'DEFAULT';
       const fileResult = await this.pgClient.query(
-        `SELECT id FROM public.files WHERE filename = $1`,
-        [baseFileName]
+        `SELECT id FROM public.files WHERE filename = $1 AND context_code = $2`,
+        [baseFileName, finalContextCode]
       );
 
       let fileId;
       let isNew = false;
 
       if (fileResult.rows.length === 0) {
-        // INSERT - используем contextCode или 'DEFAULT'
-        const finalContextCode = contextCode || 'DEFAULT';
+        // INSERT
         const insertResult = await this.pgClient.query(
-          `INSERT INTO public.files (filename, file_url, modified_at, content, context_code)
-           VALUES ($1, $2, $3, $4, $5)
+          `INSERT INTO public.files (filename, file_url, modified_at, content, context_code, file_hash)
+           VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING id`,
-          [baseFileName, absolutePath, modifiedAt, fileContent, finalContextCode]
+          [baseFileName, absolutePath, modifiedAt, fileContent, finalContextCode, fileHash]
         );
         fileId = insertResult.rows[0].id;
         isNew = true;
       } else {
         fileId = fileResult.rows[0].id;
-        // UPDATE - обновляем context_code если передан
-        if (contextCode) {
-          await this.pgClient.query(
-            `UPDATE public.files
-             SET file_url = $1, modified_at = $2, content = $3, context_code = $4
-             WHERE id = $5`,
-            [absolutePath, modifiedAt, fileContent, contextCode, fileId]
-          );
-        } else {
-          await this.pgClient.query(
-            `UPDATE public.files
-             SET file_url = $1, modified_at = $2, content = $3
-             WHERE id = $4`,
-            [absolutePath, modifiedAt, fileContent, fileId]
-          );
-        }
+        // UPDATE
+        await this.pgClient.query(
+          `UPDATE public.files
+           SET file_url = $1, modified_at = $2, content = $3, context_code = $4, file_hash = $5
+           WHERE id = $6`,
+          [absolutePath, modifiedAt, fileContent, finalContextCode, fileHash, fileId]
+        );
       }
 
       return { id: fileId, isNew };
@@ -1525,7 +1547,7 @@ class DbService {
    * @returns {Promise<Object>} - Созданный AI Item
    */
   async createAiItem(params) {
-    const { full_name, contextCode, chunkId, type, sName, fileId } = params;
+    const { full_name, contextCode, chunkId, type, sName, fileId, contentHash } = params;
     
     try {
       // Проверяем, существует ли AI Item с таким именем и контекстом
@@ -1540,14 +1562,14 @@ class DbService {
         // Если существует, обновляем
         itemId = existingItemQuery.rows[0].id;
         await this.pgClient.query(
-          'UPDATE public.ai_item SET updated_at = CURRENT_TIMESTAMP, type = $1, s_name = $2, file_id = $3 WHERE id = $4',
-          [type, sName, fileId, itemId]
+          'UPDATE public.ai_item SET updated_at = CURRENT_TIMESTAMP, type = $1, s_name = $2, file_id = $3, content_hash = $4 WHERE id = $5',
+          [type, sName, fileId, contentHash || null, itemId]
         );
       } else {
         // Иначе создаем новый
         const insertResult = await this.pgClient.query(
-          'INSERT INTO public.ai_item (full_name, context_code, type, s_name, file_id) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-          [full_name, contextCode, type, sName, fileId]
+          'INSERT INTO public.ai_item (full_name, context_code, type, s_name, file_id, content_hash) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+          [full_name, contextCode, type, sName, fileId, contentHash || null]
         );
         itemId = insertResult.rows[0].id;
       }
@@ -3519,6 +3541,196 @@ class DbService {
       return null;
     } catch (error) {
       console.error(`[DB] ❌ Ошибка getFunctionBodyByAiItemId для ai_item_id ${aiItemId}:`, error);
+      throw error;
+    }
+  }
+
+  // === Методы для инкрементального обновления ===
+
+  /**
+   * Получение метаданных файла для инкрементальной проверки
+   * @param {string} filename - Имя файла
+   * @param {string} contextCode - Код контекста
+   * @returns {Promise<{id: number, modified_at: string, file_hash: string}|null>}
+   */
+  async getFileMetaForIncrCheck(filename, contextCode) {
+    try {
+      const result = await this.pgClient.query(
+        'SELECT id, modified_at, file_hash FROM public.files WHERE filename = $1 AND context_code = $2',
+        [filename, contextCode]
+      );
+      return result.rows.length > 0 ? result.rows[0] : null;
+    } catch (error) {
+      console.error(`[DB] Ошибка getFileMetaForIncrCheck для ${filename}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Обновление modified_at файла (при skip-by-hash)
+   * @param {number} fileId - ID файла
+   * @param {Date} mtime - Новое время модификации
+   */
+  async updateFileModifiedAt(fileId, mtime) {
+    try {
+      await this.pgClient.query(
+        'UPDATE public.files SET modified_at = $1 WHERE id = $2',
+        [mtime, fileId]
+      );
+    } catch (error) {
+      console.error(`[DB] Ошибка updateFileModifiedAt для fileId ${fileId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Получение всех ai_item для файла (для инкрементального сравнения)
+   * @param {number} fileId - ID файла
+   * @param {string} contextCode - Код контекста
+   * @returns {Promise<Array<{id: number, full_name: string, content_hash: string, file_id: number}>>}
+   */
+  async getAiItemsByFileId(fileId, contextCode) {
+    try {
+      const result = await this.pgClient.query(
+        'SELECT id, full_name, content_hash, file_id FROM public.ai_item WHERE file_id = $1 AND context_code = $2',
+        [fileId, contextCode]
+      );
+      return result.rows;
+    } catch (error) {
+      console.error(`[DB] Ошибка getAiItemsByFileId для fileId ${fileId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Пометить ai_item как требующие перестройки (needs_rebuild = true)
+   * @param {string[]} fullNames - Список full_name для маркировки
+   * @param {string} contextCode - Код контекста
+   */
+  async markNeedsRebuild(fullNames, contextCode) {
+    try {
+      if (!fullNames || fullNames.length === 0) return;
+      await this.pgClient.query(
+        'UPDATE public.ai_item SET needs_rebuild = true WHERE full_name = ANY($1::text[]) AND context_code = $2',
+        [fullNames, contextCode]
+      );
+    } catch (error) {
+      console.error(`[DB] Ошибка markNeedsRebuild:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Сброс флага needs_rebuild для конкретного ai_item
+   * @param {number} aiItemId - ID ai_item
+   */
+  async clearNeedsRebuild(aiItemId) {
+    try {
+      await this.pgClient.query(
+        'UPDATE public.ai_item SET needs_rebuild = false WHERE id = $1',
+        [aiItemId]
+      );
+    } catch (error) {
+      console.error(`[DB] Ошибка clearNeedsRebuild для aiItemId ${aiItemId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Каскадное удаление ai_item: link -> chunk_vector -> ai_item
+   * @param {number} aiItemId - ID ai_item
+   * @param {string} fullName - full_name сущности
+   * @param {string} contextCode - Код контекста
+   */
+  async deleteAiItemCascade(aiItemId, fullName, contextCode) {
+    try {
+      // 1. Удалить link'и где source = fullName
+      await this.pgClient.query(
+        'DELETE FROM public.link WHERE context_code = $1 AND source = $2',
+        [contextCode, fullName]
+      );
+      // 2. Удалить все чанки (L0, L1, 2-logic, все)
+      await this.pgClient.query(
+        'DELETE FROM public.chunk_vector WHERE ai_item_id = $1',
+        [aiItemId]
+      );
+      // 3. Удалить сам ai_item
+      await this.pgClient.query(
+        'DELETE FROM public.ai_item WHERE id = $1',
+        [aiItemId]
+      );
+    } catch (error) {
+      console.error(`[DB] Ошибка deleteAiItemCascade для aiItemId ${aiItemId} (${fullName}):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Получение обратных соседей (кто ссылается на fullName через link.target)
+   * @param {string} fullName - full_name целевой сущности
+   * @param {string} contextCode - Код контекста
+   * @returns {Promise<string[]>} Список source full_name
+   */
+  async getReverseLinkedItems(fullName, contextCode) {
+    try {
+      const result = await this.pgClient.query(
+        'SELECT DISTINCT source FROM public.link WHERE target = $1 AND context_code = $2',
+        [fullName, contextCode]
+      );
+      return result.rows.map(r => r.source);
+    } catch (error) {
+      console.error(`[DB] Ошибка getReverseLinkedItems для ${fullName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Удаление всех чанков для ai_item
+   * @param {number} aiItemId - ID ai_item
+   */
+  async deleteChunksByAiItemId(aiItemId) {
+    try {
+      await this.pgClient.query(
+        'DELETE FROM public.chunk_vector WHERE ai_item_id = $1',
+        [aiItemId]
+      );
+    } catch (error) {
+      console.error(`[DB] Ошибка deleteChunksByAiItemId для aiItemId ${aiItemId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Удаление всех link'ов где source = fullName
+   * @param {string} fullName - full_name источника
+   * @param {string} contextCode - Код контекста
+   */
+  async deleteLinksBySource(fullName, contextCode) {
+    try {
+      await this.pgClient.query(
+        'DELETE FROM public.link WHERE context_code = $1 AND source = $2',
+        [contextCode, fullName]
+      );
+    } catch (error) {
+      console.error(`[DB] Ошибка deleteLinksBySource для ${fullName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Получение текущего file_id для ai_item (перечитывание перед удалением)
+   * @param {number} aiItemId - ID ai_item
+   * @returns {Promise<number|null>} file_id или null
+   */
+  async getAiItemFileId(aiItemId) {
+    try {
+      const result = await this.pgClient.query(
+        'SELECT file_id FROM public.ai_item WHERE id = $1',
+        [aiItemId]
+      );
+      return result.rows.length > 0 ? result.rows[0].file_id : null;
+    } catch (error) {
+      console.error(`[DB] Ошибка getAiItemFileId для aiItemId ${aiItemId}:`, error);
       throw error;
     }
   }

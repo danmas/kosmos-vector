@@ -853,6 +853,7 @@ async function runFullSystemTest() {
         linksApiCheck: false,
         columnExtractionCheck: false,
         logicArchitectCheck: false,
+        incrementalCheck: false,
         naturalQueryTests: []
     };
     
@@ -966,6 +967,41 @@ async function runFullSystemTest() {
                 foundKeywords: queryResult.foundKeywords || []
             });
         }
+
+        // Проверка 4: Инкрементальное обновление (повторный Step1 без изменений файлов)
+        console.log('\n[Проверка 4] Инкрементальное обновление (повторный Step1)...');
+        try {
+            const step1AgainRes = await fetch(`${BASE_URL}/api/pipeline/step/1/run?context-code=${CONTEXT_CODE}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!step1AgainRes.ok) {
+                throw new Error(`Статус: ${step1AgainRes.status}`);
+            }
+            const step1AgainJson = await step1AgainRes.json();
+            if (!step1AgainJson.success) {
+                throw new Error(step1AgainJson.error || 'Step1 не запустился');
+            }
+            const step1AgainCompletion = await waitForStepCompletion(1);
+            if (!step1AgainCompletion.success) {
+                throw new Error(step1AgainCompletion.error || 'Step1 завершился с ошибкой');
+            }
+            const statusRes = await fetch(`${BASE_URL}/api/pipeline/steps/status?context-code=${CONTEXT_CODE}`);
+            if (!statusRes.ok) throw new Error('Не удалось получить статус шагов');
+            const { steps } = await statusRes.json();
+            const step1Data = steps.find(s => s.id === 1);
+            const summary = step1Data?.report?.summary || {};
+            const skippedFiles = summary.skippedFiles || 0;
+            const skippedEntities = summary.skippedEntities || 0;
+            results.incrementalCheck = skippedFiles >= 1 || skippedEntities >= 1;
+            if (results.incrementalCheck) {
+                console.log(`  [SUCCESS] Инкремент: пропущено файлов ${skippedFiles}, сущностей ${skippedEntities}`);
+            } else {
+                console.log(`  [WARNING] Ожидались пропуски (skippedFiles или skippedEntities). Получено: skippedFiles=${skippedFiles}, skippedEntities=${skippedEntities}`);
+            }
+        } catch (error) {
+            console.error(`  [FAILURE] Инкрементальная проверка: ${error.message}`);
+        }
         
         // Итоги
         console.log('\n' + '='.repeat(80));
@@ -1006,11 +1042,13 @@ async function runFullSystemTest() {
                 console.log(`     Найдено: ${test.foundKeywords.join(', ')}`);
             }
         });
+        console.log(`Инкрементальное обновление (повторный Step1): ${results.incrementalCheck ? '✅' : '❌'}`);
         
         const allPassed = results.cleanup && results.step1 && results.step2 && 
                          results.multiRootCheck && results.aiItemsCheck && results.linksCheck &&
                          results.linksApiCheck && results.columnExtractionCheck && 
-                         results.logicArchitectCheck && results.naturalQueryTests.every(t => t.success);
+                         results.logicArchitectCheck && results.incrementalCheck &&
+                         results.naturalQueryTests.every(t => t.success);
         
         console.log('\n' + '='.repeat(80));
         if (allPassed) {

@@ -1,0 +1,16 @@
+{
+  "contextCode": "INCR_UPDATE_TEST",
+  "rootPath": "C:\\ERV\\projects-ex\\kosmos-vector\\tests\\incremental_test_project",
+  "includeMask": "**/*",
+  "ignorePatterns": "**/node_modules/**",
+  "fileSelection": [
+    "C:\\ERV\\projects-ex\\kosmos-vector\\tests\\incremental_test_project\\./incr_functions.sql"
+  ],
+  "lastUpdated": "2026-02-11T14:23:02.082Z",
+  "metadata": {
+    "projectName": "Incremental update test",
+    "description": "Single SQL file for incremental Step1 tests",
+    "tags": [],
+    "custom_settings": "functions_loading:\n  enabled: true\njs_loading:\n  enabled: false\nts_loading:\n  enabled: false\nphp_loading:\n  enabled: false\nddl_loading:\n  enabled: false\ntable_loading:\n  enabled: false"
+  }
+}

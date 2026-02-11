@@ -3,6 +3,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const { checkFileChanged } = require('../../packages/core/fileChangeDetector');
+const { processEntitiesIncremental } = require('../../packages/core/entityProcessor');
 
 /**
  * Извлечение связей L1 из кода функции
@@ -397,6 +399,23 @@ function parseFunctionsFromContent(sqlContent, filePath) {
 
         // Мы внутри функции
         if (currentFunction) {
+            // Сначала проверяем, не ждём ли мы LANGUAGE
+            if (waitingForLanguage) {
+                if (trimmed.match(/^LANGUAGE\s+\w+\s*;?/i)) {
+                    // Нашли LANGUAGE — добавляем строку и завершаем функцию
+                    bodyLines.push(originalLine);
+                    saveFunction();
+                    continue;
+                } else {
+                    // Получили что-то другое — завершаем без добавления этой строки
+                    saveFunction();
+                    // Эта строка может быть началом комментария для следующей функции
+                    pendingCommentLines.push(originalLine);
+                    continue;
+                }
+            }
+
+            // Добавляем строку в body
             bodyLines.push(originalLine);
 
             // Ищем AS $тег$ или AS $$
@@ -425,25 +444,16 @@ function parseFunctionsFromContent(sqlContent, filePath) {
                 continue;
             }
 
-            // Проверяем только закрывающий $$
+            // Проверяем закрывающий $$; (с точкой с запятой) — функция завершена (LANGUAGE был до AS $$)
+            if (trimmed === closingTag + ';' || trimmed.startsWith(closingTag + '; ')) {
+                saveFunction();
+                continue;
+            }
+
+            // Проверяем только закрывающий $$ (без точки с запятой) — ждём LANGUAGE
             if (trimmed === closingTag || trimmed.startsWith(closingTag + ' ') || trimmed.startsWith(closingTag + '\t')) {
                 // Закрывающий $$ — теперь ждём LANGUAGE на следующей строке
                 waitingForLanguage = true;
-                continue;
-            }
-
-            // Ждём LANGUAGE после закрывающего $$
-            if (waitingForLanguage && trimmed.match(/^LANGUAGE\s+\w+\s*;?/i)) {
-                // Нашли LANGUAGE — завершаем функцию
-                saveFunction();
-                continue;
-            }
-
-            // Если ждали LANGUAGE, но получили что-то другое — всё равно завершаем
-            if (waitingForLanguage && !trimmed.match(/^LANGUAGE/i)) {
-                saveFunction();
-                // Эта строка может быть началом комментария для следующей функции
-                pendingCommentLines.push(originalLine);
                 continue;
             }
 
@@ -470,9 +480,9 @@ function parseFunctionsFromContent(sqlContent, filePath) {
  * @param {PipelineStateManager} pipelineState - Менеджер состояния pipeline (опционально)
  * @returns {Promise<Object>} Отчет о загрузке файла
  */
-async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipelineState = null) {
+async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipelineState = null, mode = 'incremental') {
     const filename = path.basename(filePath);
-    console.log(`[SQL-Loader] Обработка файла: ${filename}`);
+    console.log(`[SQL-Loader] Обработка файла: ${filename} (mode=${mode})`);
 
     // Инициализация отчета
     const report = {
@@ -482,17 +492,46 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
         functionsFound: 0,
         functionsProcessed: 0,
         functions: [],
-        errors: []
+        errors: [],
+        skipped: false,
+        skipReason: null,
+        entityReport: null
     };
 
+    // === Инкрементальная проверка файла ===
     let sqlContent;
-    try {
-        sqlContent = fs.readFileSync(filePath, 'utf8');
-    } catch (err) {
-        const errorMsg = `Не удалось прочитать файл ${filename}: ${err.message}`;
-        console.error(`[SQL-Loader] ${errorMsg}`);
-        report.errors.push(errorMsg);
-        return report;
+    let fileHash = null;
+
+    if (mode === 'incremental') {
+        try {
+            const changeResult = await checkFileChanged(filePath, contextCode, dbService);
+            if (!changeResult.changed) {
+                console.log(`[SQL-Loader] Файл ${filename} не изменился (${changeResult.status}), пропускаем`);
+                report.skipped = true;
+                report.skipReason = changeResult.status;
+                report.fileId = changeResult.fileId;
+                return report;
+            }
+            sqlContent = changeResult.content;
+            fileHash = changeResult.newHash;
+            report.fileId = changeResult.fileId;
+        } catch (err) {
+            console.warn(`[SQL-Loader] Ошибка инкрементальной проверки ${filename}, читаем полностью: ${err.message}`);
+            // Fallback к полному чтению
+            sqlContent = null;
+        }
+    }
+
+    // Если content ещё не получен (mode=full или fallback)
+    if (!sqlContent) {
+        try {
+            sqlContent = fs.readFileSync(filePath, 'utf8');
+        } catch (err) {
+            const errorMsg = `Не удалось прочитать файл ${filename}: ${err.message}`;
+            console.error(`[SQL-Loader] ${errorMsg}`);
+            report.errors.push(errorMsg);
+            return report;
+        }
     }
 
     const functions = parseFunctionsFromContent(sqlContent, filePath);
@@ -505,9 +544,9 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
 
     console.log(`[SQL-Loader] Найдено функций: ${functions.length}`);
 
-    // Регистрация файла
+    // Регистрация файла (с хешем)
     try {
-        const { id: fileId, isNew } = await dbService.saveFileInfo(filename, sqlContent, filePath, contextCode);
+        const { id: fileId, isNew } = await dbService.saveFileInfo(filename, sqlContent, filePath, contextCode, fileHash);
         report.fileId = fileId;
         report.isNew = isNew;
         console.log(`[SQL-Loader] Файл зарегистрирован: fileId = ${fileId}, isNew = ${isNew}`);
@@ -539,7 +578,80 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
         }
     }
 
-    // Загрузка каждой функции
+    // === Инкрементальная обработка сущностей ===
+    if (mode === 'incremental' && report.fileId) {
+        try {
+            const entityReport = await processEntitiesIncremental(functions, report.fileId, contextCode, dbService, {
+                loaderTag: '[SQL-Loader]',
+                createChunksAndLinks: async (entity, aiItem, fId) => {
+                    // L0 чанк
+                    const chunkContentL0 = {
+                        full_name: entity.full_name,
+                        s_name: entity.sname,
+                        signature: entity.signature,
+                        body: entity.body
+                    };
+                    const chunkContent = { text: chunkContentL0 };
+                    if (entity.comment && typeof entity.comment === 'string' && entity.comment.trim()) {
+                        chunkContent.comment = entity.comment.trim();
+                    }
+
+                    const chunkIdL0 = await dbService.saveChunkVector(
+                        fId, chunkContent, null,
+                        { type: 'function', level: '0-исходник', full_name: entity.full_name, s_name: entity.sname },
+                        null, contextCode
+                    );
+                    await dbService.pgClient.query(
+                        'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+                        [aiItem.id, chunkIdL0]
+                    );
+
+                    // L1 чанк (связи)
+                    try {
+                        const l1Result = await parsePlpgsqlFunctionL1(entity.body);
+                        const chunkIdL1 = await dbService.saveChunkVector(
+                            fId, { text: l1Result }, null,
+                            { type: 'json', level: '1-связи', full_name: entity.full_name, s_name: entity.sname },
+                            chunkIdL0, contextCode
+                        );
+                        await dbService.pgClient.query(
+                            'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+                            [aiItem.id, chunkIdL1]
+                        );
+
+                        // Дублирование связей в таблицу link
+                        for (const [key, code] of Object.entries(linkTypeMap)) {
+                            const typeId = linkTypeIds[code];
+                            if (!typeId) continue;
+                            const targets = (l1Result[key] || []).filter(t => typeof t === 'string' && t.trim().length > 0);
+                            for (const target of targets) {
+                                try {
+                                    await dbService.pgClient.query(
+                                        `INSERT INTO public.link (context_code, source, target, link_type_id, file_id)
+                                         VALUES ($1, $2, $3, $4, $5)
+                                         ON CONFLICT (context_code, source, target, link_type_id) DO NOTHING`,
+                                        [contextCode, entity.full_name, target, typeId, fId || null]
+                                    );
+                                } catch (err) {
+                                    console.error(`[SQL-Loader] Ошибка link ${entity.full_name} -> ${target} (${code}):`, err.message);
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.error(`[SQL-Loader] Ошибка парсинга L1 для ${entity.full_name}: ${err.message}`);
+                    }
+                }
+            });
+            report.entityReport = entityReport;
+            report.functionsProcessed = entityReport.created + entityReport.updated;
+            console.log(`[SQL-Loader] Инкрементальный итог: created=${entityReport.created}, updated=${entityReport.updated}, unchanged=${entityReport.unchanged}, deleted=${entityReport.deleted}`);
+            return report;
+        } catch (err) {
+            console.error(`[SQL-Loader] Ошибка инкрементальной обработки: ${err.message}, переходим к полному режиму`);
+        }
+    }
+
+    // === Полный режим (mode=full или fallback) ===
     for (const func of functions) {
         console.log(`[SQL-Loader] → Функция: ${func.full_name} (${func.sname})`);
 
@@ -555,7 +667,6 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
         };
 
         try {
-            // Создание AI Item
             const aiItem = await dbService.createAiItem({
                 full_name: func.full_name,
                 contextCode: contextCode,
@@ -574,115 +685,65 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
 
             functionReport.aiItemId = aiItem.id;
 
-            // Сохранение чанка уровня 0
             const chunkContentL0 = {
                 full_name: func.full_name,
                 s_name: func.sname,
                 signature: func.signature,
                 body: func.body
             };
-
-            // Формируем chunkContent с comment на верхнем уровне для автоматического сохранения в ai_comment
-            const chunkContent = {
-                text: chunkContentL0
-            };
+            const chunkContent = { text: chunkContentL0 };
             if (func.comment && typeof func.comment === 'string' && func.comment.trim()) {
                 chunkContent.comment = func.comment.trim();
             }
 
             try {
                 const chunkIdL0 = await dbService.saveChunkVector(
-                    report.fileId,
-                    chunkContent,  // передаём объект с text и comment на верхнем уровне
-                    null, // без embedding
-                    {
-                        type: 'function',
-                        level: '0-исходник',
-                        full_name: func.full_name,
-                        s_name: func.sname
-                    },
-                    null, // parentChunkId
-                    contextCode
+                    report.fileId, chunkContent, null,
+                    { type: 'function', level: '0-исходник', full_name: func.full_name, s_name: func.sname },
+                    null, contextCode
                 );
-
                 functionReport.chunkL0Id = chunkIdL0;
-
-                // Привязываем чанк к AI Item
                 await dbService.pgClient.query(
                     'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                     [functionReport.aiItemId, chunkIdL0]
                 );
 
-                console.log(`[SQL-Loader] Чанк 0 сохранён: chunkId = ${chunkIdL0}`);
-
-                // Парсинг L1 (связи)
                 try {
                     const l1Result = await parsePlpgsqlFunctionL1(func.body);
                     functionReport.l1Parsed = true;
                     functionReport.l1CalledFunctions = l1Result.called_functions || [];
-                    console.log(`[SQL-Loader] Успешно построен L1 для ${func.full_name}`);
 
-                    // Сохранение чанка уровня 1 (связи)
                     const chunkIdL1 = await dbService.saveChunkVector(
-                        report.fileId,
-                        { text: l1Result },  // передаём объект, а не строку
-                        null, // без embedding
-                        {
-                            type: 'json',
-                            level: '1-связи',
-                            full_name: func.full_name,
-                            s_name: func.sname
-                        },
-                        chunkIdL0, // parentChunkId
-                        contextCode
+                        report.fileId, { text: l1Result }, null,
+                        { type: 'json', level: '1-связи', full_name: func.full_name, s_name: func.sname },
+                        chunkIdL0, contextCode
                     );
-
                     functionReport.chunkL1Id = chunkIdL1;
-
-                    // Привязываем чанк L1 к AI Item
                     await dbService.pgClient.query(
                         'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                         [functionReport.aiItemId, chunkIdL1]
                     );
 
-                    // === Дублирование связей в таблицу link ===
                     if (l1Result && functionReport.aiItemId) {
-                        let linksCount = 0;
-
                         for (const [key, code] of Object.entries(linkTypeMap)) {
                             const typeId = linkTypeIds[code];
-                            if (!typeId) {
-                                // Предупреждение уже было при кэшировании
-                                continue;
-                            }
-
-                            const targets = (l1Result[key] || [])
-                                .filter(t => typeof t === 'string' && t.trim().length > 0);
-
+                            if (!typeId) continue;
+                            const targets = (l1Result[key] || []).filter(t => typeof t === 'string' && t.trim().length > 0);
                             for (const target of targets) {
                                 try {
                                     await dbService.pgClient.query(
-                                        `INSERT INTO public.link 
-                                         (context_code, source, target, link_type_id, file_id)
+                                        `INSERT INTO public.link (context_code, source, target, link_type_id, file_id)
                                          VALUES ($1, $2, $3, $4, $5)
                                          ON CONFLICT (context_code, source, target, link_type_id) DO NOTHING`,
                                         [contextCode, func.full_name, target, typeId, report.fileId || null]
                                     );
-                                    linksCount++;
                                 } catch (err) {
                                     console.error(`[SQL-Loader] Ошибка link ${func.full_name} -> ${target} (${code}):`, err.message);
                                     functionReport.errors.push(`Link error: ${code} -> ${target}`);
                                 }
                             }
                         }
-
-                        if (linksCount > 0) {
-                            console.log(`[SQL-Loader] Сохранено ${linksCount} связей для ${func.full_name}`);
-                        }
                     }
-                    // === КОНЕЦ дублирования связей ===
-                                        
-                    console.log(`[SQL-Loader] Чанк 1 (связи) сохранён: chunkId = ${chunkIdL1}`);
                 } catch (err) {
                     const errorMsg = `Ошибка парсинга L1 для ${func.full_name}: ${err.message}`;
                     console.error(`[SQL-Loader] ${errorMsg}`);
@@ -699,11 +760,9 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
             functionReport.errors.push(errorMsg);
         }
 
-        // Если функция обработана успешно (есть aiItemId и chunkL0Id), увеличиваем счетчик
         if (functionReport.aiItemId && functionReport.chunkL0Id) {
             report.functionsProcessed++;
         }
-
         report.functions.push(functionReport);
     }
 
