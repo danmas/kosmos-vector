@@ -1,0 +1,112 @@
+# Схемы: ItemType — справочник типов AI Items (function, class, table и т.д.).
+# Аналогично Tag, изолировано по context-code. Lazy seed при первом GET.
+---
+ItemType:
+  type: object
+  required:
+    - id
+    - code
+    - name
+    - is_system
+    - created_at
+  properties:
+    id:
+      type: integer
+      description: Уникальный идентификатор типа
+      example: 1
+    code:
+      type: string
+      description: Уникальный код типа в рамках context-code (function, class, table, ...)
+      example: function
+    name:
+      type: string
+      description: Человекочитаемое название
+      example: Функция
+    description:
+      type: string
+      nullable: true
+      description: Описание типа
+    is_system:
+      type: boolean
+      description: true = системный тип из seed, удаление запрещено
+      example: true
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+      nullable: true
+ItemTypeCreateRequest:
+  type: object
+  required:
+    - code
+    - name
+  properties:
+    code:
+      type: string
+      minLength: 1
+      maxLength: 50
+      example: custom-type
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      example: Пользовательский тип
+    description:
+      type: string
+      maxLength: 500
+      nullable: true
+ItemTypeUpdateRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 500
+      nullable: true
+  minProperties: 1
+ItemTypeListResponse:
+  type: object
+  required:
+    - success
+    - types
+  properties:
+    success:
+      type: boolean
+      enum: [true]
+    types:
+      type: array
+      items:
+        $ref: '#/components/schemas/ItemType'
+ItemTypeResponse:
+  type: object
+  required:
+    - success
+    - itemType
+  properties:
+    success:
+      type: boolean
+      enum: [true]
+    itemType:
+      $ref: '#/components/schemas/ItemType'
+ItemTypeItemsResponse:
+  type: object
+  required:
+    - success
+    - itemType
+    - items
+  properties:
+    success:
+      type: boolean
+      enum: [true]
+    itemType:
+      $ref: '#/components/schemas/ItemType'
+    items:
+      type: array
+      items:
+        $ref: '#/components/schemas/AiItemSummary'
+      description: Список AI Items с данным типом

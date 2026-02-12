@@ -1,0 +1,215 @@
+# Paths: /api/types (CRUD), /api/types/{code}/items — справочник типов AI Items.
+# Аналогично tags. Lazy seed при первом GET для context.
+---
+/api/types:
+  get:
+    tags:
+      - ItemTypes
+    summary: Получить список всех типов
+    description: |
+      Возвращает список всех типов для указанного context-code.
+      При первом обращении для context выполняется автоматический seed базовых типов (function, class, table и т.д.).
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        description: Список типов
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemTypeListResponse'
+      '400':
+        description: Отсутствует context-code
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  post:
+    tags:
+      - ItemTypes
+    summary: Создать новый тип
+    description: |
+      Создает кастомный тип (is_system=false). Код уникален в рамках context-code.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        schema:
+          type: string
+          example: CARL
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ItemTypeCreateRequest'
+    responses:
+      '201':
+        description: Тип создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemTypeResponse'
+      '400':
+        description: Неверные данные
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '409':
+        description: Тип с таким кодом уже существует
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/types/{code}:
+  get:
+    tags:
+      - ItemTypes
+    summary: Получить тип по коду
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        schema:
+          type: string
+          example: CARL
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+        example: function
+    responses:
+      '200':
+        description: Тип найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemTypeResponse'
+      '404':
+        description: Тип не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  put:
+    tags:
+      - ItemTypes
+    summary: Обновить тип
+    description: Обновляет name и/или description. Код изменить нельзя.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        schema:
+          type: string
+          example: CARL
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+        example: function
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ItemTypeUpdateRequest'
+    responses:
+      '200':
+        description: Тип обновлён
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemTypeResponse'
+      '400':
+        description: Неверные данные
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Тип не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  delete:
+    tags:
+      - ItemTypes
+    summary: Удалить тип
+    description: Только кастомные типы (is_system=false). Системные типы удалить нельзя.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        schema:
+          type: string
+          example: CARL
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Тип удалён
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success: { type: boolean, example: true }
+                message: { type: string, example: Item type deleted successfully }
+      '403':
+        description: Системный тип, удаление запрещено
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Тип не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/types/{code}/items:
+  get:
+    tags:
+      - ItemTypes
+    summary: Получить AI Items с указанным типом
+    description: Возвращает список AI Items, у которых ai_item.type = указанный код типа.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        schema:
+          type: string
+          example: CARL
+      - name: code
+        in: path
+        required: true
+        description: Код типа (function, class, table, ...)
+        schema:
+          type: string
+        example: function
+    responses:
+      '200':
+        description: Список AI Items
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemTypeItemsResponse'
+      '404':
+        description: Тип не найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'

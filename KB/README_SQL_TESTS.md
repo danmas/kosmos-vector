@@ -2,11 +2,13 @@
 
 Этот набор тестов предназначен для проверки функциональности SQL векторизации в LangChain RAG демо с PostgreSQL.
 
+> **Статус:** Файлы `tests/test_sql_vectorization.js` и `tests/test_sql_vectorization_levels.js` в репозитории **отсутствуют**. В `package.json` заведены скрипты `test-sql-vectorization` и `test-sql-levels`; при появлении этих файлов команды ниже будут работать. Для актуальной SQL E2E-проверки используйте `tests/test-sql-order-system.js` (см. [README_SQL_ORDER_SYSTEM.md](README_SQL_ORDER_SYSTEM.md)).
+
 ## Описание тестов
 
 ### 1. Тест базовой SQL векторизации (Уровень 0)
 
-Файл: `test_sql_vectorization.js`
+Файл: `tests/test_sql_vectorization.js` (отсутствует в репозитории)
 
 Проверяет следующую функциональность:
 - Наличие тестового SQL-файла
@@ -17,7 +19,7 @@
 
 ### 2. Тест для уровней SQL-объектов (Уровни 1 и 2)
 
-Файл: `test_sql_vectorization_levels.js`
+Файл: `tests/test_sql_vectorization_levels.js` (отсутствует в репозитории)
 
 Проверяет следующую функциональность:
 - Создание чанков уровня 1 (связи) для SQL-объектов
@@ -29,12 +31,12 @@
 
 Перед запуском тестов убедитесь, что:
 
-1. Сервер запущен: `npm start`
-2. Установлены все зависимости: `npm install`
+1. Сервер запущен: `bun start` или `node server.js`
+2. Установлены все зависимости: `bun install`
 
 ## Тестовые данные
 
-Тесты используют файл `docs/manual_itest_carl_tables.sql`, который содержит образцы SQL объектов:
+Тесты используют файл `tests/docs/manual_itest_carl_tables.sql`, который содержит образцы SQL объектов:
 - Таблицы
 - Функции
 - Представления (Views)
@@ -44,14 +46,14 @@
 
 ## Запуск тестов
 
-Запуск тестов базовой векторизации:
+Запуск тестов базовой векторизации (при наличии файла):
 ```bash
-npm run test-sql-vectorization
+bun run test-sql-vectorization
 ```
 
-Запуск тестов для уровней SQL-объектов:
+Запуск тестов для уровней SQL-объектов (при наличии файла):
 ```bash
-npm run test-sql-levels
+bun run test-sql-levels
 ```
 
 > **Важно**: Тесты для уровней SQL-объектов следует запускать только после успешного выполнения базовых тестов, так как они зависят от наличия векторизованных объектов уровня 0.
@@ -70,13 +72,13 @@ npm run test-sql-levels
 
 ## Просмотр чанков
 
-После запуска тестов вы можете просмотреть созданные чанки через API:
+После запуска тестов вы можете просмотреть созданные чанки через API (порт по умолчанию — 3200, см. `PORT` в .env):
 
 ```bash
-curl http://localhost:3005/file-chunks/manual_itest_carl_tables.sql
+curl http://localhost:3200/file-chunks/manual_itest_carl_tables.sql
 ```
 
 Либо через веб-интерфейс, открыв в браузере:
-http://localhost:3005
+http://localhost:3200
 
 И перейдя к файлу `manual_itest_carl_tables.sql` в списке документов. 

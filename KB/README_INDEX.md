@@ -79,6 +79,7 @@
 | [README_AI_ITEM_COMPLETE.md](./README_AI_ITEM_COMPLETE.md) | Полное описание AI Item | Структура AI Item, L0/L1/L2 уровни, API endpoints, парсинг зависимостей | |
 | [README_links.md](./README_links.md) | Связи L1 (граф зависимостей) | Таблица link, link_type, типы связей (calls, reads_from, updates), Column Extraction | |
 | [README_TAGS.md](./README_TAGS.md) | Теги для AI Items | CRUD тегов, many-to-many связь ai_item_tag, классификация | |
+| [README_TYPES.md](./README_TYPES.md) | Справочник типов AI Items | CRUD типов, GET /api/types, lazy seed, фильтр по типу | 2026-02-11 |
 | [README_UI_COMMENTS.md](./README_UI_COMMENTS.md) | Комментарии AI Items | GET/POST/PUT/DELETE /api/items/{id}/comment, интеграция с UI | |
 | [README_IS_VECTORIZED.md](./README_IS_VECTORIZED.md) | Флаг векторизации | Поле isVectorized в API ответах, проверка наличия эмбеддингов | |
 | [README_agent-script.md](./README_agent-script.md) | Natural Query Engine | Генерация JS-скриптов из вопросов на естественном языке, sandbox, поиск похожих вопросов | |
@@ -87,9 +88,11 @@
 
 ## 6. Тестирование
 
-| Файл | Описание | Ключевые темы |
-|------|----------|---------------|
-| [README_FULL_TEST.md](./README_FULL_TEST.md) | Полный системный тест | E2E тестирование, multi-root конфигурация, все типы файлов, проверки |
+| Файл | Описание | Ключевые темы | Актуализация |
+|------|----------|---------------|--------------|
+| [README_TESTS.md](./README_TESTS.md) | Обзор тестов проекта | api_test, full_cycle_test, folder_cycle_test, full_system_test, run_all_tests | 2026-02-11 |
+| [README_SQL_TESTS.md](./README_SQL_TESTS.md) | SQL-векторизация и тесты | test_sql_vectorization, test_sql_levels, manual_itest_carl_tables | 2026-02-11 |
+| [README_FULL_TEST.md](./README_FULL_TEST.md) | Полный системный тест | E2E тестирование, multi-root конфигурация, все типы файлов, проверки | |
 
 ---
 
@@ -117,7 +120,8 @@
 1. [README_AI_ITEM_COMPLETE.md](./README_AI_ITEM_COMPLETE.md) - структура
 2. [README_links.md](./README_links.md) - граф зависимостей
 3. [README_TAGS.md](./README_TAGS.md) - тегирование
-4. [README_UI_COMMENTS.md](./README_UI_COMMENTS.md) - комментарии
+4. [README_TYPES.md](./README_TYPES.md) - фильтр по типам
+5. [README_UI_COMMENTS.md](./README_UI_COMMENTS.md) - комментарии
 
 ### Конфигурация
 1. [README_APP_CONFIG_API.md](./README_APP_CONFIG_API.md) - глобальные настройки

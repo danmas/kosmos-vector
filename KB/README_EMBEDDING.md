@@ -1,120 +1,118 @@
-# Как происходит embedding в вашем проекте
+# Embedding в проекте
 
-### 1. **Архитектура системы embedding**
+## Какая модель используется
 
-Ваш проект использует **паттерн Factory** для создания разных типов embedding моделей:
+- **По умолчанию** в коде используется **`simple`** — локальная заглушка (SimpleEmbeddings), без внешнего API.
+- Для реальных эмбеддингов через API задаётся **`openai`** — тогда используется модель **OpenAI `text-embedding-ada-002`** (фиксировано в коде).
 
-#### **EmbeddingsFactory** (`EmbeddingsFactory.js`)
-- Фабрика создает embedding модели на основе конфигурации
-- Поддерживает два типа моделей:
-  - **SimpleEmbeddings** - простая модель для тестирования
-  - **OpenAIEmbeddings** - реальная модель от OpenAI
+**Выбор модели** задаётся в таком порядке приоритета:
+
+1. Параметр `config.defaultModel` при создании `new EmbeddingsFactory(config)`.
+2. Переменная окружения **`EMBEDDINGS_MODEL`** (`'simple'` или `'openai'`).
+3. Если ни то ни другое не задано — **`'simple'**.
+
+В `server.js` фабрика создаётся как `new EmbeddingsFactory()`, поэтому фактически используется `process.env.EMBEDDINGS_MODEL` или `'simple'`.
+
+**Важно:** в конфигах (например, `kb-configs/KOSMOS-VECTOR.json`) в описании может фигурировать «Google Gemini (text-embedding-004)». В коде **EmbeddingsFactory поддерживает только `simple` и `openai`**; Gemini не реализован.
+
+---
+
+## 1. Архитектура (EmbeddingsFactory)
+
+Используется **паттерн Factory** для создания моделей эмбеддингов.
+
+**Файл:** `packages/core/EmbeddingsFactory.js`
+
+- Фабрика создаёт модель на основе конфигурации.
+- Поддерживаются два типа:
+  - **`simple`** → SimpleEmbeddings (локальная заглушка).
+  - **`openai`** → OpenAIEmbeddings от `@langchain/openai`, модель `text-embedding-ada-002`.
 
 ```javascript
-// EmbeddingsFactory.js
+// Приоритет: type || config.defaultModel || process.env.EMBEDDINGS_MODEL || 'simple'
 createEmbeddings(type = null) {
   const embeddingsType = type || this.defaultModel;
-  
   if (embeddingsType === 'openai') {
-    // ...
     return new OpenAIEmbeddings({
       openAIApiKey: this.openAIApiKey,
       modelName: "text-embedding-ada-002"
     });
-  } else {
-    return new SimpleEmbeddings();
   }
+  return new SimpleEmbeddings();
 }
 ```
 
-### 2. **Типы embedding моделей**
+---
 
-#### **SimpleEmbeddings** 
-- Генерирует **детерминированные** векторы размерностью **1536**
-- Использует хеш-функцию для создания воспроизводимых результатов
-- Предназначена для тестирования и разработки
+## 2. Типы моделей
+
+### SimpleEmbeddings
+
+- Локальная реализация, **без внешних запросов**.
+- Вектор размерности **1536**, детерминированный (хеш от текста).
+- Для тестирования и разработки.
+
+### OpenAIEmbeddings (@langchain/openai)
+
+- Реальная модель **OpenAI `text-embedding-ada-002`**.
+- Запросы к **`https://api.openai.com/v1/embeddings`**.
+- Требуется `OPENAI_API_KEY` (в конфиге фабрики или в `process.env.OPENAI_API_KEY`).
+
+---
+
+## 3. Методы
+
+У каждой модели:
+
+- **`embedQuery(text)`** — один текст (например, поисковый запрос).
+- **`embedDocuments(documents)`** — массив текстов (чанки документов).
+
+---
+
+## 4. Процесс векторизации
+
+1. **Чанки** — разбиение по типу файла: `splitJavaScriptByObjects()`, `splitSqlByObjects()`, `splitMarkdownBySections()` и т.д.
+2. **Эмбеддинги** — `embeddingsModel.embedDocuments(chunks)`.
+3. **Сохранение** — векторы и метаданные в PostgreSQL (таблица с полем `embedding`, тип `vector`).
+
+Пример сохранения через хранилище:
 
 ```javascript
-// SimpleEmbeddings.js
-_generateVector(text) {
-  // ... (хеш-функция и генерация вектора)
-}
+// PostgresVectorStore
+const texts = documents.map((doc) => doc.pageContent);
+const vectors = await this._embeddings.embedDocuments(texts);
+return this.addVectors(vectors, documents);
 ```
 
-#### **OpenAIEmbeddingsWrapper**
-- Обертка над OpenAI API
-- Использует модель `text-embedding-ada-002`
-- Добавляет логирование и обработку ошибок
+---
 
-### 3. **Основные методы embedding**
+## 5. Поиск по векторам
 
-Каждая модель реализует два ключевых метода:
-
-- **`embedQuery(text)`** - создает embedding для одного текста (обычно для поисковых запросов)
-- **`embedDocuments(documents)`** - создает embeddings для массива документов
-
-### 4. **Процесс векторизации документов**
-
-#### **Шаг 1: Разбиение на чанки**
-Текст разбивается на чанки специализированными функциями:
-- `splitJavaScriptByObjects()` - для JS файлов по объектам/функциям
-- `splitSqlByObjects()` - для SQL файлов по объектам базы данных
-- `splitMarkdownBySections()` - для Markdown по заголовкам
-
-#### **Шаг 2: Создание embeddings**
-```javascript
-// server.js
-console.log(`Создание эмбеддингов для ${chunksToEmbed.length} SQL-объектов`);
-const vectors = await embeddingsModel.embedDocuments(chunksToEmbed);
-```
-
-#### **Шаг 3: Сохранение в PostgreSQL**
-Векторы сохраняются в базе данных PostgreSQL вместе с метаданными:
+Запрос переводится в вектор той же моделью, затем сравнение с БД (pgvector):
 
 ```javascript
-// PostgresVectorStore.js
-async addDocuments(documents) {
-  const texts = documents.map((doc) => doc.pageContent);
-  const vectors = await this._embeddings.embedDocuments(texts);
-  return this.addVectors(vectors, documents);
-}
-```
-
-### 5. **Поиск по векторам**
-
-Для поиска создается embedding запроса и сравнивается с сохраненными векторами:
-
-```javascript
-// PostgresVectorStore.js
 const queryEmbedding = await this._embeddings.embedQuery(query);
-const results = await this._dbService.searchSimilarVectors(queryEmbedding, ...);
+const results = await this._dbService.similaritySearch(queryEmbedding, ...);
 ```
 
-### 6. **Microservices архитектура**
+---
 
-Система также поддерживает микросервисную архитектуру:
+## 6. Полный поток
 
-- **common-service** - общие функции векторизации
-- **openai-service** - сервис для OpenAI embeddings
-- **simple-service** - сервис для простых embeddings
+1. Загрузка файла → чтение содержимого.
+2. Парсинг и разбиение → чанки по типу файла.
+3. Создание эмбеддингов → `embedDocuments(chunks)`.
+4. Метаданные → имена объектов (SQL/JS) и т.д.
+5. Сохранение в БД → векторы и метаданные в PostgreSQL.
+6. Поиск → через `embedQuery` + similarity search по полю `embedding`.
 
-### 7. **Полный flow embedding**
+---
 
-1. **Загрузка файла** → Чтение содержимого
-2. **Парсинг и разбиение** → Создание чанков по типу файла
-3. **Создание embeddings** → `embeddingsModel.embedDocuments(chunks)`
-4. **Извлечение метаданных** → Определение имен объектов (для SQL/JS)
-5. **Сохранение в БД** → Векторы + метаданные в PostgreSQL
-6. **Индексация** → Векторный поиск готов
+## 7. Внешние зависимости
 
-Эта архитектура позволяет эффективно обрабатывать разные типы файлов, создавать семантические embeddings и выполнять быстрый поиск по содержимому.
+| Модель  | Внешний сервер | Размерность |
+|--------|-----------------|-------------|
+| simple | нет             | 1536        |
+| openai | api.openai.com  | 1536 (text-embedding-ada-002) |
 
-### 8. **Внешние серверы для Embedding**
-
-В проекте используется два типа эмбеддингов:
-
-1.  **`SimpleEmbeddings`**: Это локальная реализация, которая **не использует внешние серверы**.
-2.  **`OpenAIEmbeddings`**: Этот метод использует API от OpenAI.
-
-URL для `OpenAIEmbeddings` (используется через библиотеку `@langchain/openai`):
-**`https://api.openai.com/v1/embeddings`**
+URL для OpenAI (через `@langchain/openai`): **`https://api.openai.com/v1/embeddings`**.

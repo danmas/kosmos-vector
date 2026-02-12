@@ -3096,6 +3096,216 @@ class DbService {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ITEM TYPES — Справочник типов AI Items (аналогично tags)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /** Базовые типы для seed (из loaders: sql, js, ts, php, md, ddl, table) */
+  static get BASE_ITEM_TYPES() {
+    return [
+      { code: 'function', name: 'Функция', description: 'PL/pgSQL, JS, TS, PHP функции' },
+      { code: 'class', name: 'Класс', description: 'Класс (JS, TS, PHP)' },
+      { code: 'method', name: 'Метод', description: 'Метод класса' },
+      { code: 'arrow', name: 'Arrow функция', description: 'Стрелочная функция (JS, TS)' },
+      { code: 'interface', name: 'Интерфейс', description: 'Интерфейс (TS, PHP)' },
+      { code: 'trait', name: 'Trait', description: 'Trait (PHP)' },
+      { code: 'table', name: 'Таблица', description: 'Таблица БД (DDL, schema)' },
+      { code: 'table_column', name: 'Колонка таблицы', description: 'Колонка (column extractor)' },
+      { code: 'view', name: 'Представление', description: 'View (SQL)' },
+      { code: 'procedure', name: 'Процедура', description: 'Процедура (SQL)' },
+      { code: 'trigger', name: 'Триггер', description: 'Триггер (SQL)' },
+      { code: 'index', name: 'Индекс', description: 'Индекс (SQL)' },
+      { code: 'sequence', name: 'Последовательность', description: 'Sequence (SQL)' },
+      { code: 'type', name: 'Тип', description: 'Type/Domain (SQL)' },
+      { code: 'domain', name: 'Domain', description: 'Domain (SQL)' },
+      { code: 'schema', name: 'Схема', description: 'Схема БД' },
+      { code: 'role', name: 'Роль', description: 'Роль PostgreSQL' },
+      { code: 'grant', name: 'Grant', description: 'Права доступа' },
+      { code: 'md_doc', name: 'MD документ', description: 'Пролог Markdown' },
+      { code: 'head_level_1', name: 'H1 раздел', description: 'Раздел # Markdown' },
+      { code: 'head_level_2', name: 'H2 подраздел', description: 'Подраздел ## Markdown' }
+    ];
+  }
+
+  /**
+   * Получить список всех типов (с lazy seed при первом обращении)
+   * @param {string} contextCode - Контекстный код
+   * @returns {Promise<Array>} Массив типов
+   */
+  async getAllItemTypes(contextCode) {
+    try {
+      const result = await this.pgClient.query(`
+        SELECT id, code, name, description, is_system, created_at, updated_at
+        FROM public.item_type
+        WHERE context_code = $1
+        ORDER BY name ASC
+      `, [contextCode]);
+
+      if (result.rows.length === 0) {
+        await this._seedItemTypes(contextCode);
+        return this.getAllItemTypes(contextCode);
+      }
+      return result.rows;
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка getAllItemTypes("${contextCode}"):`, error);
+      throw error;
+    }
+  }
+
+  async _seedItemTypes(contextCode) {
+    const types = DbService.BASE_ITEM_TYPES;
+    for (const t of types) {
+      await this.pgClient.query(`
+        INSERT INTO public.item_type (context_code, code, name, description, is_system)
+        VALUES ($1, $2, $3, $4, true)
+        ON CONFLICT (context_code, code) DO NOTHING
+      `, [contextCode, t.code, t.name, t.description || null]);
+    }
+  }
+
+  /**
+   * Получить тип по коду
+   * @param {string} contextCode - Контекстный код
+   * @param {string} typeCode - Код типа
+   * @returns {Promise<Object|null>} Тип или null
+   */
+  async getItemTypeByCode(contextCode, typeCode) {
+    try {
+      const result = await this.pgClient.query(`
+        SELECT id, code, name, description, is_system, created_at, updated_at
+        FROM public.item_type
+        WHERE context_code = $1 AND code = $2
+      `, [contextCode, typeCode]);
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка getItemTypeByCode("${contextCode}", "${typeCode}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Создать новый тип (is_system=false)
+   * @param {string} contextCode - Контекстный код
+   * @param {Object} data - { code, name, description? }
+   * @returns {Promise<Object>} Созданный тип
+   */
+  async createItemType(contextCode, { code, name, description = null }) {
+    try {
+      const result = await this.pgClient.query(`
+        INSERT INTO public.item_type (context_code, code, name, description, is_system)
+        VALUES ($1, $2, $3, $4, false)
+        RETURNING id, code, name, description, is_system, created_at, updated_at
+      `, [contextCode, code, name, description]);
+      return result.rows[0];
+    } catch (error) {
+      if (error.code === '23505') {
+        const customError = new Error(`Item type with code '${code}' already exists`);
+        customError.code = 'DUPLICATE_TYPE';
+        throw customError;
+      }
+      console.error(`[DB] ❌ Ошибка createItemType("${contextCode}", "${code}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Обновить тип
+   * @param {string} contextCode - Контекстный код
+   * @param {string} typeCode - Код типа
+   * @param {Object} updates - { name?, description? }
+   * @returns {Promise<Object|null>} Обновлённый тип или null
+   */
+  async updateItemType(contextCode, typeCode, updates) {
+    try {
+      const setClauses = [];
+      const values = [];
+      let paramIndex = 1;
+      if (updates.name !== undefined) {
+        setClauses.push(`name = $${paramIndex++}`);
+        values.push(updates.name);
+      }
+      if (updates.description !== undefined) {
+        setClauses.push(`description = $${paramIndex++}`);
+        values.push(updates.description);
+      }
+      if (setClauses.length === 0) return this.getItemTypeByCode(contextCode, typeCode);
+      setClauses.push('updated_at = CURRENT_TIMESTAMP');
+      values.push(contextCode, typeCode);
+      const result = await this.pgClient.query(`
+        UPDATE public.item_type
+        SET ${setClauses.join(', ')}
+        WHERE context_code = $${paramIndex++} AND code = $${paramIndex}
+        RETURNING id, code, name, description, is_system, created_at, updated_at
+      `, values);
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка updateItemType("${contextCode}", "${typeCode}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Удалить тип (только если is_system=false)
+   * @param {string} contextCode - Контекстный код
+   * @param {string} typeCode - Код типа
+   * @returns {Promise<boolean>} true если удалён
+   */
+  async deleteItemType(contextCode, typeCode) {
+    try {
+      const type = await this.getItemTypeByCode(contextCode, typeCode);
+      if (!type) return false;
+      if (type.is_system) {
+        const error = new Error('Cannot delete system type');
+        error.code = 'SYSTEM_TYPE_READONLY';
+        throw error;
+      }
+      await this.pgClient.query(`
+        DELETE FROM public.item_type WHERE context_code = $1 AND code = $2
+      `, [contextCode, typeCode]);
+      return true;
+    } catch (error) {
+      if (error.code === 'SYSTEM_TYPE_READONLY') throw error;
+      console.error(`[DB] ❌ Ошибка deleteItemType("${contextCode}", "${typeCode}"):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Получить AI Items с указанным типом
+   * @param {string} contextCode - Контекстный код
+   * @param {string} typeCode - Код типа
+   * @returns {Promise<{itemType: Object, items: Array}|null>}
+   */
+  async getAiItemsByType(contextCode, typeCode) {
+    try {
+      const itemType = await this.getItemTypeByCode(contextCode, typeCode);
+      if (!itemType) return null;
+
+      const result = await this.pgClient.query(`
+        SELECT
+          ai.full_name as id,
+          ai.type,
+          f.filename as "filePath",
+          COALESCE(
+            (SELECT cv.metadata->>'language'
+             FROM public.chunk_vector cv
+             WHERE cv.ai_item_id = ai.id
+             LIMIT 1),
+            'unknown'
+          ) as language
+        FROM public.ai_item ai
+        LEFT JOIN public.files f ON f.id = ai.file_id
+        WHERE ai.context_code = $1 AND ai.type = $2
+        ORDER BY ai.full_name ASC
+      `, [contextCode, typeCode]);
+
+      return { itemType, items: result.rows };
+    } catch (error) {
+      console.error(`[DB] ❌ Ошибка getAiItemsByType("${contextCode}", "${typeCode}"):`, error);
+      throw error;
+    }
+  }
+
   /**
    * Получить теги AI Item
    * @param {string} contextCode - Контекстный код

@@ -2532,9 +2532,9 @@ ${JSON.stringify({
 
       const result = await dbService.getAiItemsByTag(contextCode, code);
       if (!result) {
-        return res.status(404).json({ 
-          success: false, 
-          error: `Tag not found: ${code}` 
+        return res.status(404).json({
+          success: false,
+          error: `Tag not found: ${code}`
         });
       }
 
@@ -2545,6 +2545,138 @@ ${JSON.stringify({
       });
     } catch (error) {
       console.error('[API/TAGS] GET/:code/items Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ITEM TYPES CRUD — Управление типами AI Items (аналогично tags)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // === GET /api/types - Получить список всех типов ===
+  router.get('/types', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const types = await dbService.getAllItemTypes(contextCode);
+      res.json({ success: true, types });
+    } catch (error) {
+      console.error('[API/TYPES] GET Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === POST /api/types - Создать новый тип ===
+  router.post('/types', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const { code, name, description } = req.body;
+
+      if (!code || typeof code !== 'string' || code.trim().length === 0) {
+        return res.status(400).json({ success: false, error: 'code is required and must be a non-empty string' });
+      }
+      if (!name || typeof name !== 'string' || name.trim().length === 0) {
+        return res.status(400).json({ success: false, error: 'name is required and must be a non-empty string' });
+      }
+
+      const itemType = await dbService.createItemType(contextCode, {
+        code: code.trim(),
+        name: name.trim(),
+        description: description || null
+      });
+      res.status(201).json({ success: true, itemType });
+    } catch (error) {
+      if (error.code === 'DUPLICATE_TYPE') {
+        return res.status(409).json({ success: false, error: error.message });
+      }
+      console.error('[API/TYPES] POST Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === GET /api/types/:code/items - Получить AI Items с указанным типом ===
+  router.get('/types/:code/items', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const { code } = req.params;
+
+      const result = await dbService.getAiItemsByType(contextCode, code);
+      if (!result) {
+        return res.status(404).json({ success: false, error: `Item type not found: ${code}` });
+      }
+
+      res.json({
+        success: true,
+        itemType: result.itemType,
+        items: result.items
+      });
+    } catch (error) {
+      console.error('[API/TYPES] GET/:code/items Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === GET /api/types/:code - Получить тип по коду ===
+  router.get('/types/:code', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const { code } = req.params;
+
+      const itemType = await dbService.getItemTypeByCode(contextCode, code);
+      if (!itemType) {
+        return res.status(404).json({ success: false, error: `Item type not found: ${code}` });
+      }
+
+      res.json({ success: true, itemType });
+    } catch (error) {
+      console.error('[API/TYPES] GET/:code Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === PUT /api/types/:code - Обновить тип ===
+  router.put('/types/:code', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const { code } = req.params;
+      const { name, description } = req.body;
+
+      if (name === undefined && description === undefined) {
+        return res.status(400).json({ success: false, error: 'At least one field (name or description) is required' });
+      }
+
+      const updates = {};
+      if (name !== undefined) updates.name = name;
+      if (description !== undefined) updates.description = description;
+
+      const itemType = await dbService.updateItemType(contextCode, code, updates);
+      if (!itemType) {
+        return res.status(404).json({ success: false, error: `Item type not found: ${code}` });
+      }
+
+      res.json({ success: true, itemType });
+    } catch (error) {
+      console.error('[API/TYPES] PUT Ошибка:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // === DELETE /api/types/:code - Удалить тип ===
+  router.delete('/types/:code', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+      const { code } = req.params;
+
+      const deleted = await dbService.deleteItemType(contextCode, code);
+      if (!deleted) {
+        return res.status(404).json({ success: false, error: `Item type not found: ${code}` });
+      }
+
+      res.json({ success: true, message: 'Item type deleted successfully' });
+    } catch (error) {
+      if (error.code === 'SYSTEM_TYPE_READONLY') {
+        return res.status(403).json({ success: false, error: error.message });
+      }
+      console.error('[API/TYPES] DELETE Ошибка:', error);
       res.status(500).json({ success: false, error: error.message });
     }
   });

@@ -8,7 +8,6 @@ AIAN Vector is a LangChain RAG server built with Bun/Express, PostgreSQL with pg
 
 - `packages/core/`: Business logic modules (database, embeddings, vector operations)
 - `server.js`: Main Express server with REST API
-- `server-v2/`: Alternative thin server implementation
 - `tests/`: Comprehensive test suite
 - `KB/`: Knowledge base documentation in Russian
 
@@ -21,9 +20,6 @@ bun install
 
 # Start main server with hot-reload
 bun start
-
-# Start alternative server-v2
-bun run start:v2
 
 # Run a specific test (examples below)
 bun tests/test_column_extractor.js
@@ -41,10 +37,10 @@ bun tests/test-epample-ShoppingCart.js      # Test shopping cart functionality
 bun tests/test-sql-order-system.js          # Test SQL order system
 
 # Server tests (require server running)
-node server-v2/api_test.js                   # Basic API smoke test
-node server-v2/full_cycle_test.js           # End-to-end file processing
-node server-v2/folder_cycle_test.js         # Batch folder processing
-node tests/full_system_test.js              # Complete system test
+node tests/api_test.js                       # Basic API smoke test
+node tests/full_cycle_test.js                # End-to-end file processing
+node tests/folder_cycle_test.js              # Batch folder processing
+node tests/full_system_test.js               # Complete system test
 
 # Run all tests via test runner
 node tests/run_all_tests.js

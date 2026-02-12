@@ -2,8 +2,15 @@
   "rootPath": "C:\\ERV\\projects-ex\\kosmos-vector\\tests\\test_data",
   "includeMask": "**/*.{sql,js,ts,php,md}",
   "ignorePatterns": "**/node_modules/**,**/dist/**,**/.git/**",
-  "fileSelection": [],
-  "lastUpdated": "2026-02-11T14:32:15.651Z",
+  "fileSelection": [
+    "C:\\ERV\\projects-ex\\kosmos-vector\\tests\\test_data\\",
+    "C:\\ERV\\projects-ex\\kosmos-vector\\tests\\test_data\\test_folder/test1.js",
+    "C:\\ERV\\projects-ex\\kosmos-vector\\tests\\test_data\\test_folder/test2.md",
+    "C:\\ERV\\projects-ex\\kosmos-vector\\tests\\test_data\\test_file.js",
+    "C:\\ERV\\projects-ex\\kosmos-vector\\tests\\test_data\\test_md_structure.md",
+    "C:\\ERV\\projects-ex\\kosmos-vector\\tests\\test_data\\test_simple.md"
+  ],
+  "lastUpdated": "2026-02-12T09:19:03.833Z",
   "metadata": {
     "projectName": "New Project",
     "description": "Тестовая конфигурация для проверки загрузки Markdown файлов",

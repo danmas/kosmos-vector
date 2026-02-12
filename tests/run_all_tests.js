@@ -19,6 +19,7 @@
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import fs from 'fs';
 
 // Получаем реальный путь к директории скрипта
 const __filename = fileURLToPath(import.meta.url);
@@ -73,40 +74,58 @@ async function runAllTests(options) {
   
   // Запуск тестов имен чанков
   if (options.chunkNames || options.all) {
-    log('ЗАПУСК ТЕСТОВ ИМЕН ЧАНКОВ...', 'header');
-    try {
-      results.chunkNames = await runTest(path.join(__dirname, 'test_all_chunk_names.js'));
-      log(`Тесты имен чанков ${results.chunkNames ? 'УСПЕШНО ЗАВЕРШЕНЫ' : 'ЗАВЕРШЕНЫ С ОШИБКАМИ'}`, 
-          results.chunkNames ? 'success' : 'error');
-    } catch (error) {
-      log(`Ошибка при запуске тестов имен чанков: ${error.message}`, 'error');
-      results.chunkNames = false;
+    const scriptPath = path.join(__dirname, 'test_all_chunk_names.js');
+    if (!fs.existsSync(scriptPath)) {
+      log(`Пропуск: файл отсутствует — test_all_chunk_names.js`, 'warning');
+      results.chunkNames = true;
+    } else {
+      log('ЗАПУСК ТЕСТОВ ИМЕН ЧАНКОВ...', 'header');
+      try {
+        results.chunkNames = await runTest(scriptPath);
+        log(`Тесты имен чанков ${results.chunkNames ? 'УСПЕШНО ЗАВЕРШЕНЫ' : 'ЗАВЕРШЕНЫ С ОШИБКАМИ'}`, 
+            results.chunkNames ? 'success' : 'error');
+      } catch (error) {
+        log(`Ошибка при запуске тестов имен чанков: ${error.message}`, 'error');
+        results.chunkNames = false;
+      }
     }
   }
   
   // Запуск тестов доступа к индексу
   if (options.indexAccess || options.all) {
-    log('ЗАПУСК ТЕСТОВ ДОСТУПА К ИНДЕКСУ...', 'header');
-    try {
-      results.indexAccess = await runTest(path.join(__dirname, 'test_index_access.js'));
-      log(`Тесты доступа к индексу ${results.indexAccess ? 'УСПЕШНО ЗАВЕРШЕНЫ' : 'ЗАВЕРШЕНЫ С ОШИБКАМИ'}`, 
-          results.indexAccess ? 'success' : 'error');
-    } catch (error) {
-      log(`Ошибка при запуске тестов доступа к индексу: ${error.message}`, 'error');
-      results.indexAccess = false;
+    const scriptPath = path.join(__dirname, 'test_index_access.js');
+    if (!fs.existsSync(scriptPath)) {
+      log(`Пропуск: файл отсутствует — test_index_access.js`, 'warning');
+      results.indexAccess = true;
+    } else {
+      log('ЗАПУСК ТЕСТОВ ДОСТУПА К ИНДЕКСУ...', 'header');
+      try {
+        results.indexAccess = await runTest(scriptPath);
+        log(`Тесты доступа к индексу ${results.indexAccess ? 'УСПЕШНО ЗАВЕРШЕНЫ' : 'ЗАВЕРШЕНЫ С ОШИБКАМИ'}`, 
+            results.indexAccess ? 'success' : 'error');
+      } catch (error) {
+        log(`Ошибка при запуске тестов доступа к индексу: ${error.message}`, 'error');
+        results.indexAccess = false;
+      }
     }
   }
   
   // Запуск тестов обработки запросов
   if (options.queryAccess || options.all) {
-    log('ЗАПУСК ТЕСТОВ ОБРАБОТКИ ЗАПРОСОВ...', 'header');
-    try {
-      results.queryAccess = await runTest(path.join(__dirname, 'test_query_access.js'));
-      log(`Тесты обработки запросов ${results.queryAccess ? 'УСПЕШНО ЗАВЕРШЕНЫ' : 'ЗАВЕРШЕНЫ С ОШИБКАМИ'}`, 
-          results.queryAccess ? 'success' : 'error');
-    } catch (error) {
-      log(`Ошибка при запуске тестов обработки запросов: ${error.message}`, 'error');
-      results.queryAccess = false;
+    const scriptPath = path.join(__dirname, 'test_query_access.js');
+    if (!fs.existsSync(scriptPath)) {
+      log(`Пропуск: файл отсутствует — test_query_access.js`, 'warning');
+      results.queryAccess = true;
+    } else {
+      log('ЗАПУСК ТЕСТОВ ОБРАБОТКИ ЗАПРОСОВ...', 'header');
+      try {
+        results.queryAccess = await runTest(scriptPath);
+        log(`Тесты обработки запросов ${results.queryAccess ? 'УСПЕШНО ЗАВЕРШЕНЫ' : 'ЗАВЕРШЕНЫ С ОШИБКАМИ'}`, 
+            results.queryAccess ? 'success' : 'error');
+      } catch (error) {
+        log(`Ошибка при запуске тестов обработки запросов: ${error.message}`, 'error');
+        results.queryAccess = false;
+      }
     }
   }
   

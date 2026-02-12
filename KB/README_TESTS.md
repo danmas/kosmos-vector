@@ -1,8 +1,8 @@
 # Тестирование проекта Aian-Vector
 
-В проекте `aian-vector` используется несколько уровней тестирования для проверки корректной работы нового сервера `server-v2` и ядра `packages/core`.
+В проекте `aian-vector` используется несколько уровней тестирования для проверки корректной работы сервера и ядра `packages/core`.
 
-## 1. API Smoke Test (`server-v2/api_test.js`)
+## 1. API Smoke Test (`tests/api_test.js`)
 
 Этот скрипт выполняет базовую проверку ("smoke test") доступности и работоспособности основных `GET` эндпоинтов сервера.
 
@@ -13,23 +13,23 @@
 -   **Работоспособность RAG**: Отправляет запрос `POST /ask` и проверяет, что сервер отвечает, даже если контекст не найден.
 
 ### Как запустить:
-1.  Убедитесь, что сервер `server-v2` запущен.
+1.  Убедитесь, что сервер запущен.
     ```bash
-    node server-v2/index.js
+    bun start
     ```
 2.  В отдельном терминале выполните команду:
     ```bash
-    node server-v2/api_test.js
+    node tests/api_test.js
     ```
 
-## 2. End-to-End (E2E) Full Cycle Test (`server-v2/full_cycle_test.js`)
+## 2. End-to-End (E2E) Full Cycle Test (`tests/full_cycle_test.js`)
 
 Это комплексный тест, который проверяет весь жизненный цикл обработки одного файла: от векторизации до получения ответа от RAG и последующей очистки.
 
 ### Что проверяет:
 -   **Полный CRUD-цикл для документов**:
     1.  **Удаление (Cleanup)**: Перед тестом отправляется `DELETE /file/:filename`, чтобы гарантировать отсутствие тестового файла в базе.
-    2.  **Создание (Vectorization)**: Тестовый файл `server-v2/test_data/test_file.js` векторизуется через эндпоинт `POST /vectorize`. Тест проверяет, что API возвращает успешный статус и ненулевое количество созданных чанков.
+    2.  **Создание (Vectorization)**: Тестовый файл `tests/test_data/test_file.js` векторизуется через эндпоинт `POST /vectorize`. Тест проверяет, что API возвращает успешный статус и ненулевое количество созданных чанков.
     3.  **Чтение (Verification)**: Скрипт запрашивает чанки для созданного файла через `GET /file-chunks/:filename` и убеждается, что они появились в базе данных.
     4.  **Удаление (Final Cleanup)**: После всех проверок тестовый файл и все его чанки удаляются из базы данных через `DELETE /file/:filename`.
 -   **Работоспособность RAG с реальным контекстом**:
@@ -37,22 +37,22 @@
     -   Проверяется, что ответ от `POST /ask` содержит в себе фрагменты кода/текста из найденных чанков, а не ответ по умолчанию "информация не найдена". Это подтверждает, что вся цепочка (поиск -> ретривер -> модель) работает корректно.
 
 ### Как запустить:
-1.  Убедитесь, что сервер `server-v2` запущен.
+1.  Убедитесь, что сервер запущен.
     ```bash
-    node server-v2/index.js
+    bun start
     ```
 2.  В отдельном терминале выполните команду:
     ```bash
-    node server-v2/full_cycle_test.js
+    node tests/full_cycle_test.js
     ```
 
-## 3. End-to-End (E2E) Folder Scan Test (`server-v2/folder_cycle_test.js`)
+## 3. End-to-End (E2E) Folder Scan Test (`tests/folder_cycle_test.js`)
 
 Этот тест проверяет весь конвейер для функциональности "Сканировать папку". Он эмулирует пакетную обработку нескольких файлов, расположенных в специальной тестовой директории.
 
 ### Что проверяет:
 -   **Пакетная обработка**:
-    1.  **Подготовка**: Создана тестовая папка `server-v2/test_data/test_folder` с несколькими файлами (`.js`, `.md`).
+    1.  **Подготовка**: Создана тестовая папка `tests/test_data/test_folder` с несколькими файлами (`.js`, `.md`).
     2.  **Предварительная очистка**: Перед тестом скрипт удаляет все документы, связанные с тестовыми файлами, чтобы обеспечить чистоту эксперимента.
     3.  **Запуск сканирования**: Вызывается эндпоинт `POST /scan-and-vectorize` с путем к тестовой папке. Тест проверяет, что API возвращает успешный статус.
     4.  **Проверка (Verification)**: Для каждого файла из тестовой папки скрипт отправляет запрос `GET /file-chunks/:filename` и убеждается, что для всех файлов были созданы и сохранены чанки в базе данных.
@@ -62,13 +62,13 @@
 -   **Финальная очистка**: После всех проверок тестовые файлы и все их чанки удаляются из базы данных.
 
 ### Как запустить:
-1.  Убедитесь, что сервер `server-v2` запущен.
+1.  Убедитесь, что сервер запущен.
     ```bash
-    node server-v2/index.js
+    bun start
     ```
 2.  В отдельном терминале выполните команду:
     ```bash
-    node server-v2/folder_cycle_test.js
+    node tests/folder_cycle_test.js
     ```
 
 ## 4. Full System Test (`tests/full_system_test.js`)
@@ -189,7 +189,7 @@ curl -X POST "http://localhost:3200/api/extract-all-columns?context-code=CARL"
 
 Тесты для проверки загрузки и обработки Markdown файлов с созданием иерархической структуры ai_items и связей.
 
-### 7.1. Direct MD Loader Test (`tests/test_md_loader_direct.js`)
+### 8.1. Direct MD Loader Test (`tests/test_md_loader_direct.js`)
 
 Прямой тест MD загрузчика без использования pipeline API. Проверяет загрузку Markdown файла, создание ai_items и связей.
 
@@ -210,7 +210,7 @@ bun tests/test_md_loader_direct.js
 **Тестовый файл:** `tests/README_TESTS.md` (этот файл!)
 **Контекст:** `TEST_MD`
 
-### 7.2. MD Loader via Pipeline (`tests/test_md_loader.js`)
+### 8.2. MD Loader via Pipeline (`tests/test_md_loader.js`)
 
 Тест загрузки Markdown через pipeline API (HTTP).
 
@@ -233,7 +233,7 @@ bun tests/test_md_loader_direct.js
 Базовый URL: `http://localhost:3200`
 Контекст: `TEST_MD`
 
-### 7.3. MD Types Check (`tests/check_md_types.js`)
+### 8.3. MD Types Check (`tests/check_md_types.js`)
 
 Проверка типов созданных ai_items для Markdown документов.
 
@@ -247,7 +247,7 @@ bun tests/test_md_loader_direct.js
 node tests/check_md_types.js
 ```
 
-### 7.4. MD Links Check (`tests/check_md_links.js`)
+### 8.4. MD Links Check (`tests/check_md_links.js`)
 
 Проверка связей между Markdown секциями.
 
@@ -262,7 +262,7 @@ node tests/check_md_types.js
 node tests/check_md_links.js
 ```
 
-### 7.5. MD Vectorization Tests
+### 8.5. MD Vectorization Tests
 
 #### Simple Embeddings (`tests/test_md_vectorize_ai_items.js`)
 
@@ -306,7 +306,7 @@ bun tests/test_md_vectorize_ai_items_openai.js
 **Тестовый файл:** `tests/README_TESTS.md`
 **Контекст:** `TEST_MD_VECTORIZE_OPENAI`
 
-### 7.6. MD Parser Test (`tests/test_md_parser.js`)
+### 8.6. MD Parser Test (`tests/test_md_parser.js`)
 
 Юнит-тест парсера Markdown структуры.
 
@@ -372,6 +372,20 @@ node temp_cleanup.js
 ### Дополнительная информация
 
 Подробное описание MD загрузки см. в [KB/README_MD_LOADING.md](../KB/README_MD_LOADING.md)
+
+## 9. Другие тесты (без отдельного раздела)
+
+Запуск через `bun tests/<файл>.js` или см. `package.json` scripts:
+
+- `test_agent_script.js` — Natural Query Engine (см. AGENTS.md)
+- `test-epample-ShoppingCart.js` — корзина (`bun run test:shopping-cart`)
+- `test-sql-order-system.js` — SQL order system E2E (см. [README_SQL_ORDER_SYSTEM.md](README_SQL_ORDER_SYSTEM.md), `bun run test:sql-order-system`)
+- `test_api_vectorize_ai_items.js`, `test_api_vectorize_ai_items_by_ids.js` — API векторизации ai_items
+- `test_app_config.js`, `test_file_content_api.js`, `test_is_vectorized_flag.js` — конфиг и API
+- `test_prompts_config.js`, `test_rag_retrieval.js` — промпты и RAG
+- `md_cycle_test.js`, `run_tests.js` — вспомогательные скрипты
+
+**Запуск набора тестов:** `node tests/run_all_tests.js` — запускает тесты имён чанков, доступа к индексу и обработки запросов. Скрипты `test_all_chunk_names.js`, `test_index_access.js`, `test_query_access.js` в репозитории отсутствуют; при их отсутствии соответствующие пункты пропускаются с предупреждением.
 
 ## Важные замечания
 

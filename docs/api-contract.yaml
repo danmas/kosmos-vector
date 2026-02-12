@@ -123,6 +123,10 @@ tags:
     description: |
       Управление тегами для классификации и группировки AiItems.
       Теги изолированы по context-code.
+  - name: ItemTypes
+    description: |
+      Справочник типов AI Items (function, class, table и т.д.).
+      Изолирован по context-code. Lazy seed при первом GET.
   - name: Chunks
     description: |
       Управление чанками (chunk_vector): векторизация, обновление метаданных.
@@ -182,6 +186,18 @@ components:
       $ref: "openapi/schemas/tags.yaml#/BulkTagsRequest"
     BulkTagsResponse:
       $ref: "openapi/schemas/tags.yaml#/BulkTagsResponse"
+    ItemType:
+      $ref: "openapi/schemas/item-types.yaml#/ItemType"
+    ItemTypeCreateRequest:
+      $ref: "openapi/schemas/item-types.yaml#/ItemTypeCreateRequest"
+    ItemTypeUpdateRequest:
+      $ref: "openapi/schemas/item-types.yaml#/ItemTypeUpdateRequest"
+    ItemTypeListResponse:
+      $ref: "openapi/schemas/item-types.yaml#/ItemTypeListResponse"
+    ItemTypeResponse:
+      $ref: "openapi/schemas/item-types.yaml#/ItemTypeResponse"
+    ItemTypeItemsResponse:
+      $ref: "openapi/schemas/item-types.yaml#/ItemTypeItemsResponse"
     PromptTemplate:
       $ref: "openapi/schemas/prompts.yaml#/PromptTemplate"
     L1L2TemplateLevel:
@@ -402,6 +418,12 @@ paths:
     $ref: "openapi/paths/tags.yaml#/~1api~1tags~1{code}"
   /api/tags/{code}/items:
     $ref: "openapi/paths/tags.yaml#/~1api~1tags~1{code}~1items"
+  /api/types:
+    $ref: "openapi/paths/types.yaml#/~1api~1types"
+  /api/types/{code}:
+    $ref: "openapi/paths/types.yaml#/~1api~1types~1{code}"
+  /api/types/{code}/items:
+    $ref: "openapi/paths/types.yaml#/~1api~1types~1{code}~1items"
   /api/ai-items/bulk/tags/add:
     $ref: "openapi/paths/tags.yaml#/~1api~1ai-items~1bulk~1tags~1add"
   /api/ai-items/bulk/tags/remove:

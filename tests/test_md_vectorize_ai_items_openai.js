@@ -10,7 +10,7 @@ const EmbeddingsFactory = require('../packages/core/EmbeddingsFactory');
 const { loadMarkdownFromFile } = require('../routes/loaders/mdLoader');
 
 const TEST_CONTEXT = 'TEST_MD_VECTORIZE_OPENAI';
-const TEST_FILE = path.join(__dirname, 'README_TESTS.md');
+const TEST_FILE = path.join(__dirname, '..', 'KB', 'README_TESTS.md');
 
 async function vectorizeAiItems(dbService, embeddings, aiItemIds, force = false) {
   let totalUpdated = 0;

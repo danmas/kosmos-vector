@@ -14,9 +14,12 @@ class EmbeddingsFactory {
    */
   constructor(config = {}) {
     this.config = config;
-    this.openAIApiKey = config.openAIApiKey || process.env.OPENAI_API_KEY;
-    this.defaultModel = config.defaultModel || process.env.EMBEDDINGS_MODEL || 'simple';
-    
+    // Временно: только из .env
+    // this.openAIApiKey = config.openAIApiKey || process.env.OPENAI_API_KEY;
+    this.openAIApiKey = process.env.OPENAI_API_KEY;
+    // this.defaultModel = config.defaultModel || process.env.EMBEDDINGS_MODEL || 'simple';
+    this.defaultModel = process.env.EMBEDDINGS_MODEL // ЛУЧШЕ ОШИБКА ЧЕМ НЕПРАВИЛЬНАЯ МОДЕЛЬ!|| 'simple';
+
     console.log(`Инициализирована EmbeddingsFactory с моделью по умолчанию: ${this.defaultModel}`);
   }
   
@@ -26,8 +29,9 @@ class EmbeddingsFactory {
    * @returns {Object} - Экземпляр модели эмбеддингов
    */
   createEmbeddings(type = null) {
-    // Если тип не указан, используем значение по умолчанию
-    const embeddingsType = type || this.defaultModel;
+    // Временно: только из .env, параметр type игнорируется
+    // const embeddingsType = type || this.defaultModel;
+    const embeddingsType = this.defaultModel;
     
     // Создаем соответствующую модель эмбеддингов
     if (embeddingsType === 'openai') {
