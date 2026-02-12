@@ -212,6 +212,8 @@ components:
       $ref: "openapi/schemas/prompts.yaml#/NaturalQueryPrompts"
     VectorOperationsPrompts:
       $ref: "openapi/schemas/prompts.yaml#/VectorOperationsPrompts"
+    RAGItemFilter:
+      $ref: "openapi/schemas/rag.yaml#/RAGItemFilter"
     PromptsConfig:
       $ref: "openapi/schemas/prompts.yaml#/PromptsConfig"
     PromptsConfigResponse:

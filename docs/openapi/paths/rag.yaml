@@ -94,6 +94,10 @@
                     type: integer
                     default: 4000
                     description: Максимальное количество токенов в контексте
+              itemFilter:
+                $ref: '#/components/schemas/RAGItemFilter'
+                description: |
+                  Фильтр AI Items по типам и тегам. Необязательно; при отсутствии фильтрация не применяется.
     responses:
       '200':
         description: Контекст успешно получен
@@ -233,6 +237,9 @@
                       maxTokens:
                         type: integer
                         default: 4000
+                  itemFilter:
+                    $ref: '#/components/schemas/RAGItemFilter'
+                    description: Фильтр AI Items по типам и тегам (в рамках ragConfig).
               llmConfig:
                 type: object
                 description: Настройки LLM (опционально)

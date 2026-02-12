@@ -101,12 +101,29 @@ class RAGRetriever {
   }
 
   /**
+   * Собрать объект фильтров для similaritySearch из options.itemFilter
+   * @private
+   */
+  _itemFilterToDbFilters(options) {
+    const itemFilter = options.itemFilter || {};
+    const filters = {};
+    if (Array.isArray(itemFilter.typeCodes) && itemFilter.typeCodes.length > 0) {
+      filters.typeCodes = itemFilter.typeCodes;
+    }
+    if (Array.isArray(itemFilter.tagCodes) && itemFilter.tagCodes.length > 0) {
+      filters.tagCodes = itemFilter.tagCodes;
+    }
+    return filters;
+  }
+
+  /**
    * Простая стратегия: векторный поиск Top-K чанков
    * @private
    */
   async _simpleStrategy(queryEmbedding, contextCode, options) {
     const limit = options.maxChunks || this.config.maxChunks;
     const levels = options.levels || this.config.levels;
+    const itemFilters = this._itemFilterToDbFilters(options);
     
     // Защита от undefined/null
     if (!Array.isArray(levels) || levels.length === 0) {
@@ -125,7 +142,7 @@ class RAGRetriever {
         queryEmbedding,
         Math.ceil(limit / levels.length),
         contextCode,
-        { chunkLevel: level }
+        { chunkLevel: level, ...itemFilters }
       );
       
       allChunks.push(...chunks);
@@ -145,6 +162,7 @@ class RAGRetriever {
    */
   async _hierarchicalStrategy(queryEmbedding, contextCode, options) {
     const limit = options.maxChunks || this.config.maxChunks;
+    const itemFilters = this._itemFilterToDbFilters(options);
     
     console.log(`[RAGRetriever] Hierarchical Strategy: limit=${limit}`);
     
@@ -153,7 +171,7 @@ class RAGRetriever {
       queryEmbedding,
       Math.min(limit, 5), // Ограничиваем количество базовых чанков
       contextCode,
-      { chunkLevel: '0-исходник' }
+      { chunkLevel: '0-исходник', ...itemFilters }
     );
     
     console.log(`[RAGRetriever] Найдено ${l0Chunks.length} L0-чанков`);
@@ -211,6 +229,7 @@ class RAGRetriever {
    */
   async _aiItemStrategy(queryEmbedding, contextCode, options) {
     const limit = options.maxChunks || this.config.maxChunks;
+    const itemFilters = this._itemFilterToDbFilters(options);
     
     console.log(`[RAGRetriever] AI Item Strategy: limit=${limit}`);
     
@@ -218,7 +237,8 @@ class RAGRetriever {
     const foundChunks = await this.dbService.similaritySearch(
       queryEmbedding,
       limit * 2, // Берём с запасом
-      contextCode
+      contextCode,
+      itemFilters
     );
     
     // 2. Группируем по AI Item

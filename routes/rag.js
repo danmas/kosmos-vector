@@ -8,6 +8,53 @@ const promptsService = require('../packages/core/promptsService');
 
 const router = express.Router();
 
+/**
+ * Подготовка параметров фильтра AI Items для RAG (typeCodes, tagCodes).
+ * Возвращает null если фильтр не задан или пустой.
+ */
+function prepareItemFilter(itemFilter) {
+  if (!itemFilter || itemFilter.mode !== 'expression') return null;
+  let typeCodes = null;
+  let tagCodes = null;
+  if (itemFilter.typeCodes && Array.isArray(itemFilter.typeCodes) && itemFilter.typeCodes.length > 0) {
+    const cleaned = itemFilter.typeCodes.filter(t => typeof t === 'string');
+    if (cleaned.length > 0) typeCodes = cleaned;
+  }
+  if (itemFilter.tagCodes && Array.isArray(itemFilter.tagCodes) && itemFilter.tagCodes.length > 0) {
+    const cleaned = itemFilter.tagCodes.filter(t => typeof t === 'string');
+    if (cleaned.length > 0) tagCodes = cleaned;
+  }
+  if (!typeCodes && !tagCodes) return null;
+  return { typeCodes: typeCodes || undefined, tagCodes: tagCodes || undefined };
+}
+
+/**
+ * Валидация itemFilter в теле запроса. Возвращает { valid: true } или { valid: false, error: string }.
+ */
+function validateItemFilter(itemFilter) {
+  if (!itemFilter) return { valid: true };
+  if (itemFilter.mode !== 'expression') {
+    return { valid: false, error: `Invalid itemFilter.mode: "${itemFilter.mode}". Only "expression" is supported.` };
+  }
+  if (itemFilter.typeCodes !== undefined) {
+    if (!Array.isArray(itemFilter.typeCodes)) {
+      return { valid: false, error: 'itemFilter.typeCodes must be an array' };
+    }
+    if (!itemFilter.typeCodes.every(t => typeof t === 'string')) {
+      return { valid: false, error: 'itemFilter.typeCodes must contain only strings' };
+    }
+  }
+  if (itemFilter.tagCodes !== undefined) {
+    if (!Array.isArray(itemFilter.tagCodes)) {
+      return { valid: false, error: 'itemFilter.tagCodes must be an array' };
+    }
+    if (!itemFilter.tagCodes.every(t => typeof t === 'string')) {
+      return { valid: false, error: 'itemFilter.tagCodes must contain only strings' };
+    }
+  }
+  return { valid: true };
+}
+
 module.exports = (dbService, vectorStore, embeddings) => {
     /**
      * POST /api/rag/retrieve
@@ -35,7 +82,8 @@ module.exports = (dbService, vectorStore, embeddings) => {
                 levels,
                 formatting = {},
                 includeRelations = true,
-                expandGraph = false
+                expandGraph = false,
+                itemFilter
             } = req.body;
 
             // Валидация
@@ -53,6 +101,16 @@ module.exports = (dbService, vectorStore, embeddings) => {
                 });
             }
 
+            const validation = validateItemFilter(itemFilter);
+            if (!validation.valid) {
+                return res.status(400).json({ success: false, error: validation.error });
+            }
+
+            const preparedFilter = prepareItemFilter(itemFilter);
+            if (preparedFilter) {
+                console.log(`[RAG/RETRIEVE] itemFilter applied: types=${(preparedFilter.typeCodes || []).join(',') || '(none)'}, tags=${(preparedFilter.tagCodes || []).join(',') || '(none)'}`);
+            }
+
             console.log(`[RAG/RETRIEVE] Query: "${query.substring(0, 100)}..."`);
             console.log(`[RAG/RETRIEVE] Strategy: ${strategy}, Context: ${contextCode}`);
 
@@ -65,8 +123,12 @@ module.exports = (dbService, vectorStore, embeddings) => {
                 expandGraph
             });
 
-            // Получаем контекст
-            const retrievalResult = await ragRetriever.retrieve(query, contextCode);
+            // Получаем контекст (передаём itemFilter в options)
+            const retrievalResult = await ragRetriever.retrieve(query, contextCode, {
+                maxChunks,
+                levels,
+                itemFilter: preparedFilter || undefined
+            });
 
             // Форматируем контекст
             const contextBuilder = new ContextBuilder({
@@ -136,6 +198,17 @@ module.exports = (dbService, vectorStore, embeddings) => {
                 });
             }
 
+            const itemFilter = ragConfig.itemFilter;
+            const validation = validateItemFilter(itemFilter);
+            if (!validation.valid) {
+                return res.status(400).json({ success: false, error: validation.error });
+            }
+
+            const preparedFilter = prepareItemFilter(itemFilter);
+            if (preparedFilter) {
+                console.log(`[RAG/ASK] itemFilter applied: types=${(preparedFilter.typeCodes || []).join(',') || '(none)'}, tags=${(preparedFilter.tagCodes || []).join(',') || '(none)'}`);
+            }
+
             console.log(`[RAG/ASK] Query: "${query.substring(0, 100)}..."`);
             console.log(`[RAG/ASK] RAG Strategy: ${ragConfig.strategy || 'hierarchical'}`);
 
@@ -148,7 +221,11 @@ module.exports = (dbService, vectorStore, embeddings) => {
                 expandGraph: ragConfig.expandGraph || false
             });
 
-            const retrievalResult = await ragRetriever.retrieve(query, contextCode);
+            const retrievalResult = await ragRetriever.retrieve(query, contextCode, {
+                maxChunks: ragConfig.maxChunks || 10,
+                levels: ragConfig.levels,
+                itemFilter: preparedFilter || undefined
+            });
 
             // 2. Форматируем контекст
             const formattingConfig = ragConfig.formatting || {};

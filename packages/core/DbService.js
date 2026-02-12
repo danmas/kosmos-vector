@@ -638,11 +638,13 @@ class DbService {
       // Форматируем вектор для PostgreSQL без кавычек
       const vectorString = `[${queryEmbedding.join(',')}]`;
       
-      // Получаем фильтры
-      const { chunkType, chunkLevel } = filters || {};
+      // Получаем фильтры (chunkType, chunkLevel — по чанку; typeCodes, tagCodes — по AI Item)
+      const { chunkType, chunkLevel, typeCodes, tagCodes } = filters || {};
+      const hasItemFilter = (Array.isArray(typeCodes) && typeCodes.length > 0) ||
+        (Array.isArray(tagCodes) && tagCodes.length > 0);
       
       // Создаем базовый запрос
-      // Извлекаем поле text из JSONB, если оно есть, иначе весь JSONB как текст
+      // При фильтре по AI Item — INNER JOIN ai_item (чанки без ai_item_id отсекаются)
       let query = `
         SELECT fv.id, 
                COALESCE(fv.chunk_content->>'text', fv.chunk_content::text) as content, 
@@ -653,8 +655,11 @@ class DbService {
                fv.level
         FROM public.chunk_vector fv
         JOIN public.files f ON fv.file_id = f.id
-        WHERE 1=1
       `;
+      if (hasItemFilter) {
+        query += `\n        JOIN public.ai_item ai ON fv.ai_item_id = ai.id`;
+      }
+      query += `\n        WHERE 1=1`;
       
       // Массив значений для подготовленного запроса
       const params = [vectorString];
@@ -676,6 +681,25 @@ class DbService {
       if (chunkLevel) {
         query += ` AND fv.level = $${paramIndex++}`;
         params.push(chunkLevel);
+      }
+      
+      // Фильтр по типам AI Item (typeCodes)
+      if (Array.isArray(typeCodes) && typeCodes.length > 0) {
+        query += ` AND ai.type = ANY($${paramIndex++})`;
+        params.push(typeCodes);
+      }
+      
+      // Фильтр по тегам AI Item (tagCodes) — элемент должен иметь хотя бы один тег из списка
+      if (Array.isArray(tagCodes) && tagCodes.length > 0) {
+        query += ` AND EXISTS (
+          SELECT 1
+          FROM public.ai_item_tag ait
+          JOIN public.tag t ON ait.tag_id = t.id
+          WHERE ait.ai_item_full_name = ai.full_name
+            AND ait.ai_item_context_code = ai.context_code
+            AND t.code = ANY($${paramIndex++})
+        )`;
+        params.push(tagCodes);
       }
       
       // Завершаем запрос сортировкой и ограничением

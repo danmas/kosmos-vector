@@ -1,0 +1,31 @@
+# RAG API schemas: RAGItemFilter (фильтр AI Items по типам и тегам)
+---
+RAGItemFilter:
+  type: object
+  required:
+    - mode
+  description: |
+    Фильтр AI Items по типам и тегам для ограничения векторного поиска.
+    Если не передан, фильтрация не применяется (обратная совместимость).
+  properties:
+    mode:
+      type: string
+      enum: [expression]
+      description: "Режим фильтрации. Поддерживается только 'expression'."
+      example: "expression"
+    typeCodes:
+      type: array
+      items:
+        type: string
+      description: |
+        Коды типов AI Item (например function, class, method).
+        Если задано и не пусто — только элементы с типом из списка.
+      example: ["function", "class"]
+    tagCodes:
+      type: array
+      items:
+        type: string
+      description: |
+        Коды тегов (например IMP, REF, DEPRECATED).
+        Если задано и не пусто — только элементы с хотя бы одним тегом из списка (OR).
+      example: ["IMP", "REF"]
