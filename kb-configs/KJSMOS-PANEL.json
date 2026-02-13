@@ -1,0 +1,13 @@
+{
+  "rootPath": "C:\\ERV\\projects-ex\\kosmos-panel",
+  "includeMask": "**/*.{sql,**/*.js,**/*.ts,**/*.tsх,**/*.md",
+  "ignorePatterns": "**/.cursor/**,**/.qoder/**,**/.vscode/**,**/data/**,**/tmp/**,**/tests/**,**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
+  "fileSelection": [],
+  "lastUpdated": "2026-02-13T08:44:16.767Z",
+  "metadata": {
+    "projectName": "New Project",
+    "description": "RAG knowledge base",
+    "tags": [],
+    "custom_settings": "md_loading:\n  enabled: true\n\njs_loading:\n  enabled: true\n\nts_loading:\n  enabled: true\n\nfunctions_loading:\n  enabled: true\n\nddl_loading:\n  enabled: fasle\n  files:\n    - ./KB/current_DB_schema.sql\n    - ./migrations/schema.sql\n\ntable_loading:\n  enabled: false\n  schema: public\n  include_patterns:\n    - \"%\"\n  exclude_patterns:\n    - \"pg_%\""
+  }
+}

@@ -1,9 +1,9 @@
 {
-  "rootPath": "C:\\ERV\\projects-ex\\kosmos-vector-UI",
-  "includeMask": "**/*.{sql,**/*.js,**/*.ts,**/*.md ",
-  "ignorePatterns": "**/.cursor/**,**/.vscode/**,**/data/**,**/tmp/**,**/tests/**,**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
+  "rootPath": "C:\\ERV\\projects-ex\\kosmos-vector-UI, C:\\ERV\\projects-ex\\kosmos-vector",
+  "includeMask": "**/*.{sql,**/*.js,**/*.ts,**/*.tsх,**/*.md",
+  "ignorePatterns": "**/.cursor/**,**/.qoder/**,**/.vscode/**,**/data/**,**/tmp/**,**/tests/**,**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
   "fileSelection": [],
-  "lastUpdated": "2026-02-12T09:30:35.612Z",
+  "lastUpdated": "2026-02-13T06:17:00.627Z",
   "metadata": {
     "projectName": "New Project",
     "description": "RAG knowledge base",

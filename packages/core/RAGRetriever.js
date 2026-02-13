@@ -166,10 +166,10 @@ class RAGRetriever {
     
     console.log(`[RAGRetriever] Hierarchical Strategy: limit=${limit}`);
     
-    // 1. Находим релевантные L0-чанки (исходный код)
+    // 1. Находим релевантные L0-чанки (исходный код); лимит из maxChunks (ползунок на фронте)
     const l0Chunks = await this.dbService.similaritySearch(
       queryEmbedding,
-      Math.min(limit, 5), // Ограничиваем количество базовых чанков
+      limit,
       contextCode,
       { chunkLevel: '0-исходник', ...itemFilters }
     );
