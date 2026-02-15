@@ -23,6 +23,7 @@
     "test:sql-order-system": "bun tests/test-sql-order-system.js"
   },
   "dependencies": {
+    "@babel/parser": "^7.24.0",
     "@modelcontextprotocol/sdk": "^1.24.3",
     "chalk": "^5.4.1",
     "cors": "^2.8.5",

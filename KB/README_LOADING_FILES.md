@@ -7,7 +7,7 @@
 - **Шаг 1** (`step1Runner.js`) — сканирование, парсинг и загрузка файлов в БД
 - **Шаг 2** (`step2Runner.js`) — проверка и авто-исправление L1 зависимостей
 
-Поддерживаемые типы файлов: SQL (функции PL/pgSQL), JavaScript, TypeScript, PHP, Markdown, DDL схемы, а также прямая загрузка схем таблиц из БД.
+Поддерживаемые типы файлов: SQL (функции PL/pgSQL), JavaScript, TypeScript, **TSX (React)**, PHP, Markdown, DDL схемы, а также прямая загрузка схем таблиц из БД.
 
 ---
 
@@ -51,6 +51,9 @@ js_loading:
 
 ts_loading:
   enabled: true        # TypeScript файлы (по умолчанию false)
+
+tsx_loading:
+  enabled: true        # TSX (React) файлы (по умолчанию false)
 
 php_loading:
   enabled: true        # PHP файлы (по умолчанию false)
@@ -203,6 +206,54 @@ fileSelection: [
 - `parseTsFunctionL1(code)` — парсинг L1 зависимостей
 - `parseTsEntitiesFromContent(content, filePath)` — извлечение сущностей из TS файла
 - `loadTsFunctionsFromFile(filePath, contextCode, dbService, pipelineState)` — полная загрузка файла
+
+### TSX Loader (`tsxLoader.js`)
+
+**Назначение:** Загрузка React компонентов и хуков из TSX файлов. Использует `@babel/parser` с плагинами `typescript` и `jsx`.
+
+**Поддерживаемые сущности:**
+- React функциональные компоненты (`function Button() { return <div>...</div> }`)
+- Arrow компоненты (`const Button = () => <div>...</div>`)
+- React классы (`class Button extends React.Component`)
+- Кастомные хуки (`function useLocalState() {...}`)
+- Интерфейсы (`interface ButtonProps {...}`)
+- Type алиасы (`type ButtonVariant = ...`)
+- forwardRef компоненты (`const Input = forwardRef(...)`)
+- memo компоненты (`const Display = memo(...)`)
+- styled-components (`const Wrapper = styled.div\`...\``)
+
+**Типы AI Items:**
+- `tsx_component` — React компонент
+- `tsx_hook` — кастомный хук (паттерн `useXxx`)
+- `interface` — TypeScript интерфейс
+- `type` — type alias
+- `class` — обычный класс (не React)
+
+**L1 связи (parseTsxL1):**
+- `imports` — ES6 импорты
+- `type_imports` — type-only импорты
+- `uses_components` — использование компонентов в JSX (`<Button>`, `<Modal.Header>`)
+- `uses_hooks` — вызовы хуков (`useState`, `useEffect`, `useCustomHook`)
+- `called_functions` — обычные вызовы функций
+
+**Типы связей в link:**
+- `imports` — импорты модулей
+- `uses_component` — использование компонента в JSX
+- `uses_hook` — вызов хука
+- `calls` — вызовы функций
+
+**Metadata для edge cases:**
+- `wrapper: "forwardRef"` — компонент обёрнут в forwardRef
+- `wrapper: "memo"` — компонент обёрнут в memo
+- `classComponent: true` — класс-компонент (extends React.Component)
+- `styled: true` — styled-component
+
+**Экспортируемые функции:**
+- `parseTsxL1(code, entityType)` — парсинг L1 зависимостей через AST
+- `parseTsxEntitiesFromContent(content, filePath)` — извлечение сущностей из TSX файла
+- `loadTsxFromFile(filePath, contextCode, dbService, pipelineState)` — полная загрузка файла
+- `isCustomHook(name)` — проверка имени на паттерн хука
+- `isComponentName(name)` — проверка имени на паттерн компонента
 
 ### PHP Loader (`phpFunctionLoader.js`)
 

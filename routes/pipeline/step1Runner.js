@@ -10,6 +10,7 @@ const { createMatchers, normalizeRelativePath, isIgnored: checkIgnored, isInclud
 const { loadSqlFunctionsFromFile } = require('../loaders/sqlFunctionLoader');
 const { loadJsFunctionsFromFile } = require('../loaders/jsFunctionLoader');
 const { loadTsFunctionsFromFile } = require('../loaders/tsFunctionLoader');
+const { loadTsxFromFile } = require('../loaders/tsxLoader');
 const { loadPhpFunctionsFromFile } = require('../loaders/phpFunctionLoader');
 const { loadDdlFromFile } = require('../loaders/ddlSchemaLoader');
 const { getFilteredTableNames, loadTableSchema } = require('../loaders/tableSchemaLoader');
@@ -199,6 +200,40 @@ function parseTsLoadingConfig(customSettingsYaml) {
 }
 
 /**
+ * Парсинг настроек загрузки TSX файлов из YAML строки custom_settings
+ * @param {string|null} customSettingsYaml - YAML строка из metadata.custom_settings
+ * @returns {object} Объект с настройками { enabled } (по умолчанию enabled: false)
+ */
+function parseTsxLoadingConfig(customSettingsYaml) {
+  if (!customSettingsYaml || typeof customSettingsYaml !== 'string' || customSettingsYaml.trim() === '') {
+    return { enabled: false }; // По умолчанию отключено
+  }
+
+  try {
+    const parsed = yaml.load(customSettingsYaml);
+    
+    if (!parsed || typeof parsed !== 'object') {
+      return { enabled: false };
+    }
+
+    const tsxLoading = parsed.tsx_loading;
+    
+    if (!tsxLoading || typeof tsxLoading !== 'object') {
+      return { enabled: false };
+    }
+
+    if (typeof tsxLoading.enabled !== 'boolean') {
+      return { enabled: false };
+    }
+
+    return { enabled: tsxLoading.enabled };
+  } catch (error) {
+    console.error(`[Step1] Ошибка парсинга YAML из custom_settings для tsx_loading: ${error.message}`);
+    return { enabled: false };
+  }
+}
+
+/**
  * Парсинг настроек загрузки PHP файлов из YAML строки custom_settings
  * @param {string|null} customSettingsYaml - YAML строка из metadata.custom_settings
  * @returns {object} Объект с настройками { enabled } (по умолчанию enabled: false для обратной совместимости)
@@ -364,6 +399,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
   const functionsLoadingConfig = parseFunctionsLoadingConfig(customSettings);
   const jsLoadingConfig = parseJsLoadingConfig(customSettings);
   const tsLoadingConfig = parseTsLoadingConfig(customSettings);
+  const tsxLoadingConfig = parseTsxLoadingConfig(customSettings);
   const phpLoadingConfig = parsePhpLoadingConfig(customSettings);
   const mdLoadingConfig = parseMdLoadingConfig(customSettings);
   const ddlLoadingConfig = parseDdlLoadingConfig(customSettings);
@@ -583,7 +619,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
 
         if (!fs.existsSync(absPath)) continue;
         const lower = absPath.toLowerCase();
-        if (!lower.endsWith('.ts') && !lower.endsWith('.tsx')) continue;
+        if (!lower.endsWith('.ts')) continue;  // .tsx обрабатывается отдельным TSX loader
         if (lower.endsWith('.d.ts')) continue; // Пропускаем declaration файлы
         if (isIgnored(relativePath)) continue;
 
@@ -610,7 +646,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
               }
             } else if (stats.isFile()) {
               const lower = absPath.toLowerCase();
-              if ((lower.endsWith('.ts') || lower.endsWith('.tsx')) && !lower.endsWith('.d.ts')) {
+              if (lower.endsWith('.ts') && !lower.endsWith('.tsx') && !lower.endsWith('.d.ts')) {
                 if (isIgnored(fullRelPath)) continue;
                 tsFilePaths.push(absPath);
               }
@@ -636,6 +672,83 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     }
   } else {
     logger.log('Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)');
+  }
+
+  // === Сканирование TSX-файлов (если включено) ===
+  let tsxFilePaths = [];
+  
+  if (tsxLoadingConfig.enabled) {
+    logger.log('Сканирование TSX файлов включено');
+    
+    // === Режим 1: Точный выбор файлов ===
+    if (fileSelection.length > 0) {
+      for (const filePath of fileSelection) {
+        const parsed = parseFileSelectionPath(filePath);
+        let targetRootPath;
+        let relativePath;
+
+        if (parsed) {
+          targetRootPath = parsed.rootPath;
+          relativePath = parsed.relativePath;
+          if (!validRootPaths.includes(targetRootPath)) continue;
+        } else {
+          targetRootPath = validRootPaths[0];
+          relativePath = filePath.startsWith('./') ? filePath : './' + filePath;
+        }
+
+        const cleanRel = relativePath.startsWith('./') ? relativePath.slice(2) : relativePath;
+        const absPath = path.join(targetRootPath, cleanRel);
+
+        if (!fs.existsSync(absPath)) continue;
+        if (!absPath.toLowerCase().endsWith('.tsx')) continue;
+        if (isIgnored(relativePath)) continue;
+
+        tsxFilePaths.push(absPath);
+      }
+    } 
+    // === Режим 2: Glob-маски ===
+    else {
+      function scanDirectoryForTsx(currentDir, currentRootPath, baseRelPath = '.') {
+        if (!fs.existsSync(currentDir)) return;
+
+        const entries = fs.readdirSync(currentDir);
+        for (const entry of entries) {
+          const absPath = path.join(currentDir, entry);
+          const relPath = path.join(baseRelPath, entry).replace(/\\/g, '/');
+          const fullRelPath = normalizeRelativePath(relPath);
+
+          try {
+            const stats = fs.statSync(absPath);
+
+            if (stats.isDirectory()) {
+              if (!isIgnored(fullRelPath)) {
+                scanDirectoryForTsx(absPath, currentRootPath, relPath);
+              }
+            } else if (stats.isFile() && absPath.toLowerCase().endsWith('.tsx')) {
+              if (isIgnored(fullRelPath)) continue;
+              tsxFilePaths.push(absPath);
+            }
+          } catch (err) {
+            logger.warn(`Ошибка доступа к ${absPath}: ${err.message}`);
+          }
+        }
+      }
+
+      for (const rootPath of validRootPaths) {
+        scanDirectoryForTsx(rootPath, rootPath, '.');
+      }
+    }
+
+    logger.log(`Найдено ${tsxFilePaths.length} TSX-файлов для обработки`);
+    for (const filePath of tsxFilePaths) {
+      tasks.push({
+        type: 'tsx',
+        path: filePath,
+        name: path.basename(filePath)
+      });
+    }
+  } else {
+    logger.log('Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)');
   }
 
   // === Сканирование PHP-файлов (если включено) ===
@@ -1056,6 +1169,46 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
             if (func.errors?.length > 0) {
               report.summary.errors += func.errors.length;
               func.errors.forEach(err => report.details.errors.push({ type: 'ts', name: `${fileReport.filename}:${func.full_name}`, message: err }));
+            }
+          });
+        } else {
+          report.summary.skipped++;
+        }
+      } else if (task.type === 'tsx') {
+        const fileReport = await loadTsxFromFile(task.path, contextCode, dbService, pipelineState, mode);
+
+        if (fileReport) {
+          report.details.tsxFiles = report.details.tsxFiles || [];
+          report.details.tsxFiles.push(fileReport);
+
+          if (fileReport.fileId) {
+            report.summary.totalFiles++;
+            report.summary.totalFunctions += fileReport.functionsProcessed || 0;
+            if (fileReport.skipped) report.summary.skippedFiles += 1;
+            if (fileReport.entityReport) {
+              report.summary.skippedEntities += fileReport.entityReport.unchanged || 0;
+              report.summary.deletedEntities += fileReport.entityReport.deleted || 0;
+              report.summary.updatedEntities += fileReport.entityReport.updated || 0;
+              report.summary.createdEntities += fileReport.entityReport.created || 0;
+            }
+
+            fileReport.functions.forEach(func => {
+              if (func.aiItemId) report.summary.totalAiItems++;
+              if (func.chunkL0Id || func.chunkL1Id) report.summary.totalChunks++;
+            });
+          } else {
+            report.summary.skipped++;
+          }
+
+          // Ошибки из файла и функций
+          if (fileReport.errors?.length > 0) {
+            report.summary.errors += fileReport.errors.length;
+            fileReport.errors.forEach(err => report.details.errors.push({ type: 'tsx', name: fileReport.filename, message: err }));
+          }
+          fileReport.functions.forEach(func => {
+            if (func.errors?.length > 0) {
+              report.summary.errors += func.errors.length;
+              func.errors.forEach(err => report.details.errors.push({ type: 'tsx', name: `${fileReport.filename}:${func.full_name}`, message: err }));
             }
           });
         } else {

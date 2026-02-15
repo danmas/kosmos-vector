@@ -2,7 +2,7 @@
 
 ## Общий процесс
 
-1. При векторизации файлов (JS, SQL, MD и др.) парсеры извлекают зависимости.
+1. При векторизации файлов (JS, TS, TSX, SQL, MD и др.) парсеры извлекают зависимости.
 2. Зависимости сохраняются в таблице `link` с типом связи через `link_type`.
 3. Все чанки с одним `full_name` привязываются к одному `ai_item`.
 4. При запросе `/api/items/:id` или `/api/items` связи берутся из таблицы `link` и разделяются на:
@@ -38,6 +38,29 @@
 - Парсер `splitJavaScriptByObjects` извлекает импорты и вызовы.
 - Зависимости сохраняются в таблицу `link` с типом связи.
 - При запросе возвращаются как `l1_out` (массив строк).
+
+### TSX (React)
+
+- Используется функция `parseTsxL1(code, entityType)` с @babel/parser
+- Извлекаются:
+  - `imports` — ES6 импорты
+  - `uses_components` — использование компонентов в JSX
+  - `uses_hooks` — вызовы хуков (useState, useEffect, useCustomHook)
+  - `called_functions` — вызовы функций
+- Результат — объект вида:
+  ```json
+  {
+    "imports": ["react", "./Button"],
+    "uses_components": ["Button", "Modal.Header"],
+    "uses_hooks": ["useState", "useEffect", "useCustomHook"],
+    "called_functions": ["handleSubmit", "validateForm"]
+  }
+  ```
+- Типы связей в link:
+  - `imports` — импорты модулей
+  - `uses_component` — использование компонента в JSX
+  - `uses_hook` — вызов хука
+  - `calls` — вызовы функций
 
 ### Другие языки
 
@@ -77,6 +100,8 @@
 | `update_tables`       | `updates`           | Изменение данных в таблице        |
 | `insert_tables`       | `inserts into`      | Вставка данных в таблицу          |
 | `dependencies` / `imports` | `depends on`   | Общая/импортная зависимость       |
+| `uses_components`     | `uses component`    | Использование React компонента в JSX |
+| `uses_hooks`          | `uses hook`         | Вызов React хука                  |
 | `reads_column`        | `reads_column`      | Функция читает колонку в SELECT   |
 | `updates_column`      | `updates_column`    | Функция обновляет колонку в SET   |
 | `inserts_column`      | `inserts_column`    | Функция вставляет в колонку       |
@@ -161,4 +186,4 @@ schema.table.column
 
 Готов к визуализации в UI (vis.js, cytoscape, react-force-graph и т.д.).
 
-Последнее обновление: 22 января 2026
+Последнее обновление: 11 февраля 2026
