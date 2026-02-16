@@ -117,6 +117,14 @@ ChatRequest:
   properties:
     message:
       type: string
+      description: Сообщение пользователя (вопрос или готовое сообщение с контекстом)
+    useRAG:
+      type: boolean
+      default: false
+      description: |
+        Если true - выполнить RAG-поиск контекста перед отправкой в LLM.
+        Если false (по умолчанию) - отправить message напрямую в LLM без векторизации.
+        Используйте false, когда клиент уже сформировал готовое сообщение с контекстом.
 ChatResponse:
   type: object
   required:

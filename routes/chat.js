@@ -35,7 +35,7 @@ module.exports = (dbService, vectorStore, embeddings) => {
                 });
             }
 
-            const { message } = req.body;
+            const { message, useRAG = false } = req.body;
             if (!message || typeof message !== 'string') {
                 return res.status(400).json({
                     success: false,
@@ -43,50 +43,69 @@ module.exports = (dbService, vectorStore, embeddings) => {
                 });
             }
 
-            // Используем RAGRetriever для интеллектуального поиска контекста
-            const ragRetriever = new RAGRetriever(dbService, embeddings, {
-                strategy: 'hierarchical',
-                maxChunks: parseInt(process.env.MAX_RESULTS) || 5,
-                includeRelations: true
-            });
-            
-            const retrievalResult = await ragRetriever.retrieve(message, contextCode);
-            
-            // Форматируем контекст с помощью ContextBuilder
-            const contextBuilder = new ContextBuilder({
-                style: 'standard',
-                includeFileNames: true,
-                includeRelations: true
-            });
-            
-            const contextData = contextBuilder.build(retrievalResult, 'hierarchical');
-            const contextText = contextData.formatted;
-            const usedContextIds = contextData.metadata.usedChunkIds;
+            if (useRAG) {
+                console.log('[CHAT] Используется RAG-поиск контекста');
+                
+                // Используем RAGRetriever для интеллектуального поиска контекста
+                const ragRetriever = new RAGRetriever(dbService, embeddings, {
+                    strategy: 'hierarchical',
+                    maxChunks: parseInt(process.env.MAX_RESULTS) || 5,
+                    includeRelations: true
+                });
+                
+                const retrievalResult = await ragRetriever.retrieve(message, contextCode);
+                
+                // Форматируем контекст с помощью ContextBuilder
+                const contextBuilder = new ContextBuilder({
+                    style: 'standard',
+                    includeFileNames: true,
+                    includeRelations: true
+                });
+                
+                const contextData = contextBuilder.build(retrievalResult, 'hierarchical');
+                const contextText = contextData.formatted;
+                const usedContextIds = contextData.metadata.usedChunkIds;
 
-            // Формируем промпт для LLM из prompts.json
-            const ragPrompts = promptsService.getRagPrompts();
-            const systemPrompt = ragPrompts.systemPrompt;
-            const userPrompt = ragPrompts.userPromptTemplate
-                .replace('{context}', contextText)
-                .replace('{question}', message);
+                // Формируем промпт для LLM из prompts.json
+                const ragPrompts = promptsService.getRagPrompts();
+                const systemPrompt = ragPrompts.systemPrompt;
+                const userPrompt = ragPrompts.userPromptTemplate
+                    .replace('{context}', contextText)
+                    .replace('{question}', message);
 
-            // Формируем сообщения для LLM
-            const messages = [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: userPrompt }
-            ];
+                // Формируем сообщения для LLM
+                const messages = [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt }
+                ];
 
-            // Вызываем LLM
-            const response = await callLLM(messages);
+                // Вызываем LLM
+                const response = await callLLM(messages);
 
-            // Формируем ответ согласно контракту
-            const chatResponse = {
-                response: response,
-                usedContextIds: usedContextIds,
-                timestamp: new Date().toISOString()
-            };
+                // Формируем ответ согласно контракту
+                res.json({
+                    response: response,
+                    usedContextIds: usedContextIds,
+                    timestamp: new Date().toISOString()
+                });
+            } else {
+                console.log('[CHAT] RAG отключён, отправка message напрямую в LLM');
+                
+                // Отправляем message напрямую в LLM без RAG-поиска и векторизации
+                const messages = [
+                    { role: "user", content: message }
+                ];
 
-            res.json(chatResponse);
+                // Вызываем LLM
+                const response = await callLLM(messages);
+
+                // Формируем ответ согласно контракту
+                res.json({
+                    response: response,
+                    usedContextIds: [],
+                    timestamp: new Date().toISOString()
+                });
+            }
 
         } catch (error) {
             console.error('[CHAT] Ошибка:', error);
