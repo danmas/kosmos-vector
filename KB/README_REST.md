@@ -1,45 +1,10 @@
 # REST API для AIAN Vector (LangChain RAG + PostgreSQL)
 
-Базовый URL: `http://localhost:{PORT}` (по умолчанию `3200`)
+Базовый URL: `http://localhost:{PORT}` (по умолчанию `3005`)
 
 - Контент: JSON (`Content-Type: application/json`)
 - Аутентификация: отсутствует (локальная разработка)
 - Ответы: JSON, коды ошибок: 4xx/5xx
-- **API версия:** 2.9.0
-
-## 🆕 НОВОЕ в версии 2.9.0
-
-### Prompts Config API - Управление конфигурацией промптов с историей
-
-**GET** `/api/prompts-config` - получить текущую конфигурацию промптов  
-**PATCH** `/api/prompts-config` - обновить с сохранением в историю  
-**GET** `/api/prompts-config/history` - список версий  
-**GET** `/api/prompts-config/history/{id}` - получить конкретную версию  
-**POST** `/api/prompts-config/restore/{id}` - восстановить из истории  
-**POST** `/api/prompts-config/reset` - сбросить к дефолтным значениям  
-**DELETE** `/api/prompts-config/history/{id}` - удалить запись из истории
-
-⚠️ **Не требует `context-code`** - промпты глобальные  
-💾 **История** хранится в PostgreSQL (таблица `prompt_config_history`)  
-🗑️ **Автоочистка:** оставляются последние 100 версий
-
-Подробности: см. `KB/README_PROMPTS_CONFIG_API.md`  
-Frontend Integration: см. `docs/README_Frontend_Prompts_Integration.md`
-
----
-
-## 🆕 НОВОЕ в версии 2.8.0
-
-### App Config API - Управление глобальной конфигурацией приложения
-
-**GET** `/api/config` - получить текущую конфигурацию  
-**PATCH** `/api/config` - частично обновить конфигурацию  
-**POST** `/api/config/reset` - сбросить к дефолтным значениям
-
-⚠️ **Не требует `context-code`** - настройки глобальные
-
-Подробности: см. `KB/README_APP_CONFIG_API.md`  
-Frontend Integration: см. `docs/README_Frontend_Config_Integration.md`
 
 ## Конвенции
 
@@ -49,85 +14,7 @@ Frontend Integration: см. `docs/README_Frontend_Config_Integration.md`
 
 ## 1. Вопросы и ответы (RAG)
 
-### POST `/api/chat` — RAG-чат с контекстом из кодовой базы
-
-**Query параметры:**
-- `context-code` (обязательный) — контекстный код для изоляции данных
-
-**Тело запроса:**
-```json
-{
-  "message": "string (обязательно)",
-  "useRAG": "boolean (опционально, default: false)"
-}
-```
-
-**Параметры:**
-- `message` — вопрос пользователя или готовое сообщение с контекстом
-- `useRAG` — флаг управления RAG-поиском:
-  - `false` (по умолчанию) — отправить `message` напрямую в LLM без векторизации и RAG-поиска. Используйте когда клиент уже сформировал готовое сообщение с контекстом.
-  - `true` — выполнить RAG-поиск контекста перед отправкой в LLM (создаётся embedding запроса, ищутся релевантные чанки, формируется контекст)
-
-**Ответ (успех):**
-```json
-{
-  "response": "string",
-  "usedContextIds": ["id1", "id2", ...],
-  "timestamp": "2026-02-16T12:00:00.000Z"
-}
-```
-
-**Поля ответа:**
-- `response` — ответ от LLM
-- `usedContextIds` — массив ID чанков, использованных как контекст (пустой при `useRAG: false`)
-- `timestamp` — время ответа
-
-**Примеры использования:**
-
-1. Клиент отправляет готовое сообщение (без RAG):
-```json
-POST /api/chat?context-code=CARL
-{
-  "message": "На основе кода функции processData() ответь: как она работает?",
-  "useRAG": false
-}
-```
-
-2. Клиент использует RAG для поиска контекста:
-```json
-POST /api/chat?context-code=CARL
-{
-  "message": "Как работает функция processData?",
-  "useRAG": true
-}
-```
-
-**Примечание:** По умолчанию RAG отключён (`useRAG: false`) для избежания ошибок превышения токенов при создании embedding из длинных сообщений.
-
----
-
-### POST `/api/ask` — Прямой запрос к LLM без RAG
-
-**Тело запроса:**
-```json
-{
-  "message": "string (обязательно)",
-  "systemPrompt": "string | null",
-  "model": "string | null"
-}
-```
-
-**Ответ (успех):**
-```json
-{
-  "response": "string",
-  "timestamp": "2026-02-16T12:00:00.000Z"
-}
-```
-
----
-
-### POST `/ask` (legacy, совместимость)
+**POST** `/ask`
 
 Тело запроса:
 ```json
@@ -322,93 +209,10 @@ POST /api/chat?context-code=CARL
 
 **POST** `/api/ai/ai-item/:id/generate-chunk` — генерация чанков L1/L2 (авто или ручной промпт)
 
-### 5.2. Извлечение колонок таблиц (Column Extraction)
-
-**POST** `/api/items/:id/extract-columns?context-code=...`  
-Извлечь использование колонок таблиц из SQL-функции.
-
-**Параметры:**
-- `:id` — full_name AI Item функции (URL-encoded)
-- `context-code` (query) — обязательный контекстный код
-
-**Ответ (успех):**
-```json
-{
-  "success": true,
-  "functionId": "hr.get_employee_skills",
-  "report": {
-    "columnsFound": 5,
-    "columnsResolved": 4,
-    "columnsUnresolved": 1,
-    "linksCreated": 5,
-    "columns": [
-      {
-        "fullName": "hr.employees.id",
-        "operation": "reads_column",
-        "resolved": true
-      },
-      {
-        "fullName": "unknown.some_field",
-        "operation": "reads_column",
-        "resolved": false
-      }
-    ]
-  }
-}
-```
-
-**Логика работы:**
-1. Парсит тело SQL-функции
-2. Извлекает алиасы таблиц из FROM/JOIN
-3. Находит колонки в SELECT, UPDATE SET, INSERT
-4. Резолвит полные имена через загруженные таблицы
-5. Создаёт ai_item типа `table_column` для каждой уникальной колонки
-6. Создаёт связи function→column в таблице link
-
-**Типы связей:**
-| link_type | Описание |
-|-----------|----------|
-| reads_column | Колонка используется в SELECT |
-| updates_column | Колонка обновляется в UPDATE SET |
-| inserts_column | В колонку вставляются данные |
-
-**Примечание:** Колонки, для которых не найдена таблица, создаются с full_name `unknown.column_name` и флагом `unresolved`.
-
-**POST** `/api/extract-all-columns?context-code=...`  
-Пакетное извлечение колонок из **всех** SQL-функций в контексте.
-
-**Ответ (успех):**
-```json
-{
-  "success": true,
-  "report": {
-    "totalFunctions": 50,
-    "functionsProcessed": 48,
-    "functionsSkipped": 2,
-    "totalColumnsFound": 320,
-    "totalColumnsResolved": 280,
-    "totalColumnsUnresolved": 40,
-    "totalLinksCreated": 320,
-    "reports": [
-      {
-        "functionFullName": "hr.get_employee_skills",
-        "columnsFound": 5,
-        "columnsResolved": 4,
-        "linksCreated": 5,
-        "hasErrors": false
-      }
-    ],
-    "errors": []
-  }
-}
-```
-
-**Примечание:** Долгая операция — рекомендуется запускать после загрузки всех таблиц и функций.
-
-### 5.3. Анализ логики (Logic Graph)
+### 5.1. Анализ логики (Logic Graph)
 
 **GET** `/api/items/:id/logic-graph?context-code=TEST`  
-Получить сохранённый анализ логики для AiItem (текстовое описание и граф потока управления).
+Получить сохраненный анализ логики для AiItem (текстовое описание и граф потока управления).
 
 **Параметры:**
 - `:id` — full_name AiItem (например, `utils.fetchData`)
@@ -687,5 +491,4 @@ POST /api/chat?context-code=CARL
 - Эмбеддинги: simple (локально) или OpenAI (`USE_OPENAI=true`). Размерность по умолчанию 1536.
 
 **Обновлено:** 13 декабря 2025 — добавлен раздел «Очистка базы данных».  
-**Обновлено:** 15 января 2026 — добавлен раздел «Анализ логики (Logic Graph)» для работы с графами потока управления.  
-**Обновлено:** 22 января 2026 — добавлен раздел «Извлечение колонок таблиц (Column Extraction)».
+**Обновлено:** [дата] — добавлен раздел «Анализ логики (Logic Graph)» для работы с графами потока управления.
