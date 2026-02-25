@@ -1,4 +1,5 @@
-require('dotenv').config();
+// Загрузка .env с явным путём (для корректной работы с pm2)
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const fs = require('fs');
 const path = require('path');
 const { writeToFile } = require('./packages/core/logger');
@@ -233,6 +234,10 @@ const express = require('express');
 const { Client } = require('pg');
 const { DbService, EmbeddingsFactory, PostgresVectorStore } = require('./packages/core');
 const { checkLLMAvailability, KOSMOS_BASE_URL, KOSMOS_MODEL, callLLM } = require('./packages/core/llmClient');
+
+// Import db-core components for optional advanced usage
+const { Database, Migrator, FilesRepository, VectorRepository, AiItemsRepository } = require('@kosmos-vector/db-core');
+
 const aiRoutes = require('./routes/ai');
 const filesRoutes = require('./routes/files');
 const chatRoutes = require('./routes/chat');
@@ -295,14 +300,34 @@ app.use((err, req, res, next) => {
 });
 
 // Инициализация клиента PostgreSQL
-const pgClient = new Client({
-  connectionString: process.env.DATABASE_URL,
-});
+// Поддерживает как DATABASE_URL, так и отдельные PG* переменные
+const pgConfig = process.env.DATABASE_URL 
+  ? { connectionString: process.env.DATABASE_URL }
+  : {
+      host: process.env.PGHOST,
+      port: process.env.PGPORT,
+      database: process.env.PGDATABASE,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD
+    };
+
+const pgClient = new Client(pgConfig);
 
 pgClient.connect();
 
-// Инициализация сервиса БД из нашего ядра
-const dbService = new DbService(pgClient);
+// Инициализация db-core компонентов (используем тот же конфиг)
+const database = new Database(pgConfig);
+const filesRepo = new FilesRepository(database);
+const vectorRepo = new VectorRepository(database);
+const aiItemsRepo = new AiItemsRepository(database);
+
+// Инициализация сервиса БД из нашего ядра с инъекцией репозиториев
+const dbService = new DbService(pgClient, {
+  database: database,
+  filesRepository: filesRepo,
+  vectorRepository: vectorRepo,
+  aiItemsRepository: aiItemsRepo
+});
 
 // Инициализация фабрики эмбеддингов
 const embeddingsFactory = new EmbeddingsFactory();
