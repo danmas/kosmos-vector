@@ -2,13 +2,111 @@
 const fs = require('fs');
 const path = require('path');
 
+// Import db-core components for delegation
+const { 
+  Database, 
+  FilesRepository, 
+  VectorRepository, 
+  AiItemsRepository,
+  Migrator 
+} = require('@kosmos-vector/db-core');
+
 /**
  * Сервис для работы с базой данных PostgreSQL
+ * 
+ * Этот класс теперь делегирует SQL-операции репозиториям из @kosmos-vector/db-core,
+ * сохраняя бизнес-логику (работу с файловой системой) внутри себя.
+ * 
+ * @example
+ * // Старый способ (обратная совместимость):
+ * const dbService = new DbService(pgClient);
+ * 
+ * // Новый способ с инъекцией зависимостей:
+ * const db = new Database(process.env.DATABASE_URL);
+ * await db.connect();
+ * const dbService = new DbService(pgClient, {
+ *   database: db,
+ *   filesRepository: new FilesRepository(db),
+ *   vectorRepository: new VectorRepository(db),
+ *   aiItemsRepository: new AiItemsRepository(db)
+ * });
  */
 class DbService {
+  /**
+   * @param {import('pg').Client} pgClient - PostgreSQL клиент (для обратной совместимости)
+   * @param {Object} config - Конфигурация
+   * @param {string} [config.docsDir] - Директория документов
+   * @param {Database} [config.database] - Экземпляр Database из db-core
+   * @param {FilesRepository} [config.filesRepository] - Репозиторий файлов
+   * @param {VectorRepository} [config.vectorRepository] - Репозиторий векторов
+   * @param {AiItemsRepository} [config.aiItemsRepository] - Репозиторий AI Items
+   */
   constructor(pgClient, config = {}) {
     this.pgClient = pgClient;
     this.docsDir = config.docsDir || path.join(process.cwd(), "docs");
+
+    // Инициализация db-core компонентов
+    // Если передан Database, используем его; иначе создаём адаптер над pgClient
+    if (config.database) {
+      this._db = config.database;
+    } else {
+      // Создаём адаптер для совместимости с существующим pgClient
+      this._db = this._createDatabaseAdapter(pgClient);
+    }
+
+    // Инициализация репозиториев (с возможностью инъекции)
+    this._filesRepo = config.filesRepository || new FilesRepository(this._db);
+    this._vectorRepo = config.vectorRepository || new VectorRepository(this._db);
+    this._aiItemsRepo = config.aiItemsRepository || new AiItemsRepository(this._db);
+  }
+
+  /**
+   * Создание адаптера Database над существующим pgClient
+   * Для обратной совместимости с кодом, который передаёт pgClient напрямую
+   * @private
+   */
+  _createDatabaseAdapter(pgClient) {
+    return {
+      query: (sql, params) => pgClient.query(sql, params),
+      queryRaw: (sql, params) => pgClient.query(sql, params),
+      queryOne: async (sql, params) => {
+        const result = await pgClient.query(sql, params);
+        return result.rows.length > 0 ? result.rows[0] : null;
+      },
+      queryAll: async (sql, params) => {
+        const result = await pgClient.query(sql, params);
+        return result.rows;
+      },
+      beginTransaction: async () => { await pgClient.query('BEGIN'); },
+      commit: async () => { await pgClient.query('COMMIT'); },
+      rollback: async () => { await pgClient.query('ROLLBACK'); },
+      connected: true,
+      getClient: () => pgClient
+    };
+  }
+
+  /**
+   * Получение репозитория файлов
+   * @returns {FilesRepository}
+   */
+  get filesRepository() {
+    return this._filesRepo;
+  }
+
+  /**
+   * Получение репозитория векторов
+   * @returns {VectorRepository}
+   */
+  get vectorRepository() {
+    return this._vectorRepo;
+  }
+
+  /**
+   * Получение репозитория AI Items
+   * @returns {AiItemsRepository}
+   */
+  get aiItemsRepository() {
+    return this._aiItemsRepo;
   }
 
   /**
@@ -612,18 +710,13 @@ class DbService {
 
   /**
    * Обновление контекстного кода для файла
+   * @delegate FilesRepository.updateContextCode
    */
   async updateContextCode(fileId, contextCode) {
     try {
-      await this.pgClient.query(
-        `UPDATE public.files
-         SET context_code = $1
-         WHERE id = $2`,
-        [contextCode, fileId]
-      );
-      
+      const result = await this._filesRepo.updateContextCode(fileId, contextCode);
       console.log(`Контекстный код для файла с id ${fileId} обновлен на ${contextCode}`);
-      return true;
+      return result;
     } catch (error) {
       console.error(`Ошибка при обновлении контекстного кода для файла с id ${fileId}:`, error);
       throw error;
@@ -632,97 +725,20 @@ class DbService {
 
   /**
    * Поиск похожих чанков по вектору запроса
+   * @delegate VectorRepository.similaritySearch
    */
   async similaritySearch(queryEmbedding, limit = 5, contextCode = null, filters = {}) {
     try {
-      // Форматируем вектор для PostgreSQL без кавычек
-      const vectorString = `[${queryEmbedding.join(',')}]`;
-      
-      // Получаем фильтры (chunkType, chunkLevel — по чанку; typeCodes, tagCodes — по AI Item)
       const { chunkType, chunkLevel, typeCodes, tagCodes } = filters || {};
-      const hasItemFilter = (Array.isArray(typeCodes) && typeCodes.length > 0) ||
-        (Array.isArray(tagCodes) && tagCodes.length > 0);
       
-      // Создаем базовый запрос
-      // При фильтре по AI Item — INNER JOIN ai_item (чанки без ai_item_id отсекаются)
-      let query = `
-        SELECT fv.id, 
-               COALESCE(fv.chunk_content->>'text', fv.chunk_content::text) as content, 
-               1 - (fv.embedding <=> $1) as similarity,
-               f.filename,
-               f.context_code,
-               fv.type,
-               fv.level
-        FROM public.chunk_vector fv
-        JOIN public.files f ON fv.file_id = f.id
-      `;
-      if (hasItemFilter) {
-        query += `\n        JOIN public.ai_item ai ON fv.ai_item_id = ai.id`;
-      }
-      query += `\n        WHERE 1=1`;
-      
-      // Массив значений для подготовленного запроса
-      const params = [vectorString];
-      let paramIndex = 2;
-      
-      // Добавляем фильтр по контекстному коду, если указан
-      if (contextCode) {
-        query += ` AND f.context_code = $${paramIndex++}`;
-        params.push(contextCode);
-      }
-      
-      // Добавляем фильтр по типу чанка, если указан
-      if (chunkType) {
-        query += ` AND fv.type = $${paramIndex++}`;
-        params.push(chunkType);
-      }
-      
-      // Добавляем фильтр по уровню чанка, если указан
-      if (chunkLevel) {
-        query += ` AND fv.level = $${paramIndex++}`;
-        params.push(chunkLevel);
-      }
-      
-      // Фильтр по типам AI Item (typeCodes)
-      if (Array.isArray(typeCodes) && typeCodes.length > 0) {
-        query += ` AND ai.type = ANY($${paramIndex++})`;
-        params.push(typeCodes);
-      }
-      
-      // Фильтр по тегам AI Item (tagCodes) — элемент должен иметь хотя бы один тег из списка
-      if (Array.isArray(tagCodes) && tagCodes.length > 0) {
-        query += ` AND EXISTS (
-          SELECT 1
-          FROM public.ai_item_tag ait
-          JOIN public.tag t ON ait.tag_id = t.id
-          WHERE ait.ai_item_full_name = ai.full_name
-            AND ait.ai_item_context_code = ai.context_code
-            AND t.code = ANY($${paramIndex++})
-        )`;
-        params.push(tagCodes);
-      }
-      
-      // Завершаем запрос сортировкой и ограничением
-      query += `
-        ORDER BY similarity DESC
-        LIMIT $${paramIndex}
-      `;
-      params.push(limit);
-      
-      const result = await this.pgClient.query(query, params);
-      
-      // Преобразование результатов
-      return result.rows.map(row => ({
-        id: row.id,
-        content: row.content,
-        similarity: row.similarity,
-        metadata: {
-          source: row.filename,
-          context_code: row.context_code,
-          type: row.type,
-          level: row.level
-        }
-      }));
+      return await this._vectorRepo.similaritySearch(queryEmbedding, {
+        limit,
+        contextCode,
+        chunkType,
+        chunkLevel,
+        typeCodes,
+        tagCodes
+      });
     } catch (error) {
       console.error("Ошибка при поиске похожих чанков:", error.message);
       console.error("Ошибка Stack:", error.stack);
@@ -794,22 +810,11 @@ class DbService {
 
   /**
    * Получение списка всех контекстных кодов
+   * @delegate FilesRepository.getContextCodes
    */
   async getContextCodes() {
     try {
-      const query = await this.pgClient.query(
-        'SELECT DISTINCT context_code FROM public.files WHERE context_code IS NOT NULL ORDER BY context_code'
-      );
-      
-      // Создаем уникальный массив контекстов, убираем дубликаты
-      const contexts = new Set(['DEFAULT']);
-      query.rows.forEach(row => {
-        if (row.context_code) {
-          contexts.add(row.context_code);
-        }
-      });
-      
-      return Array.from(contexts);
+      return await this._filesRepo.getContextCodes();
     } catch (error) {
       console.error('Ошибка при получении кодов контекстов:', error);
       throw error;
@@ -818,17 +823,13 @@ class DbService {
 
   /**
    * Удаление файла из базы данных
+   * @delegate FilesRepository.delete
    */
   async deleteFile(fileId) {
     try {
-      // Удаление файла (каскадно удалит и все связанные векторы)
-      await this.pgClient.query(
-        `DELETE FROM public.files WHERE id = $1`,
-        [fileId]
-      );
-      
+      const result = await this._filesRepo.delete(fileId);
       console.log(`Файл с id ${fileId} удален из базы данных`);
-      return true;
+      return result;
     } catch (error) {
       console.error(`Ошибка при удалении файла с id ${fileId}:`, error);
       throw error;
@@ -1330,27 +1331,9 @@ class DbService {
   async getAllAiItems(contextCode = null) {
     try {
       console.log(`[DB] Поиск AI Items с contextCode: "${contextCode}"`);
-      
-      let query = 'SELECT * FROM public.ai_item';
-      const params = [];
-      
-      if (contextCode) {
-        query += ' WHERE context_code = $1';
-        params.push(contextCode);
-      }
-      
-      query += ' ORDER BY full_name';
-      
-      console.log(`[DB] Выполняем запрос: ${query} с параметрами:`, params);
-      
-      const result = await this.pgClient.query(query, params);
-      
-      console.log(`[DB] Найдено ${result.rows.length} AI Items`);
-      result.rows.forEach((item, index) => {
-        console.log(`[DB] AI Item ${index}: id=${item.id}, full_name="${item.full_name}", context_code="${item.context_code}"`);
-      });
-      
-      return result.rows;
+      const items = await this._aiItemsRepo.getAll(contextCode);
+      console.log(`[DB] Найдено ${items.length} AI Items`);
+      return items;
     } catch (error) {
       console.error('Ошибка при получении списка ai_item:', error);
       throw error;
@@ -1359,21 +1342,13 @@ class DbService {
 
   /**
    * Получает AI Item по ID
+   * @delegate AiItemsRepository.getById
    * @param {string} itemId - ID элемента AI Item
    * @returns {Promise<Object|null>} Информация об элементе или null, если не найден
    */
   async getAiItemById(itemId) {
     try {
-      const result = await this.pgClient.query(
-        'SELECT * FROM public.ai_item WHERE id = $1',
-        [itemId]
-      );
-      
-      if (result.rows.length === 0) {
-        return null;
-      }
-      
-      return result.rows[0];
+      return await this._aiItemsRepo.getById(itemId);
     } catch (error) {
       console.error(`Ошибка при получении ai_item с ID ${itemId}:`, error);
       throw error;
@@ -1436,46 +1411,29 @@ class DbService {
 
   /**
    * Получение id записей ai_item по списку full_name и context_code
+   * @delegate AiItemsRepository.getByFullNames
    * @param {string[]} fullNames - Список full_name
    * @param {string} contextCode - Код контекста
    * @returns {Promise<Array<{id: number, full_name: string}>>} Список { id, full_name } для найденных записей
    */
   async getAiItemIdsByFullNames(fullNames, contextCode) {
-    if (!Array.isArray(fullNames) || fullNames.length === 0) {
-      return [];
-    }
-    const result = await this.pgClient.query(
-      'SELECT id, full_name FROM public.ai_item WHERE full_name = ANY($1::text[]) AND context_code = $2',
-      [fullNames, contextCode]
-    );
-    return result.rows;
+    return this._aiItemsRepo.getByFullNames(fullNames, contextCode);
   }
 
   /**
    * Обновление контекста для ai_item
+   * @delegate AiItemsRepository.updateContextCode
    * @param {number} itemId - ID элемента
    * @param {string} newContextCode - Новый код контекста
    * @returns {Promise<Object>} Обновленный элемент
    */
   async updateAiItemContext(itemId, newContextCode) {
     try {
-      // Обновляем контекстный код
-      await this.pgClient.query(
-        'UPDATE public.ai_item SET context_code = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-        [newContextCode, itemId]
-      );
-      
-      // Получаем обновленный элемент
-      const result = await this.pgClient.query(
-        'SELECT * FROM public.ai_item WHERE id = $1',
-        [itemId]
-      );
-      
-      if (result.rows.length === 0) {
+      const result = await this._aiItemsRepo.updateContextCode(itemId, newContextCode);
+      if (!result) {
         throw new Error(`ai_item с ID ${itemId} не найден`);
       }
-      
-      return result.rows[0];
+      return result;
     } catch (error) {
       console.error(`Ошибка при обновлении контекста ai_item с ID ${itemId}:`, error);
       throw error;
@@ -1484,50 +1442,17 @@ class DbService {
 
   /**
    * Очистка неиспользуемых ai_item
+   * @delegate AiItemsRepository.cleanupOrphaned
    * @param {string|null} contextCode - Код контекста для фильтрации (опционально)
    * @returns {Promise<Array>} Список удаленных элементов
    */
   async cleanupOrphanedAiItems(contextCode = null) {
     try {
-      let query;
-      const params = [];
-      
-      if (contextCode) {
-        // Находим и удаляем ai_item, на которые нет ссылок из чанков уровня 0 с фильтрацией по context_code
-        query = `
-          DELETE FROM public.ai_item
-          WHERE context_code = $1
-            AND id NOT IN (
-              SELECT DISTINCT fv.ai_item_id 
-              FROM public.chunk_vector fv
-              JOIN public.files f ON fv.file_id = f.id
-              WHERE fv.ai_item_id IS NOT NULL 
-                AND fv.level = '0-исходник'
-                AND f.context_code = $1
-            )
-          RETURNING id, full_name, context_code
-        `;
-        params.push(contextCode);
-      } else {
-        // Находим и удаляем ai_item, на которые нет ссылок из чанков уровня 0
-        query = `
-          DELETE FROM public.ai_item
-          WHERE id NOT IN (
-            SELECT DISTINCT ai_item_id 
-            FROM public.chunk_vector 
-            WHERE ai_item_id IS NOT NULL AND level = '0-исходник'
-          )
-          RETURNING id, full_name, context_code
-        `;
+      const deleted = await this._aiItemsRepo.cleanupOrphaned(contextCode);
+      if (deleted.length > 0) {
+        console.log(`Удалено ${deleted.length} неиспользуемых ai_item`);
       }
-      
-      const result = await this.pgClient.query(query, params);
-      
-      if (result.rows.length > 0) {
-        console.log(`Удалено ${result.rows.length} неиспользуемых ai_item`);
-      }
-      
-      return result.rows;
+      return deleted;
     } catch (error) {
       console.error('Ошибка при удалении неиспользуемых ai_item:', error);
       throw error;

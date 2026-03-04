@@ -20,8 +20,11 @@ yarn-error.log*
 # Директории сборки
 dist/
 build/
-tmp/
+
+# Данные приложения
+data/ tmp/
 logs/
+docs/
 
 # Кэш
 .npm
@@ -34,5 +37,3 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Данные приложения
-data/ 

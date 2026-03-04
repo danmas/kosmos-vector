@@ -1,0 +1,22 @@
+{
+    "name": "@kosmos-vector/db-core",
+    "version": "1.0.0",
+    "description": "Universal database module for Kosmos Vector - Data Access Layer (DAL) with repository pattern",
+    "main": "src/index.js",
+    "exports": {
+        ".": "./src/index.js",
+        "./Database": "./src/Database.js",
+        "./Migrator": "./src/Migrator.js",
+        "./repositories/*": "./src/repositories/*.js"
+    },
+    "keywords": [
+        "postgresql",
+        "pgvector",
+        "rag",
+        "repository-pattern",
+        "dal"
+    ],
+    "dependencies": {
+        "pg": "^8.11.3"
+    }
+}

@@ -1,9 +1,22 @@
 {
-  "rootPath": "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api",
-  "includeMask": "**/api_par*.sql",
+  "rootPath": "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql",
+  "includeMask": "**/api_*.sql",
   "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
-  "fileSelection": [],
-  "lastUpdated": "2026-02-18T17:21:57.464Z",
+  "fileSelection": [
+    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql",
+    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql",
+    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql",
+    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql",
+    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql",
+    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api_inspect_bil.sql",
+    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api_inspect.sql",
+    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api_logistic.sql",
+    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api_procedures.sql",
+    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api_serv_autocode.sql",
+    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api_service.sql",
+    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api_tests.sql"
+  ],
+  "lastUpdated": "2026-03-04T16:17:25.489Z",
   "metadata": {
     "projectName": "New Project",
     "description": "RAG knowledge base",

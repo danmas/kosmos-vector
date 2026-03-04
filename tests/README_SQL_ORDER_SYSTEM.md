@@ -322,7 +322,6 @@ AI Item "public.create_order(p_customer_id integer, p_items jsonb)":
 ## Связанные файлы
 
 - `tests/test-epample-ShoppingCart.js` - аналогичный тест для JS
-- `tests/full_cycle_test.js` - базовый E2E тест
 - `routes/ai.js` - API для генерации L1/L2 чанков
 - `packages/core/textSplitters.js` - логика разбиения SQL
 - `KB/README_AI_ITEM_STATUS.md` - документация по статусу реализации

@@ -291,10 +291,7 @@ npm run test:shopping-cart
 
 ### Дополнительные тесты
 
-- `tests/full_cycle_test.js` - Полный цикл для одного файла
-- `tests/folder_cycle_test.js` - Пакетная обработка
-- `tests/md_cycle_test.js` - Специально для Markdown
-- `tests/api_test.js` - Smoke тесты API
+- `tests/full_system_test.js` - Полный E2E тест системы
 - `tests/run_all_tests.js` - Запуск всех тестов
 
 ---

@@ -38,9 +38,13 @@ function writeToFile(level, context, message) {
 }
 
 function formatMessage(message, args) {
-  const formatted = args.map(arg =>
-    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-  ).join(' ');
+  const formatted = args.map(arg => {
+    if (arg instanceof Error) return arg.stack || `${arg.name}: ${arg.message}`;
+    if (typeof arg === 'object' && arg !== null) {
+      try { return JSON.stringify(arg); } catch { return String(arg); }
+    }
+    return String(arg);
+  }).join(' ');
   return message + (formatted ? ' ' + formatted : '');
 }
 
