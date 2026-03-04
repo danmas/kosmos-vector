@@ -208,22 +208,32 @@ const logContext = new AsyncLocalStorage();
 // Экспортируем logContext для использования в других модулях
 module.exports.logContext = logContext;
 
+function _serializeArg(a) {
+  if (a instanceof Error) {
+    return a.stack || `${a.name}: ${a.message}`;
+  }
+  if (typeof a === 'object' && a !== null) {
+    try { return JSON.stringify(a); } catch { return String(a); }
+  }
+  return String(a);
+}
+
 // Обёртки для console.log/error/warn с поддержкой sessionId из контекста
 console.log = (...args) => {
   const sessionId = logContext.getStore()?.sessionId || null;
-  const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+  const message = args.map(_serializeArg).join(' ');
   addLog('INFO', message, sessionId);
 };
 
 console.error = (...args) => {
   const sessionId = logContext.getStore()?.sessionId || null;
-  const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+  const message = args.map(_serializeArg).join(' ');
   addLog('ERROR', message, sessionId);
 };
 
 console.warn = (...args) => {
   const sessionId = logContext.getStore()?.sessionId || null;
-  const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+  const message = args.map(_serializeArg).join(' ');
   addLog('WARN', message, sessionId);
 };
 
@@ -231,7 +241,7 @@ console.warn = (...args) => {
 console.log('Server started — log buffer initialized');
 
 const express = require('express');
-const { Client } = require('pg');
+const { Pool } = require('pg');
 const { DbService, EmbeddingsFactory, PostgresVectorStore } = require('./packages/core');
 const { checkLLMAvailability, KOSMOS_BASE_URL, KOSMOS_MODEL, callLLM } = require('./packages/core/llmClient');
 
@@ -311,12 +321,19 @@ const pgConfig = process.env.DATABASE_URL
       password: process.env.PGPASSWORD
     };
 
-const pgClient = new Client(pgConfig);
+const pgClient = new Pool({
+  ...pgConfig,
+  max: 5,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 10000
+});
 
-pgClient.connect();
+pgClient.on('error', (err) => {
+  console.error('[PostgreSQL Pool] Idle client error:', err.message);
+});
 
-// Инициализация db-core компонентов (используем тот же конфиг)
-const database = new Database(pgConfig);
+// db-core Database переиспользует тот же Pool (один пул на всё приложение)
+const database = new Database(pgClient);
 const filesRepo = new FilesRepository(database);
 const vectorRepo = new VectorRepository(database);
 const aiItemsRepo = new AiItemsRepository(database);
@@ -439,8 +456,15 @@ app.get('/api/available-models', async (req, res) => {
   }
 });
 
-const server = app.listen(port, async () => {
-  console.log(`Server v2 listening at http://localhost:${port}`);
+let server;
+
+pgClient.query('SELECT 1')
+  .then(() => {
+    console.log('[PostgreSQL] Подключение проверено (Pool, единый на всё приложение)');
+  })
+  .then(() => {
+    server = app.listen(port, async () => {
+      console.log(`Server v2 listening at http://localhost:${port}`);
   
   // Проверка доступности LLM сервера
   console.log('Проверка доступности LLM сервера...');
@@ -498,4 +522,19 @@ server.on('error', (err) => {
     console.error('Ошибка при запуске сервера:', err);
     process.exit(1);
   }
-});
+    });
+  })
+  .catch((err) => {
+    console.error('PostgreSQL: подключение не удалось:', err.message);
+    process.exit(1);
+  });
+
+// Graceful shutdown — закрываем Pool при завершении процесса (bun --watch, SIGTERM, etc.)
+function gracefulShutdown(signal) {
+  pgClient.end().catch(() => {});
+  if (server) server.close();
+  process.exit(0);
+}
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+process.on('beforeExit', () => pgClient.end().catch(() => {}));

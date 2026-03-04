@@ -24,6 +24,18 @@ class Database {
    * @param {DatabaseConfig|string} config - Конфигурация или строка подключения
    */
   constructor(config) {
+    // Поддержка внедрения готового Pool/Client
+    if (config && (config instanceof Pool || config instanceof Client)) {
+      this.config = {};
+      this.connection = config;
+      this.connected = true;
+      this.usePool = config instanceof Pool;
+      this._externalConnection = true;
+      this.maxPoolSize = 10;
+      this._transactionClient = null;
+      return;
+    }
+
     // Нормализация конфигурации
     if (typeof config === 'string') {
       this.config = { connectionString: config };
@@ -33,6 +45,7 @@ class Database {
 
     this.usePool = this.config.usePool || false;
     this.maxPoolSize = this.config.maxPoolSize || 10;
+    this._externalConnection = false;
 
     /** @type {Client|Pool|null} */
     this.connection = null;
@@ -62,9 +75,13 @@ class Database {
           database: this.config.database,
           user: this.config.user,
           password: this.config.password,
-          max: this.maxPoolSize
+          max: this.maxPoolSize,
+          idleTimeoutMillis: 10000,
+          connectionTimeoutMillis: 10000
         });
-        // Pool не требует явного connect(), но проверим доступность
+        this.connection.on('error', (err) => {
+          console.error('[Database Pool] Idle client error:', err.message);
+        });
         const testClient = await this.connection.connect();
         testClient.release();
       } else {
@@ -95,13 +112,12 @@ class Database {
     if (!this.connected || !this.connection) {
       return;
     }
+    if (this._externalConnection) {
+      return;
+    }
 
     try {
-      if (this.usePool) {
-        await this.connection.end();
-      } else {
-        await this.connection.end();
-      }
+      await this.connection.end();
       this.connected = false;
       this.connection = null;
       console.log('[Database] Отключено от PostgreSQL');

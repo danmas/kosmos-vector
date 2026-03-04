@@ -93,7 +93,7 @@
 
 | Файл | Описание | Ключевые темы | Актуализация |
 |------|----------|---------------|--------------|
-| [README_TESTS.md](./README_TESTS.md) | Обзор тестов проекта | api_test, full_cycle_test, folder_cycle_test, full_system_test, run_all_tests | 2026-02-11 |
+| [README_TESTS.md](./README_TESTS.md) | Обзор тестов проекта | full_system_test, run_all_tests | 2026-02-11 |
 | [README_SQL_TESTS.md](./README_SQL_TESTS.md) | SQL-векторизация и тесты | test_sql_vectorization, test_sql_levels, manual_itest_carl_tables | 2026-02-11 |
 | [README_FULL_TEST.md](./README_FULL_TEST.md) | Полный системный тест | E2E тестирование, multi-root конфигурация, все типы файлов, проверки | |
 

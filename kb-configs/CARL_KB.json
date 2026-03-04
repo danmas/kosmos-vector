@@ -1,0 +1,13 @@
+{
+  "rootPath": "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\KB",
+  "includeMask": "**/*.md",
+  "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
+  "fileSelection": [],
+  "lastUpdated": "2026-03-04T14:30:27.143Z",
+  "metadata": {
+    "projectName": "CARL KB",
+    "description": "RAG knowledge base",
+    "tags": [],
+    "custom_settings": "md_loading:\n  enabled: true\nfunctions_loading:\n  enabled: true\nddl_loading:\n  enabled: false\n  files:\n    - ./schema/hr_schema.sql\ntable_loading:\n  enabled: false"
+  }
+}

@@ -37,9 +37,6 @@ bun tests/test-epample-ShoppingCart.js      # Test shopping cart functionality
 bun tests/test-sql-order-system.js          # Test SQL order system
 
 # Server tests (require server running)
-node tests/api_test.js                       # Basic API smoke test
-node tests/full_cycle_test.js                # End-to-end file processing
-node tests/folder_cycle_test.js              # Batch folder processing
 node tests/full_system_test.js               # Complete system test
 
 # Run all tests via test runner
