@@ -56473,6 +56473,3650 @@
             }
           ]
         }
+      },
+      {
+        "timestamp": "2026-03-04T16:37:57.622Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:37:57.713Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 12,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:43:20.582Z",
+        "status": "running",
+        "progress": 83,
+        "itemsProcessed": 10,
+        "totalItems": 12,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:00.316Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 12,
+        "totalItems": 12,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 9,
+            "totalTables": 0,
+            "totalFunctions": 322,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 3,
+            "skippedFiles": 0,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 322
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_login_test.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_lot_sr.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_role.sql",
+                "fileId": "863953fe-4933-4fc1-b37b-979fe0c76490",
+                "isNew": true,
+                "functionsFound": 7,
+                "functionsProcessed": 7,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 7,
+                  "updated": 0,
+                  "unchanged": 0,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "api_truck_sr.sql",
+                "fileId": "aa2b9386-cdb9-4d41-8846-9843235cedee",
+                "isNew": true,
+                "functionsFound": 34,
+                "functionsProcessed": 34,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 34,
+                  "updated": 0,
+                  "unchanged": 0,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "api_workflow.sql",
+                "fileId": "f0225f21-8f1f-45a8-9289-7116f4f8b31f",
+                "isNew": true,
+                "functionsFound": 79,
+                "functionsProcessed": 79,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 79,
+                  "updated": 0,
+                  "unchanged": 0,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "api_inspect_bil.sql",
+                "fileId": "3840bd1c-a37b-4887-a802-b6248ffeb5ea",
+                "isNew": true,
+                "functionsFound": 15,
+                "functionsProcessed": 15,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 15,
+                  "updated": 0,
+                  "unchanged": 0,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "api_inspect.sql",
+                "fileId": "7032df4f-5477-4a54-be0c-8b0eb6b39cb0",
+                "isNew": true,
+                "functionsFound": 126,
+                "functionsProcessed": 126,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 126,
+                  "updated": 0,
+                  "unchanged": 0,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "api_logistic.sql",
+                "fileId": "e906bfb9-21b1-4344-a153-81ec7b6ca5b3",
+                "isNew": true,
+                "functionsFound": 5,
+                "functionsProcessed": 5,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 5,
+                  "updated": 0,
+                  "unchanged": 0,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "api_procedures.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_serv_autocode.sql",
+                "fileId": "8c063dc3-da9c-4d39-aac9-c32e423626b7",
+                "isNew": true,
+                "functionsFound": 23,
+                "functionsProcessed": 23,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 23,
+                  "updated": 0,
+                  "unchanged": 0,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "api_service.sql",
+                "fileId": "d933ecda-9cd7-432d-b405-dcda714f3a75",
+                "isNew": true,
+                "functionsFound": 26,
+                "functionsProcessed": 26,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 26,
+                  "updated": 0,
+                  "unchanged": 0,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "api_tests.sql",
+                "fileId": "e8a3b83c-41fd-41dd-bfa8-e7be98066ff4",
+                "isNew": true,
+                "functionsFound": 7,
+                "functionsProcessed": 7,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 7,
+                  "updated": 0,
+                  "unchanged": 0,
+                  "deleted": 0
+                }
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-04T16:37:57.700Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.701Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql"
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.701Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api_*.sql\""
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.702Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.702Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 12 файлов"
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.708Z",
+              "level": "info",
+              "message": "[Step1] Режим: точный выбор файлов (12 шт.)"
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.710Z",
+              "level": "info",
+              "message": "[Step1] Найдено 12 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.710Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.710Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.710Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.711Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.711Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.711Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.712Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.721Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.721Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 12 (12 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-04T16:37:57.721Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-04T16:44:00.315Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-04T16:44:00.315Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 9 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      }
+    ],
+    "2": [
+      {
+        "timestamp": "2026-03-04T16:44:08.014Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:09.419Z",
+        "status": "running",
+        "progress": 3,
+        "itemsProcessed": 10,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:10.903Z",
+        "status": "running",
+        "progress": 7,
+        "itemsProcessed": 20,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:12.524Z",
+        "status": "running",
+        "progress": 10,
+        "itemsProcessed": 30,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:13.645Z",
+        "status": "running",
+        "progress": 14,
+        "itemsProcessed": 40,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:16.709Z",
+        "status": "running",
+        "progress": 17,
+        "itemsProcessed": 50,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:17.740Z",
+        "status": "running",
+        "progress": 21,
+        "itemsProcessed": 60,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:20.231Z",
+        "status": "running",
+        "progress": 24,
+        "itemsProcessed": 70,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:21.202Z",
+        "status": "running",
+        "progress": 27,
+        "itemsProcessed": 80,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:22.204Z",
+        "status": "running",
+        "progress": 31,
+        "itemsProcessed": 90,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:23.674Z",
+        "status": "running",
+        "progress": 34,
+        "itemsProcessed": 100,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:27.052Z",
+        "status": "running",
+        "progress": 38,
+        "itemsProcessed": 110,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:29.593Z",
+        "status": "running",
+        "progress": 41,
+        "itemsProcessed": 120,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:31.633Z",
+        "status": "running",
+        "progress": 45,
+        "itemsProcessed": 130,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:33.470Z",
+        "status": "running",
+        "progress": 48,
+        "itemsProcessed": 140,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:34.744Z",
+        "status": "running",
+        "progress": 51,
+        "itemsProcessed": 150,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:35.853Z",
+        "status": "running",
+        "progress": 55,
+        "itemsProcessed": 160,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:37.847Z",
+        "status": "running",
+        "progress": 58,
+        "itemsProcessed": 170,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:40.026Z",
+        "status": "running",
+        "progress": 62,
+        "itemsProcessed": 180,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:41.524Z",
+        "status": "running",
+        "progress": 65,
+        "itemsProcessed": 190,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:43.844Z",
+        "status": "running",
+        "progress": 68,
+        "itemsProcessed": 200,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:45.166Z",
+        "status": "running",
+        "progress": 72,
+        "itemsProcessed": 210,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:48.679Z",
+        "status": "running",
+        "progress": 75,
+        "itemsProcessed": 220,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:50.893Z",
+        "status": "running",
+        "progress": 79,
+        "itemsProcessed": 230,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:52.208Z",
+        "status": "running",
+        "progress": 82,
+        "itemsProcessed": 240,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:53.518Z",
+        "status": "running",
+        "progress": 86,
+        "itemsProcessed": 250,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:55.498Z",
+        "status": "running",
+        "progress": 89,
+        "itemsProcessed": 260,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:57.796Z",
+        "status": "running",
+        "progress": 92,
+        "itemsProcessed": 270,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:44:59.172Z",
+        "status": "running",
+        "progress": 96,
+        "itemsProcessed": 280,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:45:01.111Z",
+        "status": "running",
+        "progress": 99,
+        "itemsProcessed": 290,
+        "totalItems": 292,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-04T16:45:01.948Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 292,
+        "totalItems": 292,
+        "error": null,
+        "report": {
+          "summary": {
+            "aiItemsNoSchema": 8,
+            "l0ChunksNoSchema": 8,
+            "l1ChunksAnalyzed": 292,
+            "missingDeps": 151,
+            "ambiguousDeps": 56,
+            "fixedDeps": 350,
+            "linksAnalyzed": 0,
+            "linksFixed": 0,
+            "linksMissing": 0,
+            "linksAmbiguous": 0
+          },
+          "details": {
+            "fixes": [
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_truck.getCarIdValueList"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_truck.getCarIdValueList"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf.__wf_SELBUY_ACCEPT"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_wf.__wf_SELBUY_ACCEPT"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_ACTIVE_TO_SUCCESS"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_ACTIVE_TO_SUCCESS"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_ACTIVE_TO_SUCCESS"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_ACTIVE_TO_SUCCESS"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_DO_ACTION"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_DO_ACTION"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_DO_ACTION"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_wf._wf_DO_ACTION"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_DO_ACTION"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_SUCCESS_TO_NOLS"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_SUCCESS_TO_NOLS"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_SUCCESS_TO_NOLS"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_NOLS_REJECT"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_NOLS_REJECT"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_NOLS_REJECT"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_NOLS_ACCEPT"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_NOLS_ACCEPT"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_NOLS_ACCEPT"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_ACTIVE_TO_FINISHED"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_ACTIVE_TO_FINISHED"
+              },
+              {
+                "from": "_wf_ACTIVE_TO_FINISHED",
+                "to": "carl_wf._wf_ACTIVE_TO_FINISHED",
+                "in": "carl_wf._wf_ACTIVE_TO_FINISHED"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_ACTIVE_TO_FINISHED"
+              },
+              {
+                "from": "getParameter",
+                "to": "carl_comm.getParameter",
+                "in": "carl_wf._wf_ACTIVE_TO_FINISHED"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_ACTIVE_TO_FINISHED"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_ACTIVE_TO_FAILED"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_ACTIVE_TO_FAILED"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_ACTIVE_TO_FAILED"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_ACTIVE_TO_FAILED"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_VW_ACTIVE_TO_FINISHED"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_VW_ACTIVE_TO_FINISHED"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_VW_ACTIVE_TO_FINISHED"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_VW_ACTIVE_TO_FINISHED"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_FINISHED_TO_SUCCESS"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_FINISHED_TO_SUCCESS"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_FINISHED_TO_SUCCESS"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_FINISHED_TO_SUCCESS"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_FINISHED_TO_FAILED"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_FINISHED_TO_FAILED"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_FINISHED_TO_FAILED"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_FINISHED_TO_FAILED"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._set_auction_param"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._set_auction_param"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_wf._set_auction_param"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._set_auction_paramS"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._set_auction_paramS"
+              },
+              {
+                "from": "_set_auction_paramS",
+                "to": "carl_wf._set_auction_paramS",
+                "in": "carl_wf._set_auction_paramS"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_FAILED_TO_ACTIVE"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_FAILED_TO_ACTIVE"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_wf._wf_FAILED_TO_ACTIVE"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_FAILED_TO_ACTIVE"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_AUTO_DECLINE"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_AUTO_DECLINE"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_AUTO_DECLINE"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_AUTO_DECLINE"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_SUCCESS_BUYNOW_TO_READY"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_SUCCESS_BUYNOW_TO_READY"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_SUCCESS_BUYNOW_TO_READY"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_READY_TO_DONE"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_READY_TO_DONE"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_READY_TO_DONE"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf.isProfileInWorkflow"
+              },
+              {
+                "from": "profile_workflow",
+                "to": "carl_wf.profile_workflow",
+                "in": "carl_wf.addWorkflowToProfile"
+              },
+              {
+                "from": "profile_workflow",
+                "to": "carl_wf.profile_workflow",
+                "in": "carl_wf.addWorkflowToProfile"
+              },
+              {
+                "from": "profile_workflow",
+                "to": "carl_wf.profile_workflow",
+                "in": "carl_wf.addWorkflowToProfile"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._check_wf_state"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._check_wf_state"
+              },
+              {
+                "from": "action",
+                "to": "carl_wf.action",
+                "in": "carl_wf._check_wf_state"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._check_wf_state"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf.executeDoneAction"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_selbuy_make_offer"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_selbuy_make_offer"
+              },
+              {
+                "from": "_wf_selbuy_make_offer",
+                "to": "carl_wf._wf_selbuy_make_offer",
+                "in": "carl_wf._wf_selbuy_make_offer"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_selbuy_make_offer"
+              },
+              {
+                "from": "getAuctParameterI",
+                "to": "carl_auct.getAuctParameterI",
+                "in": "carl_wf._wf_selbuy_make_offer"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_wf._wf_selbuy_make_offer"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_selbuy_make_offer"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_selbuy_make_offer"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf.executeAction"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf.executeAction"
+              },
+              {
+                "from": "executeAction",
+                "to": "carl_wf.executeAction",
+                "in": "carl_wf.executeAction"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_DRAFT_TO_MODERATE"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_DRAFT_TO_MODERATE"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_DRAFT_TO_MODERATE"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_DRAFT_TO_MODERATE"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_wf._wf_DRAFT_TO_MODERATE"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_MODERATE_TO_DRAFT"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_MODERATE_TO_DRAFT"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_MODERATE_TO_DRAFT"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_MODERATE_TO_DRAFT"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_wf._wf_MODERATE_TO_DRAFT"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_wf._wf_MODERATE_TO_DRAFT"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_MODERATE_TO_ACTIVE"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_MODERATE_TO_ACTIVE"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_MODERATE_TO_ACTIVE"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_MODERATE_TO_ACTIVE"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_ACTIVE_TO_MODERATE"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_ACTIVE_TO_MODERATE"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_ACTIVE_TO_MODERATE"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_ACTIVE_TO_MODERATE"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_FRONT_ACCEPT"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_FRONT_ACCEPT"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_FRONT_ACCEPT"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_wf._wf_FRONT_ACCEPT"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_FRONT_ACCEPT"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_FRONT_DECLINE"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_FRONT_DECLINE"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_wf._wf_FRONT_DECLINE"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_FRONT_DECLINE"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_REINSTALL"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_REINSTALL"
+              },
+              {
+                "from": "_wf_REINSTALL",
+                "to": "carl_wf._wf_REINSTALL",
+                "in": "carl_wf._wf_REINSTALL"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_REINSTALL"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_wf._wf_REINSTALL"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_REINSTALL"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_BACK_ACCEPT"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_BACK_ACCEPT"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_wf._wf_BACK_ACCEPT"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_BACK_ACCEPT"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_BACK_DECLINE"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_BACK_DECLINE"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_wf._wf_BACK_DECLINE"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_BACK_DECLINE"
+              },
+              {
+                "from": "acceptOffer",
+                "to": "carl_auct.acceptOffer",
+                "in": "carl_wf._wf_ACCEPT"
+              },
+              {
+                "from": "action",
+                "to": "carl_wf.action",
+                "in": "carl_wf.checkReady"
+              },
+              {
+                "from": "broker",
+                "to": "carl_data.broker",
+                "in": "carl_wf.checkReady"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_wf._wf_ANY_ACTION"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_wf._wf_ANY_ACTION"
+              },
+              {
+                "from": "_writeAuctLog",
+                "to": "carl_auct._writeAuctLog",
+                "in": "carl_wf._wf_ANY_ACTION"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_wf._wf_ANY_ACTION"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_prof.paymentInfo"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_prof.paymentInfo"
+              },
+              {
+                "from": "bil_operation",
+                "to": "carl_data.bil_operation",
+                "in": "carl_prof.paymentInfo"
+              },
+              {
+                "from": "users",
+                "to": "carl_data.users",
+                "in": "carl_prof.paymentInfo"
+              },
+              {
+                "from": "getOrganIdByAccGrp",
+                "to": "carl_auth.getOrganIdByAccGrp",
+                "in": "carl_prof._payUnpaid"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_prof.getBilSum"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_prof.getBilSum"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_prof._bil_pay"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_prof._bil_pay"
+              },
+              {
+                "from": "getParameter",
+                "to": "carl_comm.getParameter",
+                "in": "carl_prof._bil_pay"
+              },
+              {
+                "from": "organ",
+                "to": "carl_data.organ",
+                "in": "carl_prof._bil_pay"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_prof.createIndivOrgan"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_prof.createIndivOrgan"
+              },
+              {
+                "from": "getParameter",
+                "to": "carl_comm.getParameter",
+                "in": "carl_prof.createIndivOrgan"
+              },
+              {
+                "from": "organ",
+                "to": "carl_data.organ",
+                "in": "carl_prof.createIndivOrgan"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_prof.getRepNumForRestSum"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_prof.getRepNumForRestSum"
+              },
+              {
+                "from": "getUserSmartName",
+                "to": "carl_auth.getUserSmartName",
+                "in": "carl_inspect.getReportsForGroupOrganInspect"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_prof.bilSumPlus"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_prof.bilSumPlus"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_prof.bilSumMinus"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_prof.bilSumMinus"
+              },
+              {
+                "from": "organ",
+                "to": "carl_data.organ",
+                "in": "carl_prof.bilSumMinus"
+              },
+              {
+                "from": "_bilPay",
+                "to": "carl_prof._bilPay",
+                "in": "carl_prof._bilPay"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_prof._bilPay"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_prof._bilPay"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_prof._getBilOperListT"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_prof._getBilOperListT"
+              },
+              {
+                "from": "dt_set",
+                "to": "unknown.dt_set",
+                "in": "carl_prof._getBilOperListT"
+              },
+              {
+                "from": "getParameter",
+                "to": "carl_comm.getParameter",
+                "in": "carl_prof._initIndivOrganForReport"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.getOrganInspectors"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.getOrganInspectors"
+              },
+              {
+                "from": "getUserSmartName",
+                "to": "carl_auth.getUserSmartName",
+                "in": "carl_inspect.getOrganInspectors"
+              },
+              {
+                "from": "users",
+                "to": "carl_data.users",
+                "in": "carl_inspect.getOrganInspectors"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct._has_report"
+              },
+              {
+                "from": "_getCityIdFromAddr",
+                "to": "carl_prof._getCityIdFromAddr",
+                "in": "carl_inspect._getCityFromReport"
+              },
+              {
+                "from": "city",
+                "to": "carl_data.city",
+                "in": "carl_inspect._getCityFromReport"
+              },
+              {
+                "from": "user_push_token",
+                "to": "carl_data.user_push_token",
+                "in": "carl_inspect.deletePushToken"
+              },
+              {
+                "from": "dt_create",
+                "to": "unknown.dt_create",
+                "in": "carl_inspect.getPushTokenList"
+              },
+              {
+                "from": "dt_end",
+                "to": "unknown.dt_end",
+                "in": "carl_inspect.getPushTokenList"
+              },
+              {
+                "from": "user_push_token",
+                "to": "carl_data.user_push_token",
+                "in": "carl_inspect.getPushTokenList"
+              },
+              {
+                "from": "inspect_report_tasks",
+                "to": "carl_data.inspect_report_tasks",
+                "in": "carl_inspect.createReportTask"
+              },
+              {
+                "from": "inspect_report_tasks",
+                "to": "carl_data.inspect_report_tasks",
+                "in": "carl_inspect.createReportTask"
+              },
+              {
+                "from": "inspect_report_tasks",
+                "to": "carl_data.inspect_report_tasks",
+                "in": "carl_inspect.createReportTask"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct._get_url_video"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_auct._get_url_video"
+              },
+              {
+                "from": "object",
+                "to": "carl_data.object",
+                "in": "carl_auct._get_url_video"
+              },
+              {
+                "from": "inspect_report_tasks",
+                "to": "carl_data.inspect_report_tasks",
+                "in": "carl_inspect.getReportTasksNotDoneList"
+              },
+              {
+                "from": "getReportTaskUrl",
+                "to": "carl_inspect.getReportTaskUrl",
+                "in": "carl_inspect.getReportTaskJ"
+              },
+              {
+                "from": "inspect_report_tasks",
+                "to": "carl_data.inspect_report_tasks",
+                "in": "carl_inspect.getReportTaskJ"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.setLotInspectReport"
+              },
+              {
+                "from": "createCarInspectAuction",
+                "to": "carl_inspect.createCarInspectAuction",
+                "in": "carl_inspect.setLotInspectReport"
+              },
+              {
+                "from": "getRegionFromAddr",
+                "to": "carl_prof.getRegionFromAddr",
+                "in": "carl_inspect.setLotInspectReport"
+              },
+              {
+                "from": "isManagerInOrgan",
+                "to": "carl_inspect.isManagerInOrgan",
+                "in": "carl_inspect.setLotInspectReport"
+              },
+              {
+                "from": "setLotInspectReport",
+                "to": "carl_inspect.setLotInspectReport",
+                "in": "carl_inspect.setLotInspectReport"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.setReportVerified"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.setReportVerified"
+              },
+              {
+                "from": "organ_code",
+                "to": "carl_data.organ_code",
+                "in": "carl_inspect.getOrganCode"
+              },
+              {
+                "from": "organ_code",
+                "to": "carl_data.organ_code",
+                "in": "carl_inspect.getOrganCode"
+              },
+              {
+                "from": "organ_code",
+                "to": "carl_data.organ_code",
+                "in": "carl_inspect.getOrganCode"
+              },
+              {
+                "from": "getUserSmartName",
+                "to": "carl_auth.getUserSmartName",
+                "in": "carl_inspect.getOrganInspectreportList"
+              },
+              {
+                "from": "bil_operation",
+                "to": "carl_data.bil_operation",
+                "in": "carl_inspect.setRegNum"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.saveCarInspectReport"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.saveCarInspectReport"
+              },
+              {
+                "from": "getOrganParameter",
+                "to": "carl_prof.getOrganParameter",
+                "in": "carl_inspect.saveCarInspectReport"
+              },
+              {
+                "from": "saveCarInspectReport",
+                "to": "carl_inspect.saveCarInspectReport",
+                "in": "carl_inspect.saveCarInspectReport"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_inspect.saveCarInspectReport"
+              },
+              {
+                "from": "users",
+                "to": "carl_data.users",
+                "in": "carl_inspect.saveCarInspectReport"
+              },
+              {
+                "from": "organ",
+                "to": "carl_data.organ",
+                "in": "carl_inspect.setDefaultCanUserMakePublicReport"
+              },
+              {
+                "from": "user_organ",
+                "to": "carl_data.user_organ",
+                "in": "carl_inspect.setCanUserMakePublicReport"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.setPublicInspectReportByAdmin"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.setPublicInspectReportByAdmin"
+              },
+              {
+                "from": "getUserSmartName",
+                "to": "carl_auth.getUserSmartName",
+                "in": "carl_inspect.getReportAuthorList"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.setAssessedValue"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.setAssessedValue"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.setDealerPrice"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.setDealerPrice"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.getDealerPrice"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.getDealerPrice"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect._createCarInspectAuction"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect._createCarInspectAuction"
+              },
+              {
+                "from": "createCarInspectAuction",
+                "to": "carl_inspect.createCarInspectAuction",
+                "in": "carl_inspect._createCarInspectAuction"
+              },
+              {
+                "from": "getAuctObjAttrib",
+                "to": "carl_auct.getAuctObjAttrib",
+                "in": "carl_inspect._createCarInspectAuction"
+              },
+              {
+                "from": "getRegionFromAddr",
+                "to": "carl_prof.getRegionFromAddr",
+                "in": "carl_inspect._createCarInspectAuction"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_inspect._createCarInspectAuction"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_inspect._createCarInspectAuction"
+              },
+              {
+                "from": "obj_attrib_values",
+                "to": "carl_data.obj_attrib_values",
+                "in": "carl_inspect._createCarInspectAuction"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.updateCarInspectReportAdm"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.updateCarInspectReportAdm"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.setPublicInspectReport"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.setPublicInspectReport"
+              },
+              {
+                "from": "getCarInspectReport",
+                "to": "carl_inspect.getCarInspectReport",
+                "in": "carl_inspect.getCarInspectReport"
+              },
+              {
+                "from": "users",
+                "to": "carl_data.users",
+                "in": "carl_inspect.getCarInspectReport"
+              },
+              {
+                "from": "getOrganNameByAccGrp",
+                "to": "carl_auth.getOrganNameByAccGrp",
+                "in": "carl_inspect.getCarInspectReportList"
+              },
+              {
+                "from": "getUserSmartName",
+                "to": "carl_auth.getUserSmartName",
+                "in": "carl_inspect.getCarInspectReportList"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.setApprovalPrice"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.setApprovalPrice"
+              },
+              {
+                "from": "getUserSmartName",
+                "to": "carl_auth.getUserSmartName",
+                "in": "carl_inspect.setApprovalPrice"
+              },
+              {
+                "from": "getAuctObjAttrib",
+                "to": "carl_auct.getAuctObjAttrib",
+                "in": "carl_inspect.setExpertCertByOrgan"
+              },
+              {
+                "from": "getOrganIdByAccGrp",
+                "to": "carl_auth.getOrganIdByAccGrp",
+                "in": "carl_inspect.setExpertCertByOrgan"
+              },
+              {
+                "from": "getOrganParameter",
+                "to": "carl_prof.getOrganParameter",
+                "in": "carl_inspect.setExpertCertByOrgan"
+              },
+              {
+                "from": "setExpertCertByOrgan",
+                "to": "carl_inspect.setExpertCertByOrgan",
+                "in": "carl_inspect.setExpertCertByOrgan"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect._getReportIdByApiKeyOrgan"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect._getReportIdByApiKeyOrgan"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.getCarInspectReportListByAuctId"
+              },
+              {
+                "from": "_buildWhereReportFilter",
+                "to": "carl_inspect._buildWhereReportFilter",
+                "in": "carl_inspect._buildWhereReportFilter"
+              },
+              {
+                "from": "getCarInspectReportListByFilterJCount",
+                "to": "carl_inspect.getCarInspectReportListByFilterJCount",
+                "in": "carl_inspect.getCarInspectReportListByFilterCount"
+              },
+              {
+                "from": "_updateInspectReportInParent",
+                "to": "carl_inspect._updateInspectReportInParent",
+                "in": "carl_inspect._updateInspectReportInParent"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_inspect._updateInspectReportInParent"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.getAuctListByInspectReport"
+              },
+              {
+                "from": "isManagerInOrgan",
+                "to": "carl_inspect.isManagerInOrgan",
+                "in": "carl_inspect.getAuctListByInspectReport"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect._convertInspectToCarl"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect._convertInspectToCarl"
+              },
+              {
+                "from": "getOrganNameByAccGrp",
+                "to": "carl_auth.getOrganNameByAccGrp",
+                "in": "carl_inspect._buildWhereCommonSearchReportFilter"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.canUserVerify"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.canUserVerify"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.acceptOrganCode"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.acceptOrganCode"
+              },
+              {
+                "from": "_getRoleId",
+                "to": "carl_auth._getRoleId",
+                "in": "carl_inspect.acceptOrganCode"
+              },
+              {
+                "from": "addUserInOrganRole",
+                "to": "carl_auth.addUserInOrganRole",
+                "in": "carl_inspect.acceptOrganCode"
+              },
+              {
+                "from": "organ",
+                "to": "carl_data.organ",
+                "in": "carl_inspect.acceptOrganCode"
+              },
+              {
+                "from": "organ_code",
+                "to": "carl_data.organ_code",
+                "in": "carl_inspect.acceptOrganCode"
+              },
+              {
+                "from": "organ_code",
+                "to": "carl_data.organ_code",
+                "in": "carl_inspect.acceptOrganCode"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect._createNewUserInOrgan"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect._createNewUserInOrgan"
+              },
+              {
+                "from": "_getRoleId",
+                "to": "carl_auth._getRoleId",
+                "in": "carl_inspect._createNewUserInOrgan"
+              },
+              {
+                "from": "addUserInOrganRole",
+                "to": "carl_auth.addUserInOrganRole",
+                "in": "carl_inspect._createNewUserInOrgan"
+              },
+              {
+                "from": "getUserOrgansList",
+                "to": "carl_prof.getUserOrgansList",
+                "in": "carl_inspect._createNewUserInOrgan"
+              },
+              {
+                "from": "getUserOrgansList",
+                "to": "carl_prof.getUserOrgansList",
+                "in": "carl_inspect._createNewUserInOrgan"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_inspect._createNewUserInOrgan"
+              },
+              {
+                "from": "user_organ",
+                "to": "carl_data.user_organ",
+                "in": "carl_inspect._createNewUserInOrgan"
+              },
+              {
+                "from": "users",
+                "to": "carl_data.users",
+                "in": "carl_inspect._createNewUserInOrgan"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.createNewInspectorInOrgan"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.createNewInspectorInOrgan"
+              },
+              {
+                "from": "_getRoleId",
+                "to": "carl_auth._getRoleId",
+                "in": "carl_inspect.createNewInspectorInOrgan"
+              },
+              {
+                "from": "addUserInOrganRole",
+                "to": "carl_auth.addUserInOrganRole",
+                "in": "carl_inspect.createNewInspectorInOrgan"
+              },
+              {
+                "from": "users",
+                "to": "carl_data.users",
+                "in": "carl_inspect.createNewInspectorInOrgan"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.deleteInspectorInOrgan"
+              },
+              {
+                "from": "organ",
+                "to": "carl_data.organ",
+                "in": "carl_inspect.deleteInspectorInOrgan"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_inspect.deleteInspectorInOrgan"
+              },
+              {
+                "from": "users",
+                "to": "carl_data.users",
+                "in": "carl_inspect.deleteInspectorInOrgan"
+              },
+              {
+                "from": "users",
+                "to": "carl_data.users",
+                "in": "carl_inspect.deleteInspectorInOrgan"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.getOrganInspectorsList"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.getOrganInspectorsList"
+              },
+              {
+                "from": "getUserSmartName",
+                "to": "carl_auth.getUserSmartName",
+                "in": "carl_inspect.getOrganInspectorsList"
+              },
+              {
+                "from": "users",
+                "to": "carl_data.users",
+                "in": "carl_inspect.getOrganInspectorsList"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.getOrganInspectorsCount"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.getOrganInspectorsCount"
+              },
+              {
+                "from": "getUserSmartName",
+                "to": "carl_auth.getUserSmartName",
+                "in": "carl_inspect.getOrganInspectorsCount"
+              },
+              {
+                "from": "users",
+                "to": "carl_data.users",
+                "in": "carl_inspect.getOrganInspectorsCount"
+              },
+              {
+                "from": "getOrganIdByAccGrp",
+                "to": "carl_auth.getOrganIdByAccGrp",
+                "in": "carl_inspect.getLastReportByVin"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.canMakeAuctFromReport"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.canMakeAuctFromReport"
+              },
+              {
+                "from": "_get_auct_status",
+                "to": "carl_auct._get_auct_status",
+                "in": "carl_inspect.canMakeAuctFromReport"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_inspect.canMakeAuctFromReport"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_inspect._convert_report_equip"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect.savePushToken"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect.savePushToken"
+              },
+              {
+                "from": "user_push_token",
+                "to": "carl_data.user_push_token",
+                "in": "carl_inspect.savePushToken"
+              },
+              {
+                "from": "user_push_token",
+                "to": "carl_data.user_push_token",
+                "in": "carl_inspect.savePushToken"
+              },
+              {
+                "from": "user_push_token",
+                "to": "carl_data.user_push_token",
+                "in": "carl_inspect.savePushToken"
+              },
+              {
+                "from": "user_organ",
+                "to": "carl_data.user_organ",
+                "in": "carl_inspect.changeAccessGroup"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_inspect._setReportStatus"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_inspect._setReportStatus"
+              },
+              {
+                "from": "report_status_history",
+                "to": "carl_data.report_status_history",
+                "in": "carl_inspect._setReportStatus"
+              },
+              {
+                "from": "report_status_history",
+                "to": "carl_data.report_status_history",
+                "in": "carl_inspect._setReportStatus"
+              },
+              {
+                "from": "getUserSmartName",
+                "to": "carl_auth.getUserSmartName",
+                "in": "carl_inspect.getUserRolesInfo"
+              },
+              {
+                "from": "getUserSmartName",
+                "to": "carl_auth.getUserSmartName",
+                "in": "carl_inspect.getReportInfo"
+              },
+              {
+                "from": "city",
+                "to": "carl_data.city",
+                "in": "carl_logistic.getLogisticCityList"
+              },
+              {
+                "from": "car_model",
+                "to": "carl_car.car_model",
+                "in": "carl_logistic.getLogisticCarModel"
+              },
+              {
+                "from": "car_model",
+                "to": "carl_car.car_model",
+                "in": "carl_logistic.getLogisticCarBody"
+              },
+              {
+                "from": "getAuctObjAttrib",
+                "to": "carl_auct.getAuctObjAttrib",
+                "in": "carl_comm._getRestrictStatus"
+              },
+              {
+                "from": "service_autocode",
+                "to": "carl_data.service_autocode",
+                "in": "carl_comm.isAutocodeInitiated"
+              },
+              {
+                "from": "getLastAuctByVin",
+                "to": "carl_auct.getLastAuctByVin",
+                "in": "carl_comm.setAutocodeReportByVin"
+              },
+              {
+                "from": "getAuctObjAttrib",
+                "to": "carl_auct.getAuctObjAttrib",
+                "in": "carl_comm.getAutocodeRepByIdAuct"
+              },
+              {
+                "from": "getAuctObjAttrib",
+                "to": "carl_auct.getAuctObjAttrib",
+                "in": "carl_comm.getInitialAv100List"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_comm.getInitialAv100List"
+              },
+              {
+                "from": "service_autocode",
+                "to": "carl_data.service_autocode",
+                "in": "carl_comm.getInitialAv100List"
+              },
+              {
+                "from": "service_autocode",
+                "to": "carl_data.service_autocode",
+                "in": "carl_comm.isAv100Initiated"
+              },
+              {
+                "from": "getAuctObjAttrib",
+                "to": "carl_auct.getAuctObjAttrib",
+                "in": "carl_comm.getProcessUpdateAv100List"
+              },
+              {
+                "from": "service_autocode",
+                "to": "carl_data.service_autocode",
+                "in": "carl_comm.getProcessUpdateAv100List"
+              },
+              {
+                "from": "getAuctObjAttrib",
+                "to": "carl_auct.getAuctObjAttrib",
+                "in": "carl_comm.getActiveAv100List"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_comm.getActiveAv100List"
+              },
+              {
+                "from": "service_autocode",
+                "to": "carl_data.service_autocode",
+                "in": "carl_comm.getActiveAv100List"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_comm.setAv100Report"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_comm.setAv100Report"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_comm.setAv100Report"
+              },
+              {
+                "from": "service_autocode",
+                "to": "carl_data.service_autocode",
+                "in": "carl_comm._getAv100RestrictStatus"
+              },
+              {
+                "from": "getAuctObjAttrib",
+                "to": "carl_auct.getAuctObjAttrib",
+                "in": "carl_comm.getAv100RestrictStatus"
+              },
+              {
+                "from": "service_autocode",
+                "to": "carl_data.service_autocode",
+                "in": "carl_comm._getAutoRestrictStatus"
+              },
+              {
+                "from": "_getRestrictStatus",
+                "to": "carl_comm._getRestrictStatus",
+                "in": "carl_comm.getRestrictStatus"
+              },
+              {
+                "from": "getAuctObjAttrib",
+                "to": "carl_auct.getAuctObjAttrib",
+                "in": "carl_comm.getRestrictStatus"
+              },
+              {
+                "from": "getAuctObjAttrib",
+                "to": "carl_auct.getAuctObjAttrib",
+                "in": "carl_comm.setAutocodeReport"
+              },
+              {
+                "from": "round",
+                "to": "unknown.round",
+                "in": "carl_comm.getEndAuctions"
+              },
+              {
+                "from": "round",
+                "to": "unknown.round",
+                "in": "carl_comm.getStartedAuctions"
+              },
+              {
+                "from": "notification_default_settings",
+                "to": "carl_data.notification_default_settings",
+                "in": "carl_comm._getUserNotificationSettingsByComma"
+              },
+              {
+                "from": "notification_type",
+                "to": "carl_data.notification_type",
+                "in": "carl_comm._getUserNotificationSettingsByComma"
+              },
+              {
+                "from": "notification_user_settings",
+                "to": "carl_data.notification_user_settings",
+                "in": "carl_comm._getUserNotificationSettingsByComma"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_comm._getRandomAuctId"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_comm._getRandomUserProfId"
+              },
+              {
+                "from": "_execAuctHistTest",
+                "to": "carl_comm._execAuctHistTest",
+                "in": "carl_comm.__execAuctHistTest"
+              },
+              {
+                "from": "writeLog",
+                "to": "carl_comm.writeLog",
+                "in": "carl_comm.__execAuctHistTest"
+              },
+              {
+                "from": "__execAuctHistTest_2",
+                "to": "carl_comm.__execAuctHistTest_2",
+                "in": "carl_comm.__execAuctHistTest_2"
+              },
+              {
+                "from": "test_auct_hist",
+                "to": "carl_data.test_auct_hist",
+                "in": "carl_comm.__execAuctHistTest_2"
+              },
+              {
+                "from": "writeLog",
+                "to": "carl_comm.writeLog",
+                "in": "carl_comm.__execAuctHistTest_2"
+              },
+              {
+                "from": "test_auct_hist",
+                "to": "carl_data.test_auct_hist",
+                "in": "carl_comm.__execAuctHistTest_2"
+              },
+              {
+                "from": "test_auct_hist",
+                "to": "carl_data.test_auct_hist",
+                "in": "carl_comm.__execAuctHistTest_2"
+              },
+              {
+                "from": "_getRandomAuctId",
+                "to": "carl_comm._getRandomAuctId",
+                "in": "carl_comm._execRundomAuctHistTests"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_comm._execRundomAuctHistTests"
+              },
+              {
+                "from": "__execAuctHistTest",
+                "to": "carl_comm.__execAuctHistTest",
+                "in": "carl_comm._execAuctHistTest"
+              },
+              {
+                "from": "getSellerProfId",
+                "to": "carl_auct.getSellerProfId",
+                "in": "carl_comm._execAuctHistTest"
+              },
+              {
+                "from": "auction_log",
+                "to": "carl_data.auction_log",
+                "in": "carl_comm._execAuctHistTest"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_comm._execAuctHistTest"
+              },
+              {
+                "from": "__execAuctHistTest_2",
+                "to": "carl_comm.__execAuctHistTest_2",
+                "in": "carl_comm._execAuctHistTest_2"
+              },
+              {
+                "from": "getSellerProfId",
+                "to": "carl_auct.getSellerProfId",
+                "in": "carl_comm._execAuctHistTest_2"
+              },
+              {
+                "from": "auction_log",
+                "to": "carl_data.auction_log",
+                "in": "carl_comm._execAuctHistTest_2"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_comm._execAuctHistTest_2"
+              }
+            ],
+            "ambiguous": [
+              {
+                "dep": "_get_auct_seller_id",
+                "candidates": [
+                  "carl_auct._get_auct_seller_id",
+                  "unknown._get_auct_seller_id"
+                ],
+                "in": "carl_wf.getActionParamList"
+              },
+              {
+                "dep": "_get_auct_seller_id",
+                "candidates": [
+                  "carl_auct._get_auct_seller_id",
+                  "unknown._get_auct_seller_id"
+                ],
+                "in": "carl_wf._set_auction_param"
+              },
+              {
+                "dep": "_get_auct_seller_id",
+                "candidates": [
+                  "carl_auct._get_auct_seller_id",
+                  "unknown._get_auct_seller_id"
+                ],
+                "in": "carl_wf._set_auction_paramS"
+              },
+              {
+                "dep": "_get_auct_leader",
+                "candidates": [
+                  "carl_auct._get_auct_leader",
+                  "unknown._get_auct_leader"
+                ],
+                "in": "carl_wf.isProfileInWorkflow"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_prof._payUnpaid"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.getReportsForGroupOrganInspect"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_prof._initIndivOrganForReport"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_prof._initIndivOrganForReport"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.getReportsForGroupOrgan"
+              },
+              {
+                "dep": "_get_auct_seller_id",
+                "candidates": [
+                  "carl_auct._get_auct_seller_id",
+                  "unknown._get_auct_seller_id"
+                ],
+                "in": "carl_inspect.setLotInspectReport"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect._copy_convert_report"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect._copy_convert_report"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.getOrganInspectreportList"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect._rep_in_organ"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setRegNum"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setRegNum"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.saveCarInspectReport"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.saveCarInspectReport"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.saveCarInspectReport"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.saveCarInspectReport"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setPublicInspectReportByAdmin"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setPublicInspectReportByAdmin"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.getCarInspectReportListT"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setAssessedValue"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setAssessedValue"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setDealerPrice"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setDealerPrice"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setExpertCert"
+              },
+              {
+                "dep": "_get_auct_seller_id",
+                "candidates": [
+                  "carl_auct._get_auct_seller_id",
+                  "unknown._get_auct_seller_id"
+                ],
+                "in": "carl_inspect._createCarInspectAuction"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect._createCarInspectAuction"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.updateCarInspectReportAdm"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.updateCarInspectReportAdm"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.saveReportDraft"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.saveReportDraft"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setReportUser"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setPublicInspectReport"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setPublicInspectReport"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.isPublicInspectReport"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.getCarInspectReport"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.getPublicCarInspectReport"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.getCarInspectReportList"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setApprovalPrice"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setApprovalPrice"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.getCarInspectReportListByAuctId"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.canUserVerify"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.getReports"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.getOrganReportVins"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.getLastOrganReportByVin"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect._convert_report_equip"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect._convert_report_equip"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.convertReportEquip"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.changeAccessGroup"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect._setReportStatus"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect._setReportStatus"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.setReportStatus"
+              },
+              {
+                "dep": "inspect_report",
+                "candidates": [
+                  "carl_data.inspect_report",
+                  "unknown.inspect_report"
+                ],
+                "in": "carl_inspect.getNotMyReports"
+              }
+            ],
+            "missing": [
+              {
+                "dep": "json_populate_record",
+                "in": "carl_wf.createRole",
+                "file": "api_role.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_wf.createRole",
+                "file": "api_role.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getBodyTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getBodyTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getDriveUnitList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getDriveUnitList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getEngineTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getEngineTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getTransTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getTransTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getCabinTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getCabinTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getSuspenderBackTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getSuspenderBackTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getEcoClassList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getEcoClassList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getEngineVolumeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getEngineVolumeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getSuspenderFrontTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getSuspenderFrontTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getEnginePowerList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getEnginePowerList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getSeatCapacityList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getSeatCapacityList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getLoadCapacityList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getLoadCapacityList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getQuantityAxesList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getQuantityAxesList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getTrailerTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getTrailerTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getBrakeTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_truck._getBrakeTypeList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "tree",
+                "in": "carl_truck._getCharacteristicList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "tree",
+                "in": "carl_truck._getCharacteristicList",
+                "file": "api_truck_sr.sql"
+              },
+              {
+                "dep": "row",
+                "in": "carl_wf.getWorkflowState",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "getauctparameterb",
+                "in": "carl_wf._wf_ACTIVE_TO_FINISHED",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_wf.createActionParam",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_wf.createActionParam",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "elseif",
+                "in": "carl_wf.getWorkflowTypeByAuctId",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_wf._set_auction_param",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_wf._set_auction_param",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_wf._set_auction_paramS",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_wf._set_auction_paramS",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "not",
+                "in": "carl_wf._wf_SUCCESS_BUYNOW_TO_READY",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "not",
+                "in": "carl_wf._wf_READY_TO_DONE",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "getusersmartname",
+                "in": "carl_wf.getUserProfileRoleAccess",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "distinct",
+                "in": "carl_wf.getUserActions",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_wf.createAction",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_wf.createAction",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_wf.createWorkflow",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_wf.createWorkflow",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_wf.createState",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_wf.createState",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_wf.addActionAccessToRole",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_wf.addActionAccessToRole",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "_getmessage",
+                "in": "carl_wf.executeAction",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "clock_timestamp",
+                "in": "carl_auct.checkReadyDelay",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "_days_check_ready_delay",
+                "in": "carl_auct.checkReadyDelay",
+                "file": "api_workflow.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_inspect.getReportsForGroupOrganInspect",
+                "file": "api_inspect_bil.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_inspect.getReportsForGroupOrgan",
+                "file": "api_inspect_bil.sql"
+              },
+              {
+                "dep": "cast",
+                "in": "carl_inspect._getReportTransmission",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "ilike",
+                "in": "carl_inspect.getOrganInspectors",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "exists",
+                "in": "carl_inspect.createReportTask",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "_getmessage",
+                "in": "carl_inspect.setLotInspectReport",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "inspect_paid_until",
+                "in": "carl_inspect.getInspectPaidUntil",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "array_upper",
+                "in": "carl_inspect._gen_inspect_report_api_key",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "md5",
+                "in": "carl_inspect._gen_inspect_report_api_key",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "regexp_split_to_array",
+                "in": "carl_inspect._gen_inspect_report_api_key",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "exists",
+                "in": "carl_inspect.canUserEditReport",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "clock_timestamp",
+                "in": "carl_inspect.saveCarInspectReport",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "unnest",
+                "in": "carl_inspect.getReportCityList",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "array_positions",
+                "in": "carl_inspect._createCarInspectAuction",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "cardinality",
+                "in": "carl_inspect._createCarInspectAuction",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "to_json",
+                "in": "carl_inspect._createCarInspectAuction",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "_getmessage",
+                "in": "carl_inspect.getCarInspectReportListByAuctId",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "cast",
+                "in": "carl_inspect._buildWhereReportFilter",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_inspect._buildWhereReportFilter",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "jsonb_each",
+                "in": "carl_inspect._buildWhereReportFilter",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_inspect._buildWhereReportFilter",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "jsonb_each",
+                "in": "carl_inspect._buildWhereReportFilter",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_inspect._buildWhereForInspectReportFromFilter",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "not",
+                "in": "carl_inspect._buildWhereForInspectReportFromFilter",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_inspect._buildWhereForInspectReportFromFilter",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "json_array_length",
+                "in": "carl_inspect.getCarInspectReportListByFilterCount",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "unnest",
+                "in": "carl_inspect.getReportCity",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "_getmessage",
+                "in": "carl_inspect.getAuctListByInspectReport",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "jsonb_array_elements",
+                "in": "carl_inspect._buildWhereCommonSearchReportFilter",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "jsonb_array_elements",
+                "in": "carl_inspect._buildWhereCommonSearchReportFilter",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "_getmessage",
+                "in": "carl_inspect._createNewUserInOrgan",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "_getmessage",
+                "in": "carl_inspect.createNewInspectorInOrgan",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "_getmessage",
+                "in": "carl_inspect.deleteInspectorInOrgan",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "not",
+                "in": "carl_inspect.deleteInspectorInOrgan",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "ilike",
+                "in": "carl_inspect.getOrganInspectorsList",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "ilike",
+                "in": "carl_inspect.getOrganInspectorsCount",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "ilike",
+                "in": "carl_inspect._convert_report_equip",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "between",
+                "in": "carl_inspect.getNotMyReports",
+                "file": "api_inspect.sql"
+              },
+              {
+                "dep": "ilike",
+                "in": "carl_logistic.getLogisticCarModel",
+                "file": "api_logistic.sql"
+              },
+              {
+                "dep": "ilike",
+                "in": "carl_logistic.getLogisticCarBody",
+                "file": "api_logistic.sql"
+              },
+              {
+                "dep": "exists",
+                "in": "carl_comm.setAutocodeReportByVin",
+                "file": "api_serv_autocode.sql"
+              },
+              {
+                "dep": "upsert",
+                "in": "carl_comm.setAutocodeReportByVin",
+                "file": "api_serv_autocode.sql"
+              },
+              {
+                "dep": "exists",
+                "in": "carl_comm.getInitialAv100List",
+                "file": "api_serv_autocode.sql"
+              },
+              {
+                "dep": "exists",
+                "in": "carl_comm.getActiveAv100List",
+                "file": "api_serv_autocode.sql"
+              },
+              {
+                "dep": "exists",
+                "in": "carl_comm.setAutocodeReport",
+                "file": "api_serv_autocode.sql"
+              },
+              {
+                "dep": "upsert",
+                "in": "carl_comm.setAutocodeReport",
+                "file": "api_serv_autocode.sql"
+              },
+              {
+                "dep": "EXISTS",
+                "in": "carl_comm.getUsersData",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "array_positions",
+                "in": "carl_comm.getUsersData",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "cardinality",
+                "in": "carl_comm.getUsersData",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "string_agg",
+                "in": "carl_comm.getUsersData",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "default_notifications_for_null_users",
+                "in": "carl_comm.getUsersData",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "user_notifications",
+                "in": "carl_comm.getUsersData",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_comm.getEndAuctions",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "numeric",
+                "in": "carl_comm.getEndAuctions",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_comm.getEndAuctions",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "p_date",
+                "in": "carl_comm.getEndAuctions",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "generate_series",
+                "in": "carl_comm._generateSeriesDatas",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "gs",
+                "in": "carl_comm._generateSeriesDatas",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "generate_series",
+                "in": "carl_comm._generateSeriesDatas",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "array_positions",
+                "in": "carl_comm.__tmp_getUsersData",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "cardinality",
+                "in": "carl_comm.__tmp_getUsersData",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "array_positions",
+                "in": "carl_comm.getDeletedUsersData",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "cardinality",
+                "in": "carl_comm.getDeletedUsersData",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_comm.getStartedAuctions",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "numeric",
+                "in": "carl_comm.getStartedAuctions",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "_date",
+                "in": "carl_comm.getStartedAuctions",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_comm.getStartedAuctions",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "array_positions",
+                "in": "carl_comm.getUsersAndProfiles",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "cardinality",
+                "in": "carl_comm.getUsersAndProfiles",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_comm.getUsersAndProfiles",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "gs",
+                "in": "carl_comm.getUsersAndProfiles",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_comm.getUsersAndProfiles",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_comm.getSales",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "gs",
+                "in": "carl_comm.getSales",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_comm.getSales",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_comm.getTop10BiddersToday",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_comm.getTop10BiddersToday",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "array_positions",
+                "in": "carl_comm.getSellerStats",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "cardinality",
+                "in": "carl_comm.getSellerStats",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_comm.getSalesHistory",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "gs",
+                "in": "carl_comm.getSalesHistory",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_comm.getSalesHistory",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "array_positions",
+                "in": "carl_comm.getLogEvents",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "cardinality",
+                "in": "carl_comm.getLogEvents",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "dt_event",
+                "in": "carl_comm.getLogEvents",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "over",
+                "in": "carl_comm.getLotsViews",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "row_number",
+                "in": "carl_comm.getLotsViews",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "over",
+                "in": "carl_comm.getLotsBidders",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "row_number",
+                "in": "carl_comm.getLotsBidders",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "s",
+                "in": "carl_comm.updateMappingOnliner",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "unnest",
+                "in": "carl_comm.updateMappingOnliner",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "string_agg",
+                "in": "carl_comm._getUserNotificationSettingsByComma",
+                "file": "api_service.sql"
+              },
+              {
+                "dep": "_execAuctHistTests",
+                "in": "carl_comm._execRundomAuctHistTests",
+                "file": "api_tests.sql"
+              }
+            ],
+            "errors": [],
+            "linkFixes": [],
+            "linkMissing": [],
+            "linkAmbiguous": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-04T16:44:08.032Z",
+              "level": "info",
+              "message": "[Step2] Запуск анализа и исправления зависимостей для контекста \"CARL\" (mode=incremental)"
+            },
+            {
+              "timestamp": "2026-03-04T16:44:08.112Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 8 AiItem без схемы"
+            },
+            {
+              "timestamp": "2026-03-04T16:44:08.166Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 8 L0 чанков без схемы"
+            },
+            {
+              "timestamp": "2026-03-04T16:45:01.802Z",
+              "level": "info",
+              "message": "[Step2] Анализ таблицы link..."
+            },
+            {
+              "timestamp": "2026-03-04T16:45:01.947Z",
+              "level": "info",
+              "message": "[Step2] Шаг 2 завершён."
+            },
+            {
+              "timestamp": "2026-03-04T16:45:01.947Z",
+              "level": "info",
+              "message": "[Step2] [L1 чанки] Исправлено: 350, неоднозначных: 56, отсутствующих: 151"
+            },
+            {
+              "timestamp": "2026-03-04T16:45:01.948Z",
+              "level": "info",
+              "message": "[Step2] [Таблица link] Исправлено: 0, неоднозначных: 0, отсутствующих: 0"
+            }
+          ]
+        }
       }
     ]
   }

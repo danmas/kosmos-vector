@@ -411,6 +411,40 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     return checkIgnored(relativePath, ignoreMatchers);
   }
 
+  /**
+   * Разрешает путь из fileSelection в targetRootPath + relativePath.
+   * Поддерживает 3 формата:
+   *  1. "C:\root\./relative/file.sql" (новый формат с \./ разделителем)
+   *  2. "C:\root\file.sql" (абсолютный путь без \./ разделителя)
+   *  3. "./file.sql" или "file.sql" (относительный путь)
+   * @returns {{ targetRootPath: string, relativePath: string } | null}
+   */
+  function resolveFileSelectionEntry(filePath) {
+    const parsed = parseFileSelectionPath(filePath);
+    if (parsed) {
+      if (!validRootPaths.includes(parsed.rootPath)) return null;
+      return { targetRootPath: parsed.rootPath, relativePath: parsed.relativePath };
+    }
+
+    if (path.isAbsolute(filePath)) {
+      const norm = path.normalize(filePath);
+      for (const rp of validRootPaths) {
+        const normRoot = path.normalize(rp).replace(/[\\\/]+$/, '');
+        if (norm.toLowerCase().startsWith(normRoot.toLowerCase() + path.sep) ||
+            norm.toLowerCase() === normRoot.toLowerCase()) {
+          const rest = norm.slice(normRoot.length).replace(/^[\\\/]/, '');
+          return { targetRootPath: rp, relativePath: './' + rest.replace(/\\/g, '/') };
+        }
+      }
+      return null;
+    }
+
+    return {
+      targetRootPath: validRootPaths[0],
+      relativePath: filePath.startsWith('./') ? filePath : './' + filePath
+    };
+  }
+
   let sqlFilePaths = [];
 
   // === Сканирование SQL-файлов (если включено) ===
@@ -420,29 +454,14 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
       logger.log(`Режим: точный выбор файлов (${fileSelection.length} шт.)`);
 
       for (const filePath of fileSelection) {
-        // Парсим путь из fileSelection (формат: {rootPath}\./relative или старый формат ./relative)
-        const parsed = parseFileSelectionPath(filePath);
-        let targetRootPath;
-        let relativePath;
-
-        if (parsed) {
-          // Новый формат с корнем
-          targetRootPath = parsed.rootPath;
-          relativePath = parsed.relativePath;
-          
-          // Проверяем, что rootPath существует в конфигурации
-          if (!validRootPaths.includes(targetRootPath)) {
-            logger.warn(`Root path из fileSelection не найден в конфигурации, пропускаем: ${filePath}`);
-            continue;
-          }
-        } else {
-          // Старый формат без корня - используем первый rootPath для обратной совместимости
-          targetRootPath = validRootPaths[0];
-          relativePath = filePath.startsWith('./') ? filePath : './' + filePath;
+        const resolved = resolveFileSelectionEntry(filePath);
+        if (!resolved) {
+          logger.warn(`Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: ${filePath}`);
+          continue;
         }
-
+        const { relativePath } = resolved;
         const cleanRel = relativePath.startsWith('./') ? relativePath.slice(2) : relativePath;
-        const absPath = path.join(targetRootPath, cleanRel);
+        const absPath = path.join(resolved.targetRootPath, cleanRel);
 
         if (!fs.existsSync(absPath)) {
           logger.warn(`Файл из fileSelection не найден: ${filePath}`);
@@ -524,21 +543,11 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     // === Режим 1: Точный выбор файлов ===
     if (fileSelection.length > 0) {
       for (const filePath of fileSelection) {
-        const parsed = parseFileSelectionPath(filePath);
-        let targetRootPath;
-        let relativePath;
-
-        if (parsed) {
-          targetRootPath = parsed.rootPath;
-          relativePath = parsed.relativePath;
-          if (!validRootPaths.includes(targetRootPath)) continue;
-        } else {
-          targetRootPath = validRootPaths[0];
-          relativePath = filePath.startsWith('./') ? filePath : './' + filePath;
-        }
-
+        const resolved = resolveFileSelectionEntry(filePath);
+        if (!resolved) continue;
+        const { relativePath } = resolved;
         const cleanRel = relativePath.startsWith('./') ? relativePath.slice(2) : relativePath;
-        const absPath = path.join(targetRootPath, cleanRel);
+        const absPath = path.join(resolved.targetRootPath, cleanRel);
 
         if (!fs.existsSync(absPath)) continue;
         if (!absPath.toLowerCase().endsWith('.js')) continue;
@@ -601,21 +610,11 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     // === Режим 1: Точный выбор файлов ===
     if (fileSelection.length > 0) {
       for (const filePath of fileSelection) {
-        const parsed = parseFileSelectionPath(filePath);
-        let targetRootPath;
-        let relativePath;
-
-        if (parsed) {
-          targetRootPath = parsed.rootPath;
-          relativePath = parsed.relativePath;
-          if (!validRootPaths.includes(targetRootPath)) continue;
-        } else {
-          targetRootPath = validRootPaths[0];
-          relativePath = filePath.startsWith('./') ? filePath : './' + filePath;
-        }
-
+        const resolved = resolveFileSelectionEntry(filePath);
+        if (!resolved) continue;
+        const { relativePath } = resolved;
         const cleanRel = relativePath.startsWith('./') ? relativePath.slice(2) : relativePath;
-        const absPath = path.join(targetRootPath, cleanRel);
+        const absPath = path.join(resolved.targetRootPath, cleanRel);
 
         if (!fs.existsSync(absPath)) continue;
         const lower = absPath.toLowerCase();
@@ -683,21 +682,11 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     // === Режим 1: Точный выбор файлов ===
     if (fileSelection.length > 0) {
       for (const filePath of fileSelection) {
-        const parsed = parseFileSelectionPath(filePath);
-        let targetRootPath;
-        let relativePath;
-
-        if (parsed) {
-          targetRootPath = parsed.rootPath;
-          relativePath = parsed.relativePath;
-          if (!validRootPaths.includes(targetRootPath)) continue;
-        } else {
-          targetRootPath = validRootPaths[0];
-          relativePath = filePath.startsWith('./') ? filePath : './' + filePath;
-        }
-
+        const resolved = resolveFileSelectionEntry(filePath);
+        if (!resolved) continue;
+        const { relativePath } = resolved;
         const cleanRel = relativePath.startsWith('./') ? relativePath.slice(2) : relativePath;
-        const absPath = path.join(targetRootPath, cleanRel);
+        const absPath = path.join(resolved.targetRootPath, cleanRel);
 
         if (!fs.existsSync(absPath)) continue;
         if (!absPath.toLowerCase().endsWith('.tsx')) continue;
@@ -760,21 +749,11 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     // === Режим 1: Точный выбор файлов ===
     if (fileSelection.length > 0) {
       for (const filePath of fileSelection) {
-        const parsed = parseFileSelectionPath(filePath);
-        let targetRootPath;
-        let relativePath;
-
-        if (parsed) {
-          targetRootPath = parsed.rootPath;
-          relativePath = parsed.relativePath;
-          if (!validRootPaths.includes(targetRootPath)) continue;
-        } else {
-          targetRootPath = validRootPaths[0];
-          relativePath = filePath.startsWith('./') ? filePath : './' + filePath;
-        }
-
+        const resolved = resolveFileSelectionEntry(filePath);
+        if (!resolved) continue;
+        const { relativePath } = resolved;
         const cleanRel = relativePath.startsWith('./') ? relativePath.slice(2) : relativePath;
-        const absPath = path.join(targetRootPath, cleanRel);
+        const absPath = path.join(resolved.targetRootPath, cleanRel);
 
         if (!fs.existsSync(absPath)) continue;
         if (!absPath.toLowerCase().endsWith('.php')) continue;
@@ -837,21 +816,11 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     // === Режим 1: Точный выбор файлов ===
     if (fileSelection.length > 0) {
       for (const filePath of fileSelection) {
-        const parsed = parseFileSelectionPath(filePath);
-        let targetRootPath;
-        let relativePath;
-
-        if (parsed) {
-          targetRootPath = parsed.rootPath;
-          relativePath = parsed.relativePath;
-          if (!validRootPaths.includes(targetRootPath)) continue;
-        } else {
-          targetRootPath = validRootPaths[0];
-          relativePath = filePath.startsWith('./') ? filePath : './' + filePath;
-        }
-
+        const resolved = resolveFileSelectionEntry(filePath);
+        if (!resolved) continue;
+        const { relativePath } = resolved;
         const cleanRel = relativePath.startsWith('./') ? relativePath.slice(2) : relativePath;
-        const absPath = path.join(targetRootPath, cleanRel);
+        const absPath = path.join(resolved.targetRootPath, cleanRel);
 
         if (!fs.existsSync(absPath)) continue;
         if (!absPath.toLowerCase().endsWith('.md')) continue;
@@ -914,25 +883,14 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     // DDL файлы указываются явно в конфигурации
     if (ddlLoadingConfig.files.length > 0) {
       for (const filePath of ddlLoadingConfig.files) {
-        const parsed = parseFileSelectionPath(filePath);
-        let targetRootPath;
-        let relativePath;
-
-        if (parsed) {
-          targetRootPath = parsed.rootPath;
-          relativePath = parsed.relativePath;
-          if (!validRootPaths.includes(targetRootPath)) {
-            logger.warn(`Root path из DDL конфигурации не найден, пропускаем: ${filePath}`);
-            continue;
-          }
-        } else {
-          // Старый формат - используем первый rootPath
-          targetRootPath = validRootPaths[0];
-          relativePath = filePath.startsWith('./') ? filePath : './' + filePath;
+        const resolved = resolveFileSelectionEntry(filePath);
+        if (!resolved) {
+          logger.warn(`DDL файл не принадлежит ни одному rootPath, пропускаем: ${filePath}`);
+          continue;
         }
-
+        const { relativePath } = resolved;
         const cleanRel = relativePath.startsWith('./') ? relativePath.slice(2) : relativePath;
-        const absPath = path.join(targetRootPath, cleanRel);
+        const absPath = path.join(resolved.targetRootPath, cleanRel);
 
         if (!fs.existsSync(absPath)) {
           logger.warn(`DDL файл не найден: ${filePath}`);
