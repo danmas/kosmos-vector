@@ -226,6 +226,64 @@ async function rebuildSqlLinksFromDb(fullName, contextCode, dbService) {
   return report;
 }
 
+/**
+ * Пакетная пересборка L1-связей для всех SQL-функций контекста.
+ * Для каждой функции вызывает rebuildSqlLinksFromDb, собирает суммарный отчёт.
+ *
+ * @param {string} contextCode
+ * @param {object} dbService
+ * @returns {Promise<object>}
+ */
+async function rebuildAllSqlLinks(contextCode, dbService) {
+  const allItems = await dbService.pgClient.query(
+    `SELECT ai.full_name, ai.type, f.filename
+     FROM public.ai_item ai
+     JOIN public.files f ON ai.file_id = f.id
+     WHERE ai.context_code = $1
+       AND ai.type = 'function'
+       AND lower(f.filename) LIKE '%.sql'
+     ORDER BY ai.full_name`,
+    [contextCode]
+  );
+
+  const summary = {
+    totalFunctions: allItems.rows.length,
+    processed: 0,
+    skipped: 0,
+    totalLinksDeleted: 0,
+    totalLinksCreated: 0,
+    errors: [],
+    reports: []
+  };
+
+  for (const row of allItems.rows) {
+    try {
+      const report = await rebuildSqlLinksFromDb(row.full_name, contextCode, dbService);
+      summary.processed++;
+      summary.totalLinksDeleted += report.linksDeleted;
+      summary.totalLinksCreated += report.linksCreated;
+      summary.reports.push({
+        fullName: report.fullName,
+        linksDeleted: report.linksDeleted,
+        linksCreated: report.linksCreated,
+        hasErrors: report.errors.length > 0
+      });
+    } catch (err) {
+      summary.skipped++;
+      summary.errors.push(`${row.full_name}: ${err.message}`);
+      summary.reports.push({
+        fullName: row.full_name,
+        linksDeleted: 0,
+        linksCreated: 0,
+        hasErrors: true
+      });
+    }
+  }
+
+  return summary;
+}
+
 module.exports = {
-  rebuildSqlLinksFromDb
+  rebuildSqlLinksFromDb,
+  rebuildAllSqlLinks
 };

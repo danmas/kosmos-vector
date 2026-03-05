@@ -1164,6 +1164,31 @@ ${JSON.stringify({
     }
   });
 
+  // === POST /api/rebuild-all-sql-links — Пакетная пересборка L1-связей для всех SQL-функций ===
+  router.post('/rebuild-all-sql-links', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+
+      console.log(`[API] Rebuild all SQL links for context: ${contextCode}`);
+
+      const { rebuildAllSqlLinks } = require('./loaders/rebuildSqlLinks');
+      const report = await rebuildAllSqlLinks(contextCode, dbService);
+
+      console.log(`[API] Rebuild all SQL links completed: ${report.processed}/${report.totalFunctions}, links created: ${report.totalLinksCreated}`);
+
+      res.json({
+        success: true,
+        report
+      });
+    } catch (error) {
+      console.error('[API] Error rebuild-all-sql-links:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to rebuild all SQL links: ' + error.message
+      });
+    }
+  });
+
   // === POST /api/extract-all-columns — Пакетное извлечение колонок из всех SQL-функций ===
   router.post('/extract-all-columns', async (req, res) => {
     try {

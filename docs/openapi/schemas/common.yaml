@@ -417,6 +417,53 @@ RebuildSqlLinksResponse:
         - true
     report:
       $ref: '#/components/schemas/RebuildSqlLinksReport'
+RebuildAllSqlLinksReport:
+  type: object
+  properties:
+    totalFunctions:
+      type: integer
+      description: Всего SQL-функций в контексте
+    processed:
+      type: integer
+      description: Успешно обработано
+    skipped:
+      type: integer
+      description: Пропущено (ошибки)
+    totalLinksDeleted:
+      type: integer
+      description: Суммарно удалено старых связей
+    totalLinksCreated:
+      type: integer
+      description: Суммарно создано связей
+    reports:
+      type: array
+      items:
+        type: object
+        properties:
+          fullName:
+            type: string
+          linksDeleted:
+            type: integer
+          linksCreated:
+            type: integer
+          hasErrors:
+            type: boolean
+    errors:
+      type: array
+      items:
+        type: string
+RebuildAllSqlLinksResponse:
+  type: object
+  required:
+    - success
+    - report
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    report:
+      $ref: '#/components/schemas/RebuildAllSqlLinksReport'
 AiComment:
   type: object
   required:

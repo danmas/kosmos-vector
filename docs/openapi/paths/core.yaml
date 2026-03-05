@@ -843,6 +843,40 @@
           application/json:
             schema:
               $ref: '#/components/schemas/ErrorResponse'
+/api/rebuild-all-sql-links:
+  post:
+    tags:
+      - Core
+    summary: Пакетная пересборка L1-связей для всех SQL-функций
+    description: |
+      Для каждой SQL-функции (ai_item type=function из .sql файлов) в контексте:
+      1. Запрашивает тело функции (prosrc) из клиентской БД (POSTGRES_URL)
+      2. Парсит вызовы функций, FROM/JOIN, UPDATE, INSERT INTO
+      3. Резолвит неквалифицированные имена по ai_item
+      4. Пересоздаёт связи в таблице link и L1-чанки в chunk_vector
+
+      Долгая операция — количество запросов к клиентской БД равно количеству SQL-функций.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных
+        schema:
+          type: string
+          example: CARL
+    responses:
+      '200':
+        description: Пакетная пересборка завершена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RebuildAllSqlLinksResponse'
+      '500':
+        description: Ошибка выполнения
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
 /api/extract-all-columns:
   post:
     tags:
