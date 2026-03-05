@@ -1,4 +1,4 @@
-# Paths: items, project/tree, project/selection, stats, graph; item by id (comment, tags, logic-graph, extract-columns, analyze-logic); extract-all-columns.
+# Paths: items, project/tree, project/selection, stats, graph; item by id (comment, tags, logic-graph, extract-columns, rebuild-sql-links, analyze-logic); extract-all-columns.
 ---
 /api/vector-db:
   delete:
@@ -778,6 +778,67 @@
               $ref: '#/components/schemas/ErrorResponse'
       '500':
         description: Ошибка извлечения колонок
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+/api/items/{id}/rebuild-sql-links:
+  post:
+    tags:
+      - Core
+    summary: Пересборка L1-связей из клиентской БД
+    description: |
+      Восстанавливает L1-связи (link и L1-чанк в chunk_vector) для указанного AiItem,
+      получая данные напрямую из клиентской PostgreSQL (POSTGRES_URL).
+
+      Для **функции** (type=function):
+      - Запрашивает тело функции (prosrc) из pg_proc
+      - Парсит вызовы функций, FROM/JOIN, UPDATE, INSERT INTO
+      - Записывает связи в таблицу link (calls, reads_from, updates, inserts_into)
+      - Обновляет или создаёт L1-чанк в chunk_vector
+
+      Для **таблицы** (type=table):
+      - Запрашивает FK из information_schema
+      - Формирует referenced_tables и записывает связи (reads_from)
+      - Обновляет или создаёт L1-чанк
+
+      Обязательно: на сервере должен быть настроен POSTGRES_URL и объект с данным full_name должен существовать в клиентской БД.
+    parameters:
+      - name: context-code
+        in: query
+        required: true
+        description: Контекстный код для изоляции данных
+        schema:
+          type: string
+          example: CARL
+      - name: id
+        in: path
+        required: true
+        description: ID AiItem (full_name), например schema.function_name или schema.table_name
+        schema:
+          type: string
+        example: carl_inspect._getCityFromReport
+    responses:
+      '200':
+        description: L1-связи успешно пересобраны
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RebuildSqlLinksResponse'
+      '400':
+        description: Неподдерживаемый тип AiItem (только function или table)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: AiItem не найден в векторной БД или объект не найден в клиентской БД
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Ошибка подключения к клиентской БД или обработки
         content:
           application/json:
             schema:

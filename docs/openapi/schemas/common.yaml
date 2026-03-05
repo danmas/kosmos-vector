@@ -374,6 +374,49 @@ BatchColumnExtractionResponse:
         - true
     report:
       $ref: '#/components/schemas/BatchColumnExtractionReport'
+RebuildSqlLinksReport:
+  type: object
+  description: Отчёт о пересборке L1-связей из клиентской БД
+  properties:
+    fullName:
+      type: string
+      description: full_name обработанного AiItem
+      example: carl_inspect._getCityFromReport
+    type:
+      type: string
+      description: Тип AiItem (function или table)
+      example: function
+    linksDeleted:
+      type: integer
+      description: Количество удалённых старых связей в link
+    linksCreated:
+      type: integer
+      description: Количество созданных связей в link
+    l1Result:
+      type: object
+      description: |
+        Распарсенные L1-зависимости. Для функции: called_functions, select_from, update_tables, insert_tables.
+        Для таблицы: foreign_keys, referenced_tables.
+    chunkUpdated:
+      type: boolean
+      description: Был ли обновлён или создан L1-чанк в chunk_vector
+    errors:
+      type: array
+      items:
+        type: string
+      description: Список ошибок при вставке отдельных связей (если были)
+RebuildSqlLinksResponse:
+  type: object
+  required:
+    - success
+    - report
+  properties:
+    success:
+      type: boolean
+      enum:
+        - true
+    report:
+      $ref: '#/components/schemas/RebuildSqlLinksReport'
 AiComment:
   type: object
   required:

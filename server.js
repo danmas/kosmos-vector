@@ -324,8 +324,10 @@ const pgConfig = process.env.DATABASE_URL
 const pgClient = new Pool({
   ...pgConfig,
   max: 5,
-  idleTimeoutMillis: 10000,
-  connectionTimeoutMillis: 10000
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 10000
 });
 
 pgClient.on('error', (err) => {

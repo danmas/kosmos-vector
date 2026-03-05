@@ -278,6 +278,10 @@ components:
       $ref: "openapi/schemas/common.yaml#/BatchColumnExtractionReport"
     BatchColumnExtractionResponse:
       $ref: "openapi/schemas/common.yaml#/BatchColumnExtractionResponse"
+    RebuildSqlLinksReport:
+      $ref: "openapi/schemas/common.yaml#/RebuildSqlLinksReport"
+    RebuildSqlLinksResponse:
+      $ref: "openapi/schemas/common.yaml#/RebuildSqlLinksResponse"
     AiComment:
       $ref: "openapi/schemas/common.yaml#/AiComment"
     AiCommentResponse:
@@ -350,6 +354,8 @@ paths:
     $ref: "openapi/paths/core.yaml#/~1api~1items~1{id}~1logic-graph"
   /api/items/{id}/extract-columns:
     $ref: "openapi/paths/core.yaml#/~1api~1items~1{id}~1extract-columns"
+  /api/items/{id}/rebuild-sql-links:
+    $ref: "openapi/paths/core.yaml#/~1api~1items~1{id}~1rebuild-sql-links"
   /api/extract-all-columns:
     $ref: "openapi/paths/core.yaml#/~1api~1extract-all-columns"
   /api/items/{id}/analyze-logic:
