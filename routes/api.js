@@ -2707,17 +2707,17 @@ ${JSON.stringify({
       }
 
       // Лимиты
-      if (itemIds.length > 100) {
+      if (itemIds.length > 500) {
         return res.status(400).json({ 
           success: false, 
-          error: 'itemIds array exceeds maximum allowed size (100)' 
+          error: 'itemIds array exceeds maximum allowed size (500)' 
         });
       }
 
-      if (tagCodes.length > 50) {
+      if (tagCodes.length > 200) {
         return res.status(400).json({ 
           success: false, 
-          error: 'tagCodes array exceeds maximum allowed size (50)' 
+          error: 'tagCodes array exceeds maximum allowed size (200)' 
         });
       }
 
@@ -2759,17 +2759,17 @@ ${JSON.stringify({
       }
 
       // Лимиты
-      if (itemIds.length > 100) {
+      if (itemIds.length > 500) {
         return res.status(400).json({ 
           success: false, 
-          error: 'itemIds array exceeds maximum allowed size (100)' 
+          error: 'itemIds array exceeds maximum allowed size (500)' 
         });
       }
 
-      if (tagCodes.length > 50) {
+      if (tagCodes.length > 200) {
         return res.status(400).json({ 
           success: false, 
-          error: 'tagCodes array exceeds maximum allowed size (50)' 
+          error: 'tagCodes array exceeds maximum allowed size (200)' 
         });
       }
 
