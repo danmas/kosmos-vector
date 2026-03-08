@@ -321,15 +321,20 @@ const pgConfig = process.env.DATABASE_URL
       password: process.env.PGPASSWORD
     };
 
+const PG_CONNECTION_TIMEOUT_MS = 10000;
+const PG_IDLE_TIMEOUT_MS = 30000;
+
 const pgClient = new Pool({
   ...pgConfig,
   max: 5,
-  idleTimeoutMillis: 10000,
-  connectionTimeoutMillis: 10000
+  idleTimeoutMillis: PG_IDLE_TIMEOUT_MS,
+  connectionTimeoutMillis: PG_CONNECTION_TIMEOUT_MS,
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 10000
 });
 
 pgClient.on('error', (err) => {
-  console.error('[PostgreSQL Pool] Idle client error:', err.message);
+  console.error('[PostgreSQL Pool] Idle client error (векторная БД DATABASE_URL):', err.message);
 });
 
 // db-core Database переиспользует тот же Pool (один пул на всё приложение)
@@ -525,7 +530,9 @@ server.on('error', (err) => {
     });
   })
   .catch((err) => {
-    console.error('PostgreSQL: подключение не удалось:', err.message);
+    const dbLabel = process.env.DATABASE_URL ? 'DATABASE_URL (векторная БД)' : 'PGHOST/PGPORT (векторная БД)';
+    console.error(`[SERVER] PostgreSQL: подключение не удалось: ${err.message}`);
+    console.error(`[SERVER] Сервер: ${dbLabel}. Таймаут подключения: ${PG_CONNECTION_TIMEOUT_MS} мс, idle: ${PG_IDLE_TIMEOUT_MS} мс`);
     process.exit(1);
   });
 

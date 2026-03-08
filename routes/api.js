@@ -438,10 +438,22 @@ module.exports = (dbService, logBuffer) => {
 
   // === Статистика дашборда ===
   router.get('/stats', async (req, res) => {
+    const isConnectionError = (err) =>
+      (err && err.message && /connection terminated|ECONNRESET|connection refused|connect ENOENT/i.test(err.message)) ||
+      (err && (err.code === 'ECONNRESET' || err.code === '57P01'));
     try {
       const stats = await dbService.getDashboardStats(req.contextCode);
       res.json(stats);
     } catch (error) {
+      if (isConnectionError(error)) {
+        try {
+          const stats = await dbService.getDashboardStats(req.contextCode);
+          return res.json(stats);
+        } catch (retryErr) {
+          console.error('[API/STATS] Ошибка (повтор неудачен):', retryErr);
+          return res.status(500).json({ success: false, error: retryErr.message });
+        }
+      }
       console.error('[API/STATS] Ошибка:', error);
       res.status(500).json({ success: false, error: error.message });
     }
@@ -1120,6 +1132,59 @@ ${JSON.stringify({
       res.status(500).json({
         success: false,
         error: 'Failed to extract columns: ' + error.message
+      });
+    }
+  });
+
+  // === POST /api/items/:id/rebuild-sql-links — Пересборка L1-связей из клиентской БД ===
+  router.post('/items/:id/rebuild-sql-links', async (req, res) => {
+    try {
+      const decodedId = decodeURIComponent(req.params.id);
+      const contextCode = req.contextCode;
+
+      console.log(`[API] Rebuild SQL links for: ${decodedId}`);
+
+      const { rebuildSqlLinksFromDb } = require('./loaders/rebuildSqlLinks');
+      const report = await rebuildSqlLinksFromDb(decodedId, contextCode, dbService);
+
+      console.log(`[API] Rebuild SQL links completed for: ${decodedId}, links: ${report.linksCreated}`);
+
+      res.json({
+        success: true,
+        report
+      });
+    } catch (error) {
+      console.error('[API] Error rebuild-sql-links:', error);
+      const status = error.message && error.message.includes('not found') ? 404
+        : error.message && error.message.includes('Unsupported') ? 400 : 500;
+      res.status(status).json({
+        success: false,
+        error: error.message || 'Failed to rebuild SQL links'
+      });
+    }
+  });
+
+  // === POST /api/rebuild-all-sql-links — Пакетная пересборка L1-связей для всех SQL-функций ===
+  router.post('/rebuild-all-sql-links', async (req, res) => {
+    try {
+      const contextCode = req.contextCode;
+
+      console.log(`[API] Rebuild all SQL links for context: ${contextCode}`);
+
+      const { rebuildAllSqlLinks } = require('./loaders/rebuildSqlLinks');
+      const report = await rebuildAllSqlLinks(contextCode, dbService);
+
+      console.log(`[API] Rebuild all SQL links completed: ${report.processed}/${report.totalFunctions}, links created: ${report.totalLinksCreated}`);
+
+      res.json({
+        success: true,
+        report
+      });
+    } catch (error) {
+      console.error('[API] Error rebuild-all-sql-links:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to rebuild all SQL links: ' + error.message
       });
     }
   });
