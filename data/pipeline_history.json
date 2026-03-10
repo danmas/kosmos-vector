@@ -56821,6 +56821,3327 @@
             }
           ]
         }
+      },
+      {
+        "timestamp": "2026-03-08T09:38:28.089Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T09:38:28.173Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 1,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T09:38:34.834Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 1,
+        "totalItems": 1,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 1,
+            "totalTables": 0,
+            "totalFunctions": 4,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 0,
+            "skippedFiles": 0,
+            "skippedEntities": 0,
+            "deletedEntities": 3,
+            "updatedEntities": 4,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_address_universal.sql",
+                "fileId": "1245991a-f6a1-4ce7-9a6d-6c07cf7d9288",
+                "isNew": false,
+                "functionsFound": 4,
+                "functionsProcessed": 4,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 0,
+                  "updated": 4,
+                  "unchanged": 0,
+                  "deleted": 3
+                }
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T09:38:28.161Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.162Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.162Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api_*.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.162Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.162Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 13 файлов"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.166Z",
+              "level": "info",
+              "message": "[Step1] Режим: точный выбор файлов (13 шт.)"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.166Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.167Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.167Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.168Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.168Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.169Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect_bil.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.169Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.169Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_logistic.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.169Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_procedures.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.170Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_serv_autocode.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.170Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_service.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.171Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_tests.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.171Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.172Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.172Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.172Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.172Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.172Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.172Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.173Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.185Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.186Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 1 (1 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:28.186Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T09:38:34.834Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-08T09:38:34.834Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 1 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-08T09:59:57.321Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T09:59:57.374Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 1,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T09:59:57.437Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 1,
+        "totalItems": 1,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 1,
+            "totalTables": 0,
+            "totalFunctions": 0,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 0,
+            "skippedFiles": 1,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_address_universal.sql",
+                "fileId": "1245991a-f6a1-4ce7-9a6d-6c07cf7d9288",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T09:59:57.363Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.363Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.363Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api_*.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.363Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.363Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 13 файлов"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.368Z",
+              "level": "info",
+              "message": "[Step1] Режим: точный выбор файлов (13 шт.)"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.369Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.369Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.370Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.370Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.371Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.371Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect_bil.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.371Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.371Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_logistic.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.371Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_procedures.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.372Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_serv_autocode.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.372Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_service.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.372Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_tests.sql"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.372Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.372Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.373Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.373Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.373Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.373Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.373Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.374Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.384Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.384Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 1 (1 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.384Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.437Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-08T09:59:57.437Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 1 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-08T10:05:39.947Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:05:40.005Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 1,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:05:40.072Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 1,
+        "totalItems": 1,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 1,
+            "totalTables": 0,
+            "totalFunctions": 0,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 0,
+            "skippedFiles": 1,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_address_universal.sql",
+                "fileId": "1245991a-f6a1-4ce7-9a6d-6c07cf7d9288",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T10:05:39.991Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.992Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.992Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api_*.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.992Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.993Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 13 файлов"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.998Z",
+              "level": "info",
+              "message": "[Step1] Режим: точный выбор файлов (13 шт.)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.999Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.999Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.000Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.000Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.000Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.001Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect_bil.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.001Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.001Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_logistic.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.001Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_procedures.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.002Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_serv_autocode.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.002Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_service.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.002Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_tests.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.002Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.003Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.003Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.003Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.003Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.004Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.004Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.004Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.017Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.017Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 1 (1 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.017Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.072Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.072Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 1 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-08T10:06:18.387Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 1,
+            "totalTables": 0,
+            "totalFunctions": 0,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 0,
+            "skippedFiles": 1,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_address_universal.sql",
+                "fileId": "1245991a-f6a1-4ce7-9a6d-6c07cf7d9288",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T10:05:39.991Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.992Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.992Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api_*.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.992Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.993Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 13 файлов"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.998Z",
+              "level": "info",
+              "message": "[Step1] Режим: точный выбор файлов (13 шт.)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.999Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.999Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.000Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.000Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.000Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.001Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect_bil.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.001Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.001Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_logistic.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.001Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_procedures.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.002Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_serv_autocode.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.002Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_service.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.002Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_tests.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.002Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.003Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.003Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.003Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.003Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.004Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.004Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.004Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.017Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.017Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 1 (1 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.017Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.072Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.072Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 1 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-08T10:06:18.408Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 1,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 1,
+            "totalTables": 0,
+            "totalFunctions": 0,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 0,
+            "skippedFiles": 1,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_address_universal.sql",
+                "fileId": "1245991a-f6a1-4ce7-9a6d-6c07cf7d9288",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T10:05:39.991Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.992Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.992Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api_*.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.992Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.993Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 13 файлов"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.998Z",
+              "level": "info",
+              "message": "[Step1] Режим: точный выбор файлов (13 шт.)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.999Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:39.999Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.000Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.000Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.000Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.001Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect_bil.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.001Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.001Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_logistic.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.001Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_procedures.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.002Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_serv_autocode.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.002Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_service.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.002Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_tests.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.002Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.003Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.003Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.003Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.003Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.004Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.004Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.004Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.017Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.017Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 1 (1 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.017Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.072Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-08T10:05:40.072Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 1 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-08T10:06:18.669Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 1,
+        "totalItems": 1,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 1,
+            "totalTables": 0,
+            "totalFunctions": 0,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 0,
+            "skippedFiles": 1,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_address_universal.sql",
+                "fileId": "1245991a-f6a1-4ce7-9a6d-6c07cf7d9288",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T10:06:18.401Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.401Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.401Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api_*.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.401Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.402Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 13 файлов"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.403Z",
+              "level": "info",
+              "message": "[Step1] Режим: точный выбор файлов (13 шт.)"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.404Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.404Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.404Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.404Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.404Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.405Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect_bil.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.405Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.405Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_logistic.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.405Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_procedures.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.405Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_serv_autocode.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.406Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_service.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.406Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_tests.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.406Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.406Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.406Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.407Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.407Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.407Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.407Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.408Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.421Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.421Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 1 (1 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.421Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.669Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-08T10:06:18.669Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 1 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-08T10:09:37.442Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:09:37.503Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 1,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:09:37.569Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 1,
+        "totalItems": 1,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 1,
+            "totalTables": 0,
+            "totalFunctions": 0,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 0,
+            "skippedFiles": 1,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_address_universal.sql",
+                "fileId": "1245991a-f6a1-4ce7-9a6d-6c07cf7d9288",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T10:09:37.485Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.486Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.486Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api_*.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.487Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.487Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 13 файлов"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.495Z",
+              "level": "info",
+              "message": "[Step1] Режим: точный выбор файлов (13 шт.)"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.496Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.496Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.497Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.497Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.497Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.498Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect_bil.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.498Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.498Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_logistic.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.498Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_procedures.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.499Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_serv_autocode.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.499Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_service.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.499Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_tests.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.501Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.501Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.501Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.502Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.502Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.502Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.502Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.503Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.515Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.515Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 1 (1 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.516Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.568Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-08T10:09:37.569Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 1 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-08T10:12:18.850Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:12:18.918Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 1,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:12:18.983Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 1,
+        "totalItems": 1,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 1,
+            "totalTables": 0,
+            "totalFunctions": 0,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 0,
+            "skippedFiles": 1,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_address_universal.sql",
+                "fileId": "1245991a-f6a1-4ce7-9a6d-6c07cf7d9288",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T10:12:18.893Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.894Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.894Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api_*.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.894Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.895Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 13 файлов"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.901Z",
+              "level": "info",
+              "message": "[Step1] Режим: точный выбор файлов (13 шт.)"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.901Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG] resolveFileSelectionEntry: filePath=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql\" -> norm=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev\\api_login\\api_login_test.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.902Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   checking rootPath: \"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.902Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.902Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG] resolveFileSelectionEntry: filePath=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql\" -> norm=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr\\api_lot_sr.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.903Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   checking rootPath: \"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.903Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.903Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG] resolveFileSelectionEntry: filePath=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql\" -> norm=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr\\api_role.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.904Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   checking rootPath: \"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.904Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.905Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG] resolveFileSelectionEntry: filePath=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql\" -> norm=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr\\api_truck_sr.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.905Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   checking rootPath: \"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.905Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.906Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG] resolveFileSelectionEntry: filePath=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql\" -> norm=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr\\api_workflow.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.906Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   checking rootPath: \"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.906Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не найден: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.906Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG] resolveFileSelectionEntry: filePath=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect_bil.sql\" -> norm=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api_inspect_bil.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.907Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   checking rootPath: \"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.907Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   NO MATCH for any rootPath"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.907Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect_bil.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.907Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG] resolveFileSelectionEntry: filePath=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect.sql\" -> norm=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api_inspect.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.908Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   checking rootPath: \"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.909Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   NO MATCH for any rootPath"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.909Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_inspect.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.909Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG] resolveFileSelectionEntry: filePath=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_logistic.sql\" -> norm=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api_logistic.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.910Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   checking rootPath: \"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.910Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   NO MATCH for any rootPath"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.910Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_logistic.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.911Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG] resolveFileSelectionEntry: filePath=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_procedures.sql\" -> norm=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api_procedures.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.911Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   checking rootPath: \"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.911Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   NO MATCH for any rootPath"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.912Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_procedures.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.912Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG] resolveFileSelectionEntry: filePath=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_serv_autocode.sql\" -> norm=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api_serv_autocode.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.912Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   checking rootPath: \"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.912Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   NO MATCH for any rootPath"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.912Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_serv_autocode.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.913Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG] resolveFileSelectionEntry: filePath=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_service.sql\" -> norm=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api_service.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.913Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   checking rootPath: \"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.913Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   NO MATCH for any rootPath"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.913Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_service.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.913Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG] resolveFileSelectionEntry: filePath=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_tests.sql\" -> norm=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api_tests.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.913Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   checking rootPath: \"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.914Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   NO MATCH for any rootPath"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.914Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\../api_tests.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.914Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG] resolveFileSelectionEntry: filePath=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\api_address_universal.sql\" -> norm=\"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\api_address_universal.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.914Z",
+              "level": "info",
+              "message": "[Step1] [DEBUG]   checking rootPath: \"C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\""
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.915Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.916Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.916Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.916Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.917Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.917Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.917Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.918Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.931Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.931Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 1 (1 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.932Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.983Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-08T10:12:18.983Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 1 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-08T10:14:05.307Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:14:05.360Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 8,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:16:21.119Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:16:21.172Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 8,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:16:21.768Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 8,
+        "totalItems": 8,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 7,
+            "totalTables": 0,
+            "totalFunctions": 0,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 1,
+            "skippedFiles": 7,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_inspect_bil.sql",
+                "fileId": "3840bd1c-a37b-4887-a802-b6248ffeb5ea",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_inspect.sql",
+                "fileId": "7032df4f-5477-4a54-be0c-8b0eb6b39cb0",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_logistic.sql",
+                "fileId": "e906bfb9-21b1-4344-a153-81ec7b6ca5b3",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_hash",
+                "entityReport": null
+              },
+              {
+                "filename": "api_procedures.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_serv_autocode.sql",
+                "fileId": "8c063dc3-da9c-4d39-aac9-c32e423626b7",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_hash",
+                "entityReport": null
+              },
+              {
+                "filename": "api_service.sql",
+                "fileId": "d933ecda-9cd7-432d-b405-dcda714f3a75",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_tests.sql",
+                "fileId": "e8a3b83c-41fd-41dd-bfa8-e7be98066ff4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_hash",
+                "entityReport": null
+              },
+              {
+                "filename": "api_address_universal.sql",
+                "fileId": "1245991a-f6a1-4ce7-9a6d-6c07cf7d9288",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T10:16:21.158Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.159Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.159Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api_*.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.159Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.159Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 13 файлов"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.165Z",
+              "level": "info",
+              "message": "[Step1] Режим: точный выбор файлов (13 шт.)"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.165Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.166Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.166Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.167Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.167Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.167Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.167Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.168Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.168Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.168Z",
+              "level": "warn",
+              "message": "[Step1] Файл из fileSelection не принадлежит ни одному rootPath, пропускаем: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.170Z",
+              "level": "info",
+              "message": "[Step1] Найдено 8 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.170Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.170Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.170Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.171Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.171Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.171Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.172Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.187Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.188Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 8 (8 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.188Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.767Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-08T10:16:21.767Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 7 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-08T10:18:15.401Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:18:15.452Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 13,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:18:16.024Z",
+        "status": "running",
+        "progress": 77,
+        "itemsProcessed": 10,
+        "totalItems": 13,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:18:16.186Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 13,
+        "totalItems": 13,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 10,
+            "totalTables": 0,
+            "totalFunctions": 0,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 3,
+            "skippedFiles": 10,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_login_test.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_lot_sr.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_role.sql",
+                "fileId": "863953fe-4933-4fc1-b37b-979fe0c76490",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_hash",
+                "entityReport": null
+              },
+              {
+                "filename": "api_truck_sr.sql",
+                "fileId": "aa2b9386-cdb9-4d41-8846-9843235cedee",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_workflow.sql",
+                "fileId": "f0225f21-8f1f-45a8-9289-7116f4f8b31f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_inspect_bil.sql",
+                "fileId": "3840bd1c-a37b-4887-a802-b6248ffeb5ea",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_inspect.sql",
+                "fileId": "7032df4f-5477-4a54-be0c-8b0eb6b39cb0",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_logistic.sql",
+                "fileId": "e906bfb9-21b1-4344-a153-81ec7b6ca5b3",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_procedures.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_serv_autocode.sql",
+                "fileId": "8c063dc3-da9c-4d39-aac9-c32e423626b7",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_service.sql",
+                "fileId": "d933ecda-9cd7-432d-b405-dcda714f3a75",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_tests.sql",
+                "fileId": "e8a3b83c-41fd-41dd-bfa8-e7be98066ff4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_address_universal.sql",
+                "fileId": "1245991a-f6a1-4ce7-9a6d-6c07cf7d9288",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T10:18:15.440Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.440Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.440Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api_*.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.440Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.441Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 13 файлов"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.446Z",
+              "level": "info",
+              "message": "[Step1] Режим: точный выбор файлов (13 шт.)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.447Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.448Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.448Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.449Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.449Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.450Z",
+              "level": "info",
+              "message": "[Step1] Найдено 13 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.450Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.450Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.451Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.451Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.451Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.451Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.452Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.464Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.465Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 13 (13 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.465Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:18:16.185Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:16.186Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 10 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-08T10:27:34.890Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 10,
+            "totalTables": 0,
+            "totalFunctions": 0,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 3,
+            "skippedFiles": 10,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_login_test.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_lot_sr.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_role.sql",
+                "fileId": "863953fe-4933-4fc1-b37b-979fe0c76490",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_hash",
+                "entityReport": null
+              },
+              {
+                "filename": "api_truck_sr.sql",
+                "fileId": "aa2b9386-cdb9-4d41-8846-9843235cedee",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_workflow.sql",
+                "fileId": "f0225f21-8f1f-45a8-9289-7116f4f8b31f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_inspect_bil.sql",
+                "fileId": "3840bd1c-a37b-4887-a802-b6248ffeb5ea",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_inspect.sql",
+                "fileId": "7032df4f-5477-4a54-be0c-8b0eb6b39cb0",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_logistic.sql",
+                "fileId": "e906bfb9-21b1-4344-a153-81ec7b6ca5b3",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_procedures.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_serv_autocode.sql",
+                "fileId": "8c063dc3-da9c-4d39-aac9-c32e423626b7",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_service.sql",
+                "fileId": "d933ecda-9cd7-432d-b405-dcda714f3a75",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_tests.sql",
+                "fileId": "e8a3b83c-41fd-41dd-bfa8-e7be98066ff4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_address_universal.sql",
+                "fileId": "1245991a-f6a1-4ce7-9a6d-6c07cf7d9288",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T10:18:15.440Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.440Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.440Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api_*.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.440Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.441Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 13 файлов"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.446Z",
+              "level": "info",
+              "message": "[Step1] Режим: точный выбор файлов (13 шт.)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.447Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.448Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.448Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.449Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.449Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.450Z",
+              "level": "info",
+              "message": "[Step1] Найдено 13 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.450Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.450Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.451Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.451Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.451Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.451Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.452Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.464Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.465Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 13 (13 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.465Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:18:16.185Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:16.186Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 10 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-08T10:27:34.910Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 1,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 10,
+            "totalTables": 0,
+            "totalFunctions": 0,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 3,
+            "skippedFiles": 10,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_login_test.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_lot_sr.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_role.sql",
+                "fileId": "863953fe-4933-4fc1-b37b-979fe0c76490",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_hash",
+                "entityReport": null
+              },
+              {
+                "filename": "api_truck_sr.sql",
+                "fileId": "aa2b9386-cdb9-4d41-8846-9843235cedee",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_workflow.sql",
+                "fileId": "f0225f21-8f1f-45a8-9289-7116f4f8b31f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_inspect_bil.sql",
+                "fileId": "3840bd1c-a37b-4887-a802-b6248ffeb5ea",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_inspect.sql",
+                "fileId": "7032df4f-5477-4a54-be0c-8b0eb6b39cb0",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_logistic.sql",
+                "fileId": "e906bfb9-21b1-4344-a153-81ec7b6ca5b3",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_procedures.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_serv_autocode.sql",
+                "fileId": "8c063dc3-da9c-4d39-aac9-c32e423626b7",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_service.sql",
+                "fileId": "d933ecda-9cd7-432d-b405-dcda714f3a75",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_tests.sql",
+                "fileId": "e8a3b83c-41fd-41dd-bfa8-e7be98066ff4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_address_universal.sql",
+                "fileId": "1245991a-f6a1-4ce7-9a6d-6c07cf7d9288",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T10:18:15.440Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.440Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.440Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api_*.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.440Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.441Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 13 файлов"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.446Z",
+              "level": "info",
+              "message": "[Step1] Режим: точный выбор файлов (13 шт.)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.447Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\dev/api_login/api_login_test.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.448Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_lot_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.448Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_role.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.449Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_truck_sr.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.449Z",
+              "level": "info",
+              "message": "[Step1] [Исправлен корруптный путь] -> C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\sr/api_workflow.sql"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.450Z",
+              "level": "info",
+              "message": "[Step1] Найдено 13 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.450Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.450Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.451Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.451Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.451Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.451Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.452Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.464Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.465Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 13 (13 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:15.465Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:18:16.185Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-08T10:18:16.186Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 10 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-08T10:27:35.238Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 1,
+        "totalItems": 1,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 1,
+            "totalTables": 0,
+            "totalFunctions": 0,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 0,
+            "skippedFiles": 1,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_address_universal.sql",
+                "fileId": "1245991a-f6a1-4ce7-9a6d-6c07cf7d9288",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T10:27:34.904Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.904Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api"
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.905Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api_*.sql\""
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.905Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.905Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 2 файлов"
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.907Z",
+              "level": "info",
+              "message": "[Step1] Режим: точный выбор файлов (2 шт.)"
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.907Z",
+              "level": "warn",
+              "message": "[Step1] Пропущен не-SQL файл из fileSelection: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\"
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.908Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.908Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.908Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.908Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.909Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.909Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.909Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.909Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.924Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.924Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 1 (1 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-08T10:27:34.924Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-08T10:27:35.238Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-08T10:27:35.238Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 1 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
       }
     ],
     "2": [
@@ -60112,6 +63433,220 @@
             },
             {
               "timestamp": "2026-03-04T16:45:01.948Z",
+              "level": "info",
+              "message": "[Step2] [Таблица link] Исправлено: 0, неоднозначных: 0, отсутствующих: 0"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-08T10:00:16.945Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:00:18.045Z",
+        "status": "running",
+        "progress": 63,
+        "itemsProcessed": 10,
+        "totalItems": 16,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:00:18.717Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 16,
+        "totalItems": 16,
+        "error": null,
+        "report": {
+          "summary": {
+            "aiItemsNoSchema": 8,
+            "l0ChunksNoSchema": 8,
+            "l1ChunksAnalyzed": 16,
+            "missingDeps": 10,
+            "ambiguousDeps": 0,
+            "fixedDeps": 0,
+            "linksAnalyzed": 0,
+            "linksFixed": 0,
+            "linksMissing": 0,
+            "linksAmbiguous": 0
+          },
+          "details": {
+            "fixes": [],
+            "ambiguous": [],
+            "missing": [
+              {
+                "dep": "getprofSmartName3",
+                "in": "carl_car.getCarIdValueList",
+                "file": "api_car.sql"
+              },
+              {
+                "dep": "elseif",
+                "in": "carl_lot._convertCarDraft",
+                "file": "api_lot.sql"
+              },
+              {
+                "dep": "jsonb_array_elements",
+                "in": "carl_lot._convertCarDraft",
+                "file": "api_lot.sql"
+              },
+              {
+                "dep": "jsonb_typeof",
+                "in": "carl_lot._convertCarDraft",
+                "file": "api_lot.sql"
+              },
+              {
+                "dep": "regexp_replace",
+                "in": "carl_lot._convertCarDraft",
+                "file": "api_lot.sql"
+              },
+              {
+                "dep": "jsonb_array_elements",
+                "in": "carl_lot._convertCarDraft",
+                "file": "api_lot.sql"
+              },
+              {
+                "dep": "ilike",
+                "in": "carl_dict.getIdRegionList",
+                "file": "api_dict.sql"
+              },
+              {
+                "dep": "array_append",
+                "in": "carl_prof.parseAddress",
+                "file": "api_address_universal.sql"
+              },
+              {
+                "dep": "array_length",
+                "in": "carl_prof.parseAddress",
+                "file": "api_address_universal.sql"
+              },
+              {
+                "dep": "regexp_replace",
+                "in": "carl_prof.parseAddress",
+                "file": "api_address_universal.sql"
+              }
+            ],
+            "errors": [],
+            "linkFixes": [],
+            "linkMissing": [],
+            "linkAmbiguous": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T10:00:16.962Z",
+              "level": "info",
+              "message": "[Step2] Запуск анализа и исправления зависимостей для контекста \"CARL\" (mode=incremental)"
+            },
+            {
+              "timestamp": "2026-03-08T10:00:17.014Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 8 AiItem без схемы"
+            },
+            {
+              "timestamp": "2026-03-08T10:00:17.070Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 8 L0 чанков без схемы"
+            },
+            {
+              "timestamp": "2026-03-08T10:00:18.538Z",
+              "level": "info",
+              "message": "[Step2] Анализ таблицы link..."
+            },
+            {
+              "timestamp": "2026-03-08T10:00:18.716Z",
+              "level": "info",
+              "message": "[Step2] Шаг 2 завершён."
+            },
+            {
+              "timestamp": "2026-03-08T10:00:18.716Z",
+              "level": "info",
+              "message": "[Step2] [L1 чанки] Исправлено: 0, неоднозначных: 0, отсутствующих: 10"
+            },
+            {
+              "timestamp": "2026-03-08T10:00:18.716Z",
+              "level": "info",
+              "message": "[Step2] [Таблица link] Исправлено: 0, неоднозначных: 0, отсутствующих: 0"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-08T10:28:34.869Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-08T10:28:35.382Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": {
+          "summary": {
+            "aiItemsNoSchema": 8,
+            "l0ChunksNoSchema": 8,
+            "l1ChunksAnalyzed": 0,
+            "missingDeps": 0,
+            "ambiguousDeps": 0,
+            "fixedDeps": 0,
+            "linksAnalyzed": 0,
+            "linksFixed": 0,
+            "linksMissing": 0,
+            "linksAmbiguous": 0
+          },
+          "details": {
+            "fixes": [],
+            "ambiguous": [],
+            "missing": [],
+            "errors": [],
+            "linkFixes": [],
+            "linkMissing": [],
+            "linkAmbiguous": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-08T10:28:34.887Z",
+              "level": "info",
+              "message": "[Step2] Запуск анализа и исправления зависимостей для контекста \"CARL\" (mode=incremental)"
+            },
+            {
+              "timestamp": "2026-03-08T10:28:35.133Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 8 AiItem без схемы"
+            },
+            {
+              "timestamp": "2026-03-08T10:28:35.190Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 8 L0 чанков без схемы"
+            },
+            {
+              "timestamp": "2026-03-08T10:28:35.247Z",
+              "level": "info",
+              "message": "[Step2] Анализ таблицы link..."
+            },
+            {
+              "timestamp": "2026-03-08T10:28:35.382Z",
+              "level": "info",
+              "message": "[Step2] Шаг 2 завершён."
+            },
+            {
+              "timestamp": "2026-03-08T10:28:35.382Z",
+              "level": "info",
+              "message": "[Step2] [L1 чанки] Исправлено: 0, неоднозначных: 0, отсутствующих: 0"
+            },
+            {
+              "timestamp": "2026-03-08T10:28:35.382Z",
               "level": "info",
               "message": "[Step2] [Таблица link] Исправлено: 0, неоднозначных: 0, отсутствующих: 0"
             }
