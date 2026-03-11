@@ -258,7 +258,7 @@ async function loadMarkdownFromFile(filePath, contextCode, dbService, pipelineSt
   for (const code of Object.values(linkTypeMap)) {
     try {
       const res = await dbService.pgClient.query(
-        'SELECT id FROM public.link_type WHERE code = $1',
+        'SELECT id FROM kosmos.link_type WHERE code = $1',
         [code]
       );
       if (res.rows.length > 0) {
@@ -284,7 +284,7 @@ async function loadMarkdownFromFile(filePath, contextCode, dbService, pipelineSt
           }
           const chunkIdL0 = await dbService.saveChunkVector(fId, chunkContent, null,
             { type: 'markdown', level: '0-исходник', md_level: entity.type === 'md_doc' ? 'doc' : (entity.type === 'head_level_1' ? 1 : 2), s_name: entity.sname, h_name: entity.comment, full_name: entity.full_name }, null, contextCode);
-          await dbService.pgClient.query('UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2', [aiItem.id, chunkIdL0]);
+          await dbService.pgClient.query('UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2', [aiItem.id, chunkIdL0]);
 
           // For MD documents, we can create hierarchical links
           // This would typically be handled separately since it requires cross-entity relationships
@@ -318,7 +318,7 @@ async function loadMarkdownFromFile(filePath, contextCode, dbService, pipelineSt
 
       // Создаём/обновляем ai_item
       const aiItemResult = await dbService.pgClient.query(
-        `INSERT INTO public.ai_item (full_name, context_code, type, s_name, h_name, file_id, created_at, updated_at)
+        `INSERT INTO kosmos.ai_item (full_name, context_code, type, s_name, h_name, file_id, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
          ON CONFLICT (full_name, context_code) 
          DO UPDATE SET type = EXCLUDED.type, s_name = EXCLUDED.s_name, h_name = EXCLUDED.h_name, 
@@ -386,7 +386,7 @@ async function loadMarkdownFromFile(filePath, contextCode, dbService, pipelineSt
 
       // Создаём ai_item для H1
       const aiItemResult = await dbService.pgClient.query(
-        `INSERT INTO public.ai_item (full_name, context_code, type, s_name, h_name, file_id, created_at, updated_at)
+        `INSERT INTO kosmos.ai_item (full_name, context_code, type, s_name, h_name, file_id, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
          ON CONFLICT (full_name, context_code) 
          DO UPDATE SET type = EXCLUDED.type, s_name = EXCLUDED.s_name, h_name = EXCLUDED.h_name, 
@@ -445,7 +445,7 @@ async function loadMarkdownFromFile(filePath, contextCode, dbService, pipelineSt
 
           // Создаём ai_item для H2
           const h2AiItemResult = await dbService.pgClient.query(
-            `INSERT INTO public.ai_item (full_name, context_code, type, s_name, h_name, file_id, created_at, updated_at)
+            `INSERT INTO kosmos.ai_item (full_name, context_code, type, s_name, h_name, file_id, created_at, updated_at)
              VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
              ON CONFLICT (full_name, context_code) 
              DO UPDATE SET type = EXCLUDED.type, s_name = EXCLUDED.s_name, h_name = EXCLUDED.h_name, 
@@ -556,7 +556,7 @@ async function createLink(dbService, contextCode, source, target, linkTypeId) {
 
   try {
     await dbService.pgClient.query(
-      `INSERT INTO public.link (context_code, source, target, link_type_id, created_at)
+      `INSERT INTO kosmos.link (context_code, source, target, link_type_id, created_at)
        VALUES ($1, $2, $3, $4, NOW())
        ON CONFLICT (context_code, source, target, link_type_id) DO NOTHING`,
       [contextCode, source, target, linkTypeId]

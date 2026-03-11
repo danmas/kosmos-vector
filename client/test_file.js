@@ -491,7 +491,7 @@ async function loadJsFunctionsFromFile(filePath, contextCode, dbService, pipelin
 
                 // Привязываем чанк к AI Item
                 await dbService.pgClient.query(
-                    'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+                    'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                     [entityReport.aiItemId, chunkIdL0]
                 );
 
@@ -523,7 +523,7 @@ async function loadJsFunctionsFromFile(filePath, contextCode, dbService, pipelin
 
                     // Привязываем чанк L1 к AI Item
                     await dbService.pgClient.query(
-                        'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+                        'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                         [entityReport.aiItemId, chunkIdL1]
                     );
 

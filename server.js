@@ -334,7 +334,7 @@ const pgClient = new Pool({
 });
 
 pgClient.on('error', (err) => {
-  console.error('[PostgreSQL Pool] Idle client error (векторная БД DATABASE_URL):', err.message);
+  console.error('[PostgreSQL Pool] Idle client error (векторная БД):', err.message);
 });
 
 // db-core Database переиспользует тот же Pool (один пул на всё приложение)

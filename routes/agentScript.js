@@ -44,7 +44,7 @@ module.exports = (dbService, embeddings) => {
 
       const rows = await dbService.pgClient.query(`
         SELECT id, question, usage_count, is_valid, last_result, created_at, updated_at
-        FROM public.agent_script
+        FROM kosmos.agent_script
         WHERE context_code = $1
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
@@ -64,7 +64,7 @@ module.exports = (dbService, embeddings) => {
 
       const result = await dbService.pgClient.query(`
         SELECT id, question, script, usage_count, is_valid, last_result, created_at, updated_at
-        FROM public.agent_script
+        FROM kosmos.agent_script
         WHERE id = $1 AND context_code = $2
       `, [id, req.contextCode]);
 
@@ -118,7 +118,7 @@ module.exports = (dbService, embeddings) => {
       }
 
       const result = await dbService.pgClient.query(`
-        UPDATE public.agent_script
+        UPDATE kosmos.agent_script
         SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP
         WHERE id = $1 AND context_code = $2
         RETURNING id, question, script, is_valid, last_result, updated_at
@@ -141,7 +141,7 @@ module.exports = (dbService, embeddings) => {
       const { id } = req.params;
 
       const result = await dbService.pgClient.query(`
-        DELETE FROM public.agent_script
+        DELETE FROM kosmos.agent_script
         WHERE id = $1 AND context_code = $2
         RETURNING id
       `, [id, req.contextCode]);
@@ -170,7 +170,7 @@ module.exports = (dbService, embeddings) => {
       // Получаем скрипт из БД
       const result = await dbService.pgClient.query(`
         SELECT id, question, question_embedding
-        FROM public.agent_script
+        FROM kosmos.agent_script
         WHERE id = $1 AND context_code = $2
       `, [scriptId, req.contextCode]);
 
@@ -215,7 +215,7 @@ module.exports = (dbService, embeddings) => {
       // Получаем скрипт из БД
       const result = await dbService.pgClient.query(`
         SELECT id, question, script, is_valid
-        FROM public.agent_script
+        FROM kosmos.agent_script
         WHERE id = $1 AND context_code = $2
       `, [scriptId, contextCode]);
 
@@ -251,7 +251,7 @@ module.exports = (dbService, embeddings) => {
 
         // Помечаем скрипт как валидный при успешном выполнении
         await dbService.pgClient.query(`
-          UPDATE public.agent_script
+          UPDATE kosmos.agent_script
           SET is_valid = true
           WHERE id = $1
         `, [scriptId]);
@@ -263,7 +263,7 @@ module.exports = (dbService, embeddings) => {
         
         // Помечаем скрипт как невалидный
         await dbService.pgClient.query(`
-          UPDATE public.agent_script
+          UPDATE kosmos.agent_script
           SET is_valid = false
           WHERE id = $1
         `, [scriptId]);
@@ -316,7 +316,7 @@ module.exports = (dbService, embeddings) => {
           };
           
           await dbService.pgClient.query(`
-            UPDATE public.agent_script
+            UPDATE kosmos.agent_script
             SET last_result = $1, updated_at = CURRENT_TIMESTAMP
             WHERE id = $2
           `, [JSON.stringify(resultToSave), scriptId]);
@@ -470,7 +470,7 @@ module.exports = (dbService, embeddings) => {
         // Помечаем скрипт как валидный
         if (scriptId) {
           await dbService.pgClient.query(`
-            UPDATE public.agent_script
+            UPDATE kosmos.agent_script
             SET is_valid = true
             WHERE id = $1
           `, [scriptId]);
@@ -485,7 +485,7 @@ module.exports = (dbService, embeddings) => {
         // Помечаем скрипт как невалидный
         if (scriptId) {
           await dbService.pgClient.query(`
-            UPDATE public.agent_script
+            UPDATE kosmos.agent_script
             SET is_valid = false
             WHERE id = $1
           `, [scriptId]);
@@ -540,7 +540,7 @@ module.exports = (dbService, embeddings) => {
           };
           
           await dbService.pgClient.query(`
-            UPDATE public.agent_script
+            UPDATE kosmos.agent_script
             SET last_result = $1, updated_at = CURRENT_TIMESTAMP
             WHERE id = $2
           `, [JSON.stringify(resultToSave), scriptId]);

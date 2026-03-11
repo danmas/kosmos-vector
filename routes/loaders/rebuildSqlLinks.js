@@ -34,7 +34,7 @@ async function getLinkTypeIds(dbService, codes) {
   const ids = {};
   for (const code of codes) {
     const res = await dbService.pgClient.query(
-      'SELECT id FROM public.link_type WHERE code = $1',
+      'SELECT id FROM kosmos.link_type WHERE code = $1',
       [code]
     );
     ids[code] = res.rows[0]?.id || null;
@@ -68,7 +68,7 @@ async function rebuildSqlLinksFromDb(fullName, contextCode, dbService) {
   const name = (parts.length > 1 ? parts[1] : parts[0]).toLowerCase();
 
   const aiResult = await dbService.pgClient.query(
-    `SELECT id, type, file_id FROM public.ai_item WHERE full_name = $1 AND context_code = $2`,
+    `SELECT id, type, file_id FROM kosmos.ai_item WHERE full_name = $1 AND context_code = $2`,
     [fullName, contextCode]
   );
   if (aiResult.rows.length === 0) {
@@ -134,7 +134,7 @@ async function rebuildSqlLinksFromDb(fullName, contextCode, dbService) {
         // Сначала пробуем ту же схему, что и у источника
         const sameSchema = `${schema}.${trimmed}`;
         const sameRes = await dbService.pgClient.query(
-          `SELECT full_name FROM public.ai_item WHERE lower(full_name) = lower($1) AND context_code = $2 LIMIT 1`,
+          `SELECT full_name FROM kosmos.ai_item WHERE lower(full_name) = lower($1) AND context_code = $2 LIMIT 1`,
           [sameSchema, contextCode]
         );
         if (sameRes.rows.length > 0) {
@@ -143,7 +143,7 @@ async function rebuildSqlLinksFromDb(fullName, contextCode, dbService) {
         }
         // Ищем по короткому имени (s_name) среди всех ai_item контекста
         const anyRes = await dbService.pgClient.query(
-          `SELECT full_name FROM public.ai_item WHERE lower(s_name) = lower($1) AND context_code = $2 LIMIT 1`,
+          `SELECT full_name FROM kosmos.ai_item WHERE lower(s_name) = lower($1) AND context_code = $2 LIMIT 1`,
           [trimmed, contextCode]
         );
         if (anyRes.rows.length > 0) {
@@ -163,7 +163,7 @@ async function rebuildSqlLinksFromDb(fullName, contextCode, dbService) {
   const linkTypeIds = await getLinkTypeIds(dbService, allCodes);
 
   const delResult = await dbService.pgClient.query(
-    'DELETE FROM public.link WHERE source = $1 AND context_code = $2',
+    'DELETE FROM kosmos.link WHERE source = $1 AND context_code = $2',
     [fullName, contextCode]
   );
   report.linksDeleted = delResult.rowCount || 0;
@@ -176,7 +176,7 @@ async function rebuildSqlLinksFromDb(fullName, contextCode, dbService) {
     for (const target of targets) {
       try {
         const ins = await dbService.pgClient.query(
-          `INSERT INTO public.link (context_code, source, target, link_type_id)
+          `INSERT INTO kosmos.link (context_code, source, target, link_type_id)
            VALUES ($1, $2, $3, $4)
            ON CONFLICT (context_code, source, target, link_type_id) DO NOTHING`,
           [contextCode, fullName, target.trim(), typeId]
@@ -192,19 +192,19 @@ async function rebuildSqlLinksFromDb(fullName, contextCode, dbService) {
 
   const sName = fullName.includes('.') ? fullName.split('.').pop() : fullName;
   const chunkRes = await dbService.pgClient.query(
-    `SELECT id FROM public.chunk_vector WHERE ai_item_id = $1 AND level LIKE '1-%' LIMIT 1`,
+    `SELECT id FROM kosmos.chunk_vector WHERE ai_item_id = $1 AND level LIKE '1-%' LIMIT 1`,
     [aiItemId]
   );
   if (chunkRes.rows.length > 0) {
     const chunkId = chunkRes.rows[0].id;
     await dbService.pgClient.query(
-      `UPDATE public.chunk_vector SET chunk_content = ($1::json->'text')::jsonb WHERE id = $2`,
+      `UPDATE kosmos.chunk_vector SET chunk_content = ($1::json->'text')::jsonb WHERE id = $2`,
       [JSON.stringify({ text: l1Result }), chunkId]
     );
     report.chunkUpdated = true;
   } else {
     const parentRes = await dbService.pgClient.query(
-      `SELECT id FROM public.chunk_vector WHERE ai_item_id = $1 AND level LIKE '0-%' ORDER BY chunk_index LIMIT 1`,
+      `SELECT id FROM kosmos.chunk_vector WHERE ai_item_id = $1 AND level LIKE '0-%' ORDER BY chunk_index LIMIT 1`,
       [aiItemId]
     );
     const parentChunkId = parentRes.rows.length > 0 ? parentRes.rows[0].id : null;
@@ -217,7 +217,7 @@ async function rebuildSqlLinksFromDb(fullName, contextCode, dbService) {
       contextCode
     );
     await dbService.pgClient.query(
-      'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+      'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
       [aiItemId, chunkId]
     );
     report.chunkUpdated = true;
@@ -237,8 +237,8 @@ async function rebuildSqlLinksFromDb(fullName, contextCode, dbService) {
 async function rebuildAllSqlLinks(contextCode, dbService) {
   const allItems = await dbService.pgClient.query(
     `SELECT ai.full_name, ai.type, f.filename
-     FROM public.ai_item ai
-     JOIN public.files f ON ai.file_id = f.id
+     FROM kosmos.ai_item ai
+     JOIN kosmos.files f ON ai.file_id = f.id
      WHERE ai.context_code = $1
        AND ai.type = 'function'
        AND lower(f.filename) LIKE '%.sql'

@@ -118,7 +118,7 @@ class DbService {
 
       // Создание таблицы files
       await this.pgClient.query(`
-        CREATE TABLE IF NOT EXISTS public.files (
+        CREATE TABLE IF NOT EXISTS kosmos.files (
           id SERIAL PRIMARY KEY,
           filename TEXT NOT NULL UNIQUE,
           context_code TEXT NOT NULL DEFAULT 'DEFAULT',
@@ -131,11 +131,11 @@ class DbService {
 
       // Создание таблицы ai_item
       await this.pgClient.query(`
-        CREATE TABLE IF NOT EXISTS public.ai_item (
+        CREATE TABLE IF NOT EXISTS kosmos.ai_item (
           id SERIAL PRIMARY KEY,
           full_name TEXT NOT NULL,
           context_code TEXT NOT NULL DEFAULT 'DEFAULT',
-          file_id INTEGER REFERENCES public.files(id) ON DELETE SET NULL,
+          file_id INTEGER REFERENCES kosmos.files(id) ON DELETE SET NULL,
           type TEXT,
           s_name TEXT,
           h_name TEXT,
@@ -147,8 +147,8 @@ class DbService {
 
       // Создание индексов для ai_item
       await this.pgClient.query(`
-        CREATE INDEX IF NOT EXISTS idx_ai_item_full_name ON public.ai_item(full_name);
-        CREATE INDEX IF NOT EXISTS idx_ai_item_context_code ON public.ai_item(context_code);
+        CREATE INDEX IF NOT EXISTS idx_ai_item_full_name ON kosmos.ai_item(full_name);
+        CREATE INDEX IF NOT EXISTS idx_ai_item_context_code ON kosmos.ai_item(context_code);
       `);
       console.log("Индексы для ai_item созданы или уже существуют");
 
@@ -194,14 +194,14 @@ class DbService {
             DO $$
             BEGIN
               IF EXISTS (SELECT 1 FROM pg_sequences WHERE schemaname = 'public' AND sequencename = 'file_vectors_id_seq') THEN
-                ALTER SEQUENCE public.file_vectors_id_seq RENAME TO chunk_vector_id_seq;
+                ALTER SEQUENCE kosmos.file_vectors_id_seq RENAME TO chunk_vector_id_seq;
               END IF;
             END $$;
           `);
           
           // Переименовываем таблицу
           await this.pgClient.query(`
-            ALTER TABLE public.file_vectors RENAME TO chunk_vector;
+            ALTER TABLE kosmos.file_vectors RENAME TO chunk_vector;
           `);
           
           console.log("Таблица file_vectors успешно переименована в chunk_vector");
@@ -253,11 +253,11 @@ class DbService {
 
       // Создание таблицы chunk_vector
       await this.pgClient.query(`
-        CREATE TABLE IF NOT EXISTS public.chunk_vector (
+        CREATE TABLE IF NOT EXISTS kosmos.chunk_vector (
           id SERIAL PRIMARY KEY,
-          file_id INTEGER REFERENCES public.files(id) ON DELETE CASCADE,
-          ai_item_id INTEGER REFERENCES public.ai_item(id) ON DELETE SET NULL,
-          parent_chunk_id INTEGER REFERENCES public.chunk_vector(id) ON DELETE CASCADE,
+          file_id INTEGER REFERENCES kosmos.files(id) ON DELETE CASCADE,
+          ai_item_id INTEGER REFERENCES kosmos.ai_item(id) ON DELETE SET NULL,
+          parent_chunk_id INTEGER REFERENCES kosmos.chunk_vector(id) ON DELETE CASCADE,
           chunk_content JSONB NOT NULL,
           embedding VECTOR,
           chunk_index INTEGER,
@@ -273,22 +273,22 @@ class DbService {
 
       // Добавляем поля content и updated_at, если их нет
       await this.pgClient.query(`
-        ALTER TABLE public.chunk_vector
+        ALTER TABLE kosmos.chunk_vector
           ADD COLUMN IF NOT EXISTS content JSONB,
           ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE
       `);
 
       // Создание индексов для ускорения поиска
       await this.pgClient.query(`
-        CREATE INDEX IF NOT EXISTS idx_chunk_vector_file_id ON public.chunk_vector(file_id);
-        CREATE INDEX IF NOT EXISTS idx_chunk_vector_parent_chunk_id ON public.chunk_vector(parent_chunk_id);
-        CREATE INDEX IF NOT EXISTS idx_chunk_vector_ai_item_id ON public.chunk_vector(ai_item_id);
+        CREATE INDEX IF NOT EXISTS idx_chunk_vector_file_id ON kosmos.chunk_vector(file_id);
+        CREATE INDEX IF NOT EXISTS idx_chunk_vector_parent_chunk_id ON kosmos.chunk_vector(parent_chunk_id);
+        CREATE INDEX IF NOT EXISTS idx_chunk_vector_ai_item_id ON kosmos.chunk_vector(ai_item_id);
       `);
       console.log("Индексы для chunk_vector созданы или уже существуют");
 
       // Создание таблицы ai_comment
       await this.pgClient.query(`
-        CREATE TABLE IF NOT EXISTS public.ai_comment (
+        CREATE TABLE IF NOT EXISTS kosmos.ai_comment (
           id SERIAL PRIMARY KEY,
           context_code TEXT NOT NULL,
           full_name TEXT NOT NULL,
@@ -303,36 +303,36 @@ class DbService {
       // Создание индекса для ai_comment
       await this.pgClient.query(`
         CREATE INDEX IF NOT EXISTS idx_ai_comment_context_full_name 
-        ON public.ai_comment(context_code, full_name)
+        ON kosmos.ai_comment(context_code, full_name)
       `);
       console.log("Индексы для ai_comment созданы или уже существуют");
 
       // === Инкрементальное обновление: миграция новых колонок ===
       // files: file_hash уже в CREATE TABLE, но для существующих БД:
       await this.pgClient.query(`
-        ALTER TABLE public.files ADD COLUMN IF NOT EXISTS file_hash TEXT
+        ALTER TABLE kosmos.files ADD COLUMN IF NOT EXISTS file_hash TEXT
       `);
       // Убираем старый UNIQUE(filename) и добавляем UNIQUE(filename, context_code)
       await this.pgClient.query(`
-        ALTER TABLE public.files DROP CONSTRAINT IF EXISTS files_filename_key
+        ALTER TABLE kosmos.files DROP CONSTRAINT IF EXISTS files_filename_key
       `);
       await this.pgClient.query(`
         DO $$ BEGIN
           IF NOT EXISTS (
             SELECT 1 FROM pg_constraint WHERE conname = 'files_filename_context_code_unique'
           ) THEN
-            ALTER TABLE public.files ADD CONSTRAINT files_filename_context_code_unique UNIQUE (filename, context_code);
+            ALTER TABLE kosmos.files ADD CONSTRAINT files_filename_context_code_unique UNIQUE (filename, context_code);
           END IF;
         END $$;
       `);
 
       // ai_item: content_hash и needs_rebuild
       await this.pgClient.query(`
-        ALTER TABLE public.ai_item ADD COLUMN IF NOT EXISTS content_hash TEXT;
-        ALTER TABLE public.ai_item ADD COLUMN IF NOT EXISTS needs_rebuild BOOLEAN DEFAULT false;
+        ALTER TABLE kosmos.ai_item ADD COLUMN IF NOT EXISTS content_hash TEXT;
+        ALTER TABLE kosmos.ai_item ADD COLUMN IF NOT EXISTS needs_rebuild BOOLEAN DEFAULT false;
       `);
       await this.pgClient.query(`
-        CREATE INDEX IF NOT EXISTS idx_ai_item_needs_rebuild ON public.ai_item (context_code, needs_rebuild) WHERE needs_rebuild = true
+        CREATE INDEX IF NOT EXISTS idx_ai_item_needs_rebuild ON kosmos.ai_item (context_code, needs_rebuild) WHERE needs_rebuild = true
       `);
       console.log("Миграция инкрементального обновления выполнена");
 
@@ -352,7 +352,7 @@ class DbService {
   async needsVectorization(fileName, contextCode = null) {
     try {
       // Получение информации о файле из базы данных
-      let query = `SELECT id, modified_at FROM public.files WHERE filename = $1`;
+      let query = `SELECT id, modified_at FROM kosmos.files WHERE filename = $1`;
       const params = [fileName];
       
       if (contextCode) {
@@ -418,7 +418,7 @@ class DbService {
       // Поиск по filename + context_code
       const finalContextCode = contextCode || 'DEFAULT';
       const fileResult = await this.pgClient.query(
-        `SELECT id FROM public.files WHERE filename = $1 AND context_code = $2`,
+        `SELECT id FROM kosmos.files WHERE filename = $1 AND context_code = $2`,
         [baseFileName, finalContextCode]
       );
 
@@ -428,7 +428,7 @@ class DbService {
       if (fileResult.rows.length === 0) {
         // INSERT
         const insertResult = await this.pgClient.query(
-          `INSERT INTO public.files (filename, file_url, modified_at, content, context_code, file_hash)
+          `INSERT INTO kosmos.files (filename, file_url, modified_at, content, context_code, file_hash)
            VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING id`,
           [baseFileName, absolutePath, modifiedAt, fileContent, finalContextCode, fileHash]
@@ -439,7 +439,7 @@ class DbService {
         fileId = fileResult.rows[0].id;
         // UPDATE
         await this.pgClient.query(
-          `UPDATE public.files
+          `UPDATE kosmos.files
            SET file_url = $1, modified_at = $2, content = $3, context_code = $4, file_hash = $5
            WHERE id = $6`,
           [absolutePath, modifiedAt, fileContent, finalContextCode, fileHash, fileId]
@@ -484,7 +484,7 @@ class DbService {
       let vectorResult;
       if (full_name) {
         vectorResult = await this.pgClient.query(
-          `SELECT id, ai_item_id FROM public.chunk_vector
+          `SELECT id, ai_item_id FROM kosmos.chunk_vector
            WHERE file_id = $1 AND full_name = $2 AND level = $3`,
           [fileId, full_name, level]
         );
@@ -492,7 +492,7 @@ class DbService {
         // Fallback: если full_name нет, проверяем по chunk_content
         // Используем приведение к тексту для сравнения JSONB
         vectorResult = await this.pgClient.query(
-          `SELECT id, ai_item_id FROM public.chunk_vector
+          `SELECT id, ai_item_id FROM kosmos.chunk_vector
            WHERE file_id = $1 AND chunk_content::text = $2::text AND (full_name IS NULL OR full_name = '') AND level = $3`,
           [fileId, JSON.stringify(chunkContent), level]
         );
@@ -504,7 +504,7 @@ class DbService {
         // INSERT
         // chunkContent передается как JSON объект, PostgreSQL автоматически конвертирует в JSONB
         const insertQuery = `
-          INSERT INTO public.chunk_vector 
+          INSERT INTO kosmos.chunk_vector 
             (file_id, chunk_content, embedding, chunk_index, type, level, s_name, full_name, h_name, parent_chunk_id)
           VALUES 
             ($1, (($2)::json->'text')::jsonb, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -521,7 +521,7 @@ class DbService {
         // UPDATE
         chunkId = vectorResult.rows[0].id;
         const updateQuery = `
-          UPDATE public.chunk_vector
+          UPDATE kosmos.chunk_vector
           SET chunk_content = (($1)::json->'text')::jsonb,
               embedding = $2,
               type = $3,
@@ -546,7 +546,7 @@ class DbService {
         let finalContextCode = contextCode;
         if (!finalContextCode) {
           const fileInfoResult = await this.pgClient.query(
-            'SELECT context_code FROM public.files WHERE id = $1',
+            'SELECT context_code FROM kosmos.files WHERE id = $1',
             [fileId]
           );
           finalContextCode = fileInfoResult.rows[0]?.context_code || 'DEFAULT';
@@ -584,7 +584,7 @@ class DbService {
 
         // Ищем другие чанки с тем же full_name в этом файле
         const existingChunkQuery = await this.pgClient.query(
-          `SELECT id, ai_item_id FROM public.chunk_vector 
+          `SELECT id, ai_item_id FROM kosmos.chunk_vector 
            WHERE file_id = $1 AND full_name = $2 AND level = '0-исходник' AND id != $3`,
           [fileId, full_name, chunkId]
         );
@@ -598,7 +598,7 @@ class DbService {
         } else {
           // Ищем глобально по full_name + context_code
           const existingItemQuery = await this.pgClient.query(
-            'SELECT id FROM public.ai_item WHERE full_name = $1 AND context_code = $2',
+            'SELECT id FROM kosmos.ai_item WHERE full_name = $1 AND context_code = $2',
             [full_name, finalContextCode]
           );
 
@@ -606,13 +606,13 @@ class DbService {
             itemId = existingItemQuery.rows[0].id;
             console.log(`[DB] Обновляем существующий AI Item ID: ${itemId}`);
             await this.pgClient.query(
-              'UPDATE public.ai_item SET updated_at = CURRENT_TIMESTAMP, s_name = $1, h_name = $2, file_id = $3 WHERE id = $4',
+              'UPDATE kosmos.ai_item SET updated_at = CURRENT_TIMESTAMP, s_name = $1, h_name = $2, file_id = $3 WHERE id = $4',
               [s_name, h_name, fileId, itemId]
             );
           } else {
             console.log(`[DB] Создаём новый AI Item: "${full_name}" (${finalContextCode})`);
             const insertResult = await this.pgClient.query(
-              'INSERT INTO public.ai_item (full_name, context_code, type, s_name, h_name, file_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+              'INSERT INTO kosmos.ai_item (full_name, context_code, type, s_name, h_name, file_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
               [full_name, finalContextCode, type, s_name, h_name, fileId]
             );
             itemId = insertResult.rows[0].id;
@@ -621,7 +621,7 @@ class DbService {
 
         // Привязываем текущий чанк к ai_item
         await this.pgClient.query(
-          'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+          'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
           [itemId, chunkId]
         );
 
@@ -629,7 +629,7 @@ class DbService {
         if (existingChunkQuery.rows.length > 0) {
           for (const row of existingChunkQuery.rows) {
             await this.pgClient.query(
-              'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+              'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
               [itemId, row.id]
             );
           }
@@ -661,8 +661,8 @@ class DbService {
       
       // Получение информации о файле из базы данных
       let query = `SELECT f.id, f.context_code, f.modified_at, COUNT(fv.id) as chunks_count
-         FROM public.files f
-         LEFT JOIN public.chunk_vector fv ON f.id = fv.file_id
+         FROM kosmos.files f
+         LEFT JOIN kosmos.chunk_vector fv ON f.id = fv.file_id
          WHERE f.filename = $1`;
       const params = [baseFileName];
       
@@ -754,8 +754,8 @@ class DbService {
     try {
       let query = `
         SELECT f.id, f.filename, f.file_url, f.context_code, f.modified_at, f.created_at,
-               (SELECT COUNT(*) FROM public.chunk_vector WHERE file_id = f.id) as chunks_count
-        FROM public.files f
+               (SELECT COUNT(*) FROM kosmos.chunk_vector WHERE file_id = f.id) as chunks_count
+        FROM kosmos.files f
       `;
       const params = [];
       
@@ -844,7 +844,7 @@ class DbService {
   async getFileChunks(fileName, contextCode = null) {
     try {
       // Получение информации о файле
-      let fileQuery = `SELECT id FROM public.files WHERE filename = $1`;
+      let fileQuery = `SELECT id FROM kosmos.files WHERE filename = $1`;
       const fileParams = [fileName];
       
       if (contextCode) {
@@ -866,7 +866,7 @@ class DbService {
         `SELECT id, 
                 COALESCE(chunk_content->>'text', chunk_content::text) as chunk_content, 
                 chunk_index as index, type, level, s_name, h_name, full_name, ai_item_id
-         FROM public.chunk_vector
+         FROM kosmos.chunk_vector
          WHERE file_id = $1
          ORDER BY chunk_index`,
         [fileId]
@@ -902,7 +902,7 @@ class DbService {
       // Получаем ID ai_item, связанных с чанками уровня 0 этого файла
       const aiItemsQuery = await this.pgClient.query(`
         SELECT DISTINCT ai_item_id 
-        FROM public.chunk_vector 
+        FROM kosmos.chunk_vector 
         WHERE file_id = $1 AND level = '0-исходник' AND ai_item_id IS NOT NULL
       `, [fileId]);
       
@@ -910,7 +910,7 @@ class DbService {
       
       // Удаление всех векторов, связанных с файлом
       const result = await this.pgClient.query(
-        "DELETE FROM public.chunk_vector WHERE file_id = $1 RETURNING id",
+        "DELETE FROM kosmos.chunk_vector WHERE file_id = $1 RETURNING id",
         [fileId]
       );
 
@@ -920,7 +920,7 @@ class DbService {
         for (const itemId of aiItemIds) {
           const referencesQuery = await this.pgClient.query(`
             SELECT COUNT(*) as ref_count
-            FROM public.chunk_vector
+            FROM kosmos.chunk_vector
             WHERE ai_item_id = $1 AND level = '0-исходник'
           `, [itemId]);
           
@@ -929,7 +929,7 @@ class DbService {
           // Если нет других ссылок, удаляем ai_item
           if (refCount === 0) {
             await this.pgClient.query(
-              "DELETE FROM public.ai_item WHERE id = $1",
+              "DELETE FROM kosmos.ai_item WHERE id = $1",
               [itemId]
             );
             console.log(`Удален неиспользуемый ai_item с ID ${itemId}`);
@@ -939,7 +939,7 @@ class DbService {
 
       // Обновление времени модификации файла, чтобы он был распознан как нуждающийся в обновлении
       await this.pgClient.query(
-        "UPDATE public.files SET modified_at = CURRENT_TIMESTAMP WHERE id = $1",
+        "UPDATE kosmos.files SET modified_at = CURRENT_TIMESTAMP WHERE id = $1",
         [fileId]
       );
 
@@ -960,7 +960,7 @@ class DbService {
       // Получаем ID ai_item, связанные с чанками файла
       const aiItemsQuery = await this.pgClient.query(`
         SELECT DISTINCT ai_item_id 
-        FROM public.chunk_vector 
+        FROM kosmos.chunk_vector 
         WHERE file_id = $1 AND ai_item_id IS NOT NULL
       `, [fileId]);
       
@@ -972,7 +972,7 @@ class DbService {
       
       // Удаляем связанные ai_items
       const result = await this.pgClient.query(`
-        DELETE FROM public.ai_item
+        DELETE FROM kosmos.ai_item
         WHERE id = ANY($1::int[])
         RETURNING id, full_name
       `, [aiItemIds]);
@@ -1026,8 +1026,8 @@ class DbService {
                    fv.chunk_index, fv.type, fv.level, 
                    fv.s_name, fv.full_name, fv.h_name, fv.created_at, fv.ai_item_id,
                    f.filename, f.context_code
-            FROM public.chunk_vector fv
-            JOIN public.files f ON fv.file_id = f.id
+            FROM kosmos.chunk_vector fv
+            JOIN kosmos.files f ON fv.file_id = f.id
             WHERE fv.chunk_index = $1
             LIMIT 1
           `;
@@ -1040,8 +1040,8 @@ class DbService {
                    fv.chunk_index, fv.type, fv.level, 
                    fv.s_name, fv.full_name, fv.h_name, fv.created_at, fv.ai_item_id,
                    f.filename, f.context_code
-            FROM public.chunk_vector fv
-            JOIN public.files f ON fv.file_id = f.id
+            FROM kosmos.chunk_vector fv
+            JOIN kosmos.files f ON fv.file_id = f.id
             WHERE fv.id = $1
           `;
           params = [chunkId];
@@ -1054,8 +1054,8 @@ class DbService {
                  fv.chunk_index, fv.type, fv.level, 
                  fv.s_name, fv.full_name, fv.h_name, fv.created_at, fv.ai_item_id,
                  f.filename, f.context_code
-          FROM public.chunk_vector fv
-          JOIN public.files f ON fv.file_id = f.id
+          FROM kosmos.chunk_vector fv
+          JOIN kosmos.files f ON fv.file_id = f.id
           WHERE fv.id = $1
         `;
         params = [chunkId];
@@ -1108,7 +1108,7 @@ class DbService {
       }
       
       const query = `
-        UPDATE public.chunk_vector
+        UPDATE kosmos.chunk_vector
         SET ${updateParts.join(', ')}
         WHERE id = $1
         RETURNING id, chunk_index, type, level
@@ -1152,7 +1152,7 @@ class DbService {
   async deleteChildChunks(parentChunkId, level) {
     try {
       await this.pgClient.query(
-        `DELETE FROM public.chunk_vector 
+        `DELETE FROM kosmos.chunk_vector 
          WHERE parent_chunk_id = $1 AND level = $2`,
         [parentChunkId, level]
       );
@@ -1188,7 +1188,7 @@ class DbService {
       // Получаем максимальный индекс для файла и уровня
       const indexResult = await this.pgClient.query(
         `SELECT MAX(chunk_index) as max_index 
-         FROM public.chunk_vector 
+         FROM kosmos.chunk_vector 
          WHERE file_id = $1 AND level = $2`,
         [fileId, level]
       );
@@ -1201,7 +1201,7 @@ class DbService {
       // Создаем новый чанк
       // content передается как JSON объект, конвертируем в JSONB
       const result = await this.pgClient.query(
-        `INSERT INTO public.chunk_vector (
+        `INSERT INTO kosmos.chunk_vector (
           file_id, chunk_content, embedding, chunk_index, type, level, parent_chunk_id, s_name, full_name, h_name
         ) VALUES ($1, $2::jsonb, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id, chunk_index as index, type, level`,
@@ -1214,7 +1214,7 @@ class DbService {
       if (aiItemId) {
         console.log(`Связываем чанк ${chunkId} с AI Item ${aiItemId}`);
         await this.pgClient.query(
-          'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+          'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
           [aiItemId, chunkId]
         );
       }
@@ -1222,7 +1222,7 @@ class DbService {
       else if (level === '0-исходник' && full_name) {
         // Получаем контекстный код файла
         const fileInfoResult = await this.pgClient.query(
-          'SELECT context_code FROM public.files WHERE id = $1',
+          'SELECT context_code FROM kosmos.files WHERE id = $1',
           [fileId]
         );
         
@@ -1230,7 +1230,7 @@ class DbService {
         
         // Проверяем, есть ли уже чанки с таким же full_name в этом файле
         const existingChunkQuery = await this.pgClient.query(
-          'SELECT id, ai_item_id FROM public.chunk_vector WHERE file_id = $1 AND full_name = $2 AND level = $3',
+          'SELECT id, ai_item_id FROM kosmos.chunk_vector WHERE file_id = $1 AND full_name = $2 AND level = $3',
           [fileId, full_name, level]
         );
         
@@ -1240,7 +1240,7 @@ class DbService {
           
           // Связываем текущий чанк с существующим AI Item
           await this.pgClient.query(
-            'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+            'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
             [existingItemId, chunkId]
           );
           return chunkId;
@@ -1248,7 +1248,7 @@ class DbService {
         
         // Проверка наличия ai_item с таким full_name и context_code
         const existingItemQuery = await this.pgClient.query(
-          'SELECT id FROM public.ai_item WHERE full_name = $1 AND context_code = $2',
+          'SELECT id FROM kosmos.ai_item WHERE full_name = $1 AND context_code = $2',
           [full_name, contextCode]
         );
         
@@ -1258,13 +1258,13 @@ class DbService {
           // Используем существующий и обновляем дату и новые поля
           itemId = existingItemQuery.rows[0].id;
           await this.pgClient.query(
-            'UPDATE public.ai_item SET updated_at = CURRENT_TIMESTAMP, type = $1, s_name = $2, h_name = $3, file_id = $4 WHERE id = $5',
+            'UPDATE kosmos.ai_item SET updated_at = CURRENT_TIMESTAMP, type = $1, s_name = $2, h_name = $3, file_id = $4 WHERE id = $5',
             [type, s_name, h_name, fileId, itemId]
           );
         } else {
           // Создаем новый ai_item с новыми полями
           const insertResult = await this.pgClient.query(
-            'INSERT INTO public.ai_item (full_name, context_code, type, s_name, h_name, file_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+            'INSERT INTO kosmos.ai_item (full_name, context_code, type, s_name, h_name, file_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
             [full_name, contextCode, type, s_name, h_name, fileId]
           );
           itemId = insertResult.rows[0].id;
@@ -1272,7 +1272,7 @@ class DbService {
         
         // Связываем чанк с ai_item
         await this.pgClient.query(
-          'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+          'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
           [itemId, chunkId]
         );
         
@@ -1281,7 +1281,7 @@ class DbService {
           for (const row of existingChunkQuery.rows) {
             if (row.id !== chunkId) { // Пропускаем текущий чанк
               await this.pgClient.query(
-                'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+                'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                 [itemId, row.id]
               );
             }
@@ -1310,7 +1310,7 @@ class DbService {
       
       // Обновляем имена чанка
       await this.pgClient.query(
-        `UPDATE public.chunk_vector
+        `UPDATE kosmos.chunk_vector
          SET s_name = $1, full_name = $2, h_name = $3
          WHERE id = $4`,
         [s_name, full_name, h_name, chunkId]
@@ -1370,8 +1370,8 @@ class DbService {
                fv.s_name, fv.full_name, fv.h_name, fv.created_at,
                f.filename, f.context_code,
                (fv.embedding IS NOT NULL) AS has_embedding
-        FROM public.chunk_vector fv
-        JOIN public.files f ON fv.file_id = f.id
+        FROM kosmos.chunk_vector fv
+        JOIN kosmos.files f ON fv.file_id = f.id
         WHERE fv.ai_item_id = $1
       `;
       
@@ -1404,7 +1404,7 @@ class DbService {
     }
     const vectorString = `[${embedding.join(',')}]`;
     await this.pgClient.query(
-      'UPDATE public.chunk_vector SET embedding = $1 WHERE id = $2',
+      'UPDATE kosmos.chunk_vector SET embedding = $1 WHERE id = $2',
       [vectorString, chunkId]
     );
   }
@@ -1467,7 +1467,7 @@ class DbService {
    */
   async getFileById(fileId, contextCode = null) {
     try {
-      let queryText = 'SELECT * FROM public.files WHERE id = $1';
+      let queryText = 'SELECT * FROM kosmos.files WHERE id = $1';
       const params = [fileId];
       
       if (contextCode) {
@@ -1501,7 +1501,7 @@ class DbService {
     try {
       // Проверяем, существует ли AI Item с таким именем и контекстом
       const existingItemQuery = await this.pgClient.query(
-        'SELECT id FROM public.ai_item WHERE full_name = $1 AND context_code = $2',
+        'SELECT id FROM kosmos.ai_item WHERE full_name = $1 AND context_code = $2',
         [full_name, contextCode]
       );
       
@@ -1511,13 +1511,13 @@ class DbService {
         // Если существует, обновляем
         itemId = existingItemQuery.rows[0].id;
         await this.pgClient.query(
-          'UPDATE public.ai_item SET updated_at = CURRENT_TIMESTAMP, type = $1, s_name = $2, file_id = $3, content_hash = $4 WHERE id = $5',
+          'UPDATE kosmos.ai_item SET updated_at = CURRENT_TIMESTAMP, type = $1, s_name = $2, file_id = $3, content_hash = $4 WHERE id = $5',
           [type, sName, fileId, contentHash || null, itemId]
         );
       } else {
         // Иначе создаем новый
         const insertResult = await this.pgClient.query(
-          'INSERT INTO public.ai_item (full_name, context_code, type, s_name, file_id, content_hash) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+          'INSERT INTO kosmos.ai_item (full_name, context_code, type, s_name, file_id, content_hash) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
           [full_name, contextCode, type, sName, fileId, contentHash || null]
         );
         itemId = insertResult.rows[0].id;
@@ -1526,14 +1526,14 @@ class DbService {
       // Связываем чанк с AI Item
       if (chunkId) {
         await this.pgClient.query(
-          'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+          'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
           [itemId, chunkId]
         );
       }
       
       // Получаем полную информацию о созданном/обновленном AI Item
       const itemQuery = await this.pgClient.query(
-        'SELECT * FROM public.ai_item WHERE id = $1',
+        'SELECT * FROM kosmos.ai_item WHERE id = $1',
         [itemId]
       );
       
@@ -1557,7 +1557,7 @@ class DbService {
       if (isUuid) {
         // Если UUID, ищем соответствующий числовой ID
         const result = await this.pgClient.query(
-          'SELECT id FROM public.files WHERE file_hash = $1',
+          'SELECT id FROM kosmos.files WHERE file_hash = $1',
           [fileId]
         );
         
@@ -1591,7 +1591,7 @@ class DbService {
       // Если колонки нет, добавляем её
       if (columnCheck.rows.length === 0) {
         await this.pgClient.query(`
-          ALTER TABLE public.files 
+          ALTER TABLE kosmos.files 
           ADD COLUMN IF NOT EXISTS file_hash TEXT,
           ADD COLUMN IF NOT EXISTS file_url TEXT,
           ADD COLUMN IF NOT EXISTS content TEXT
@@ -1616,8 +1616,8 @@ class DbService {
     try {
       const result = await this.pgClient.query(`
         SELECT f.id, f.filename, f.file_url, f.context_code, f.modified_at, f.created_at, f.content,
-               (SELECT COUNT(*) FROM public.chunk_vector WHERE file_id = f.id) as chunks_count
-        FROM public.files f
+               (SELECT COUNT(*) FROM kosmos.chunk_vector WHERE file_id = f.id) as chunks_count
+        FROM kosmos.files f
         WHERE f.filename = $1
       `, [filename]);
 
@@ -1679,18 +1679,18 @@ class DbService {
       // ai_item не имеют каскадного удаления, поэтому удаляем отдельно.
 
       // Удаляем все ai_item (на них нет жёстких ссылок с каскадом)
-      await this.pgClient.query(`DELETE FROM public.ai_item`);
+      await this.pgClient.query(`DELETE FROM kosmos.ai_item`);
       console.log("Таблица ai_item очищена");
 
       // Удаляем все файлы — автоматически удалятся все связанные векторы благодаря ON DELETE CASCADE
-      await this.pgClient.query(`DELETE FROM public.files`);
+      await this.pgClient.query(`DELETE FROM kosmos.files`);
       console.log("Таблица files очищена (векторы удалены каскадно)");
 
       // Дополнительно: сбрасываем последовательности автоинкремента (опционально, но рекомендуется)
       await this.pgClient.query(`
-        ALTER SEQUENCE public.files_id_seq RESTART WITH 1;
-        ALTER SEQUENCE public.ai_item_id_seq RESTART WITH 1;
-        ALTER SEQUENCE public.chunk_vector_id_seq RESTART WITH 1;
+        ALTER SEQUENCE kosmos.files_id_seq RESTART WITH 1;
+        ALTER SEQUENCE kosmos.ai_item_id_seq RESTART WITH 1;
+        ALTER SEQUENCE kosmos.chunk_vector_id_seq RESTART WITH 1;
       `);
       console.log("Последовательности ID сброшены");
 
@@ -1712,7 +1712,7 @@ class DbService {
       console.log("Жёсткая очистка всех таблиц (TRUNCATE)...");
 
       await this.pgClient.query(`
-        TRUNCATE TABLE public.chunk_vector, public.ai_item, public.files
+        TRUNCATE TABLE kosmos.chunk_vector, kosmos.ai_item, kosmos.files
         RESTART IDENTITY
         CASCADE;
       `);
@@ -1741,7 +1741,7 @@ class DbService {
 
       // 1. Получаем ID файлов для этого context-code
       const filesResult = await this.pgClient.query(
-        'SELECT id FROM public.files WHERE context_code = $1',
+        'SELECT id FROM kosmos.files WHERE context_code = $1',
         [contextCode]
       );
       const fileIds = filesResult.rows.map(row => row.id);
@@ -1749,14 +1749,14 @@ class DbService {
 
       // 2. Удаляем ai_item для этого context-code
       const aiItemsResult = await this.pgClient.query(
-        'DELETE FROM public.ai_item WHERE context_code = $1 RETURNING id',
+        'DELETE FROM kosmos.ai_item WHERE context_code = $1 RETURNING id',
         [contextCode]
       );
       const aiItemsCount = aiItemsResult.rows.length;
 
       // 3. Удаляем ai_comment для этого context-code
       const aiCommentsResult = await this.pgClient.query(
-        'DELETE FROM public.ai_comment WHERE context_code = $1 RETURNING id',
+        'DELETE FROM kosmos.ai_comment WHERE context_code = $1 RETURNING id',
         [contextCode]
       );
       const aiCommentsCount = aiCommentsResult.rows.length;
@@ -1768,9 +1768,9 @@ class DbService {
         // Используем подзапрос с JOIN для удаления чанков, связанных с файлами нужного context-code
         // Это работает независимо от типа file_id (UUID или INTEGER)
         const chunksResult = await this.pgClient.query(
-          `DELETE FROM public.chunk_vector 
+          `DELETE FROM kosmos.chunk_vector 
            WHERE file_id IN (
-             SELECT id FROM public.files WHERE context_code = $1
+             SELECT id FROM kosmos.files WHERE context_code = $1
            ) 
            RETURNING id`,
           [contextCode]
@@ -1780,7 +1780,7 @@ class DbService {
 
       // 5. Удаляем файлы для этого context-code (каскадно удалятся связанные чанки, но мы уже удалили их выше)
       await this.pgClient.query(
-        'DELETE FROM public.files WHERE context_code = $1',
+        'DELETE FROM kosmos.files WHERE context_code = $1',
         [contextCode]
       );
 
@@ -1841,8 +1841,8 @@ class DbService {
           ai.file_id,
           f.filename,
           f.file_url
-        FROM public.ai_item ai
-        JOIN public.files f ON ai.file_id = f.id
+        FROM kosmos.ai_item ai
+        JOIN kosmos.files f ON ai.file_id = f.id
         WHERE ai.full_name = $1
       `;
       const params = [full_name];
@@ -1864,7 +1864,7 @@ class DbService {
       // Извлекаем поле text из JSONB, если оно есть, иначе весь JSONB как текст
       const chunksResult = await this.pgClient.query(`
         SELECT COALESCE(chunk_content->>'text', chunk_content::text) as chunk_content, level, type, embedding
-        FROM public.chunk_vector
+        FROM kosmos.chunk_vector
         WHERE ai_item_id = $1
         ORDER BY chunk_index
       `, [row.ai_id]);
@@ -1890,18 +1890,18 @@ class DbService {
       // l1_out: source = текущий item, target существует в ai_item, с типом связи
       const l1OutResult = await this.pgClient.query(`
         SELECT DISTINCT l.target, lt.code as type
-        FROM public.link l
-        JOIN public.link_type lt ON lt.id = l.link_type_id
-        JOIN public.ai_item ai ON ai.full_name = l.target AND ai.context_code = l.context_code
+        FROM kosmos.link l
+        JOIN kosmos.link_type lt ON lt.id = l.link_type_id
+        JOIN kosmos.ai_item ai ON ai.full_name = l.target AND ai.context_code = l.context_code
         WHERE l.source = $1 AND l.context_code = $2
       `, [full_name, effectiveContextCode]);
 
       // l1_in: target = текущий item, source существует в ai_item, с типом связи
       const l1InResult = await this.pgClient.query(`
         SELECT DISTINCT l.source, lt.code as type
-        FROM public.link l
-        JOIN public.link_type lt ON lt.id = l.link_type_id
-        JOIN public.ai_item ai ON ai.full_name = l.source AND ai.context_code = l.context_code
+        FROM kosmos.link l
+        JOIN kosmos.link_type lt ON lt.id = l.link_type_id
+        JOIN kosmos.ai_item ai ON ai.full_name = l.source AND ai.context_code = l.context_code
         WHERE l.target = $1 AND l.context_code = $2
       `, [full_name, effectiveContextCode]);
 
@@ -1950,9 +1950,9 @@ class DbService {
             ) FILTER (WHERE fv.id IS NOT NULL),
             '[]'::json
           ) AS chunks
-        FROM public.ai_item ai
-        JOIN public.files f ON ai.file_id = f.id
-        LEFT JOIN public.chunk_vector fv ON fv.ai_item_id = ai.id
+        FROM kosmos.ai_item ai
+        JOIN kosmos.files f ON ai.file_id = f.id
+        LEFT JOIN kosmos.chunk_vector fv ON fv.ai_item_id = ai.id
       `;
       const params = [];
 
@@ -1973,10 +1973,10 @@ class DbService {
           lt.code as link_type,
           CASE WHEN ai_src.id IS NOT NULL THEN true ELSE false END as source_exists,
           CASE WHEN ai_tgt.id IS NOT NULL THEN true ELSE false END as target_exists
-        FROM public.link l
-        JOIN public.link_type lt ON lt.id = l.link_type_id
-        LEFT JOIN public.ai_item ai_src ON ai_src.full_name = l.source AND ai_src.context_code = l.context_code
-        LEFT JOIN public.ai_item ai_tgt ON ai_tgt.full_name = l.target AND ai_tgt.context_code = l.context_code
+        FROM kosmos.link l
+        JOIN kosmos.link_type lt ON lt.id = l.link_type_id
+        LEFT JOIN kosmos.ai_item ai_src ON ai_src.full_name = l.source AND ai_src.context_code = l.context_code
+        LEFT JOIN kosmos.ai_item ai_tgt ON ai_tgt.full_name = l.target AND ai_tgt.context_code = l.context_code
         WHERE 1=1
       `;
       const linksParams = [];
@@ -2060,19 +2060,19 @@ class DbService {
 
       // 1. Общее количество AiItems
       const totalItemsQuery = contextCode 
-        ? 'SELECT COUNT(*) AS count FROM public.ai_item WHERE context_code = $1'
-        : 'SELECT COUNT(*) AS count FROM public.ai_item';
+        ? 'SELECT COUNT(*) AS count FROM kosmos.ai_item WHERE context_code = $1'
+        : 'SELECT COUNT(*) AS count FROM kosmos.ai_item';
       const totalItemsRes = await this.pgClient.query(totalItemsQuery, params);
       const totalItems = parseInt(totalItemsRes.rows[0].count);
 
       // 2. Количество чанков уровня 1 (зависимости)
       const depsQuery = contextCode
         ? `SELECT COUNT(*) AS count 
-           FROM public.chunk_vector fv
-           JOIN public.files f ON fv.file_id = f.id
+           FROM kosmos.chunk_vector fv
+           JOIN kosmos.files f ON fv.file_id = f.id
            WHERE fv.level LIKE '1-%' AND f.context_code = $1`
         : `SELECT COUNT(*) AS count 
-           FROM public.chunk_vector 
+           FROM kosmos.chunk_vector 
            WHERE level LIKE '1-%'`;
       const depsRes = await this.pgClient.query(depsQuery, params);
       const totalDeps = parseInt(depsRes.rows[0].count);
@@ -2080,12 +2080,12 @@ class DbService {
       // 3. Статистика по типам AiItem
       const typeStatsQuery = contextCode
         ? `SELECT type, COUNT(*) AS count 
-           FROM public.ai_item 
+           FROM kosmos.ai_item 
            WHERE type IS NOT NULL AND type != '' AND context_code = $1
            GROUP BY type
            ORDER BY count DESC`
         : `SELECT type, COUNT(*) AS count 
-           FROM public.ai_item 
+           FROM kosmos.ai_item 
            WHERE type IS NOT NULL AND type != ''
            GROUP BY type
            ORDER BY count DESC`;
@@ -2101,16 +2101,16 @@ class DbService {
         ? `SELECT 
            LOWER(SUBSTRING(f.filename FROM '\.([^\.]+)$')) AS ext,
            COUNT(*) AS count
-           FROM public.files f
-           JOIN public.ai_item ai ON f.id = ai.file_id
+           FROM kosmos.files f
+           JOIN kosmos.ai_item ai ON f.id = ai.file_id
            WHERE f.context_code = $1
            GROUP BY ext
            ORDER BY count DESC`
         : `SELECT 
            LOWER(SUBSTRING(filename FROM '\.([^\.]+)$')) AS ext,
            COUNT(*) AS count
-           FROM public.files f
-           JOIN public.ai_item ai ON f.id = ai.file_id
+           FROM kosmos.files f
+           JOIN kosmos.ai_item ai ON f.id = ai.file_id
            GROUP BY ext
            ORDER BY count DESC`;
       const langStatsRes = await this.pgClient.query(langStatsQuery, params);
@@ -2134,11 +2134,11 @@ class DbService {
       // 5. Размер векторного индекса (чанков с embedding)
       const vectorSizeQuery = contextCode
         ? `SELECT COUNT(*) AS count 
-           FROM public.chunk_vector fv
-           JOIN public.files f ON fv.file_id = f.id
+           FROM kosmos.chunk_vector fv
+           JOIN kosmos.files f ON fv.file_id = f.id
            WHERE fv.embedding IS NOT NULL AND f.context_code = $1`
         : `SELECT COUNT(*) AS count 
-           FROM public.chunk_vector 
+           FROM kosmos.chunk_vector 
            WHERE embedding IS NOT NULL`;
       const vectorSizeRes = await this.pgClient.query(vectorSizeQuery, params);
       const vectorIndexSize = `${vectorSizeRes.rows[0].count} vectors`;
@@ -2146,11 +2146,11 @@ class DbService {
       // 6. Дата последней модификации (по чанкам)
       const lastScanQuery = contextCode
         ? `SELECT MAX(fv.created_at) AS last 
-           FROM public.chunk_vector fv
-           JOIN public.files f ON fv.file_id = f.id
+           FROM kosmos.chunk_vector fv
+           JOIN kosmos.files f ON fv.file_id = f.id
            WHERE f.context_code = $1`
         : `SELECT MAX(created_at) AS last 
-           FROM public.chunk_vector`;
+           FROM kosmos.chunk_vector`;
       const lastScanRes = await this.pgClient.query(lastScanQuery, params);
       const lastScan = lastScanRes.rows[0].last || new Date().toISOString();
 
@@ -2190,8 +2190,8 @@ class DbService {
           fv.content,
           fv.created_at,
           fv.updated_at
-        FROM public.chunk_vector fv
-        JOIN public.ai_item ai ON fv.ai_item_id = ai.id
+        FROM kosmos.chunk_vector fv
+        JOIN kosmos.ai_item ai ON fv.ai_item_id = ai.id
         WHERE ai.full_name = $1 AND fv.level = '2-logic'
       `;
       const params = [fullName];
@@ -2266,8 +2266,8 @@ class DbService {
     try {
       // Находим ai_item
       const aiItemQuery = contextCode
-        ? `SELECT id, file_id FROM public.ai_item WHERE full_name = $1 AND context_code = $2`
-        : `SELECT id, file_id FROM public.ai_item WHERE full_name = $1`;
+        ? `SELECT id, file_id FROM kosmos.ai_item WHERE full_name = $1 AND context_code = $2`
+        : `SELECT id, file_id FROM kosmos.ai_item WHERE full_name = $1`;
       
       const aiItemParams = contextCode ? [fullName, contextCode] : [fullName];
       const aiItemResult = await this.pgClient.query(aiItemQuery, aiItemParams);
@@ -2281,7 +2281,7 @@ class DbService {
 
       // Проверяем, существует ли уже чанк с level='2-logic'
       const existingQuery = `
-        SELECT id, created_at FROM public.chunk_vector
+        SELECT id, created_at FROM kosmos.chunk_vector
         WHERE ai_item_id = $1 AND level = '2-logic'
         LIMIT 1
       `;
@@ -2299,7 +2299,7 @@ class DbService {
         updatedAt = new Date().toISOString();
 
         await this.pgClient.query(
-          `UPDATE public.chunk_vector
+          `UPDATE kosmos.chunk_vector
            SET chunk_content = $1::jsonb,
                content = $2::jsonb,
                updated_at = CURRENT_TIMESTAMP
@@ -2312,7 +2312,7 @@ class DbService {
         updatedAt = null;
 
         await this.pgClient.query(
-          `INSERT INTO public.chunk_vector
+          `INSERT INTO kosmos.chunk_vector
            (file_id, ai_item_id, chunk_content, content, level, full_name, type)
            VALUES ($1, $2, $3::jsonb, $4::jsonb, '2-logic', $5, 'logic-graph')`,
           [fileId, aiItemId, JSON.stringify(chunkContent), JSON.stringify(content), fullName]
@@ -2335,9 +2335,9 @@ class DbService {
   async deleteLogicGraph(fullName, contextCode = null) {
     try {
       let query = `
-        DELETE FROM public.chunk_vector
+        DELETE FROM kosmos.chunk_vector
         WHERE ai_item_id IN (
-          SELECT ai.id FROM public.ai_item ai
+          SELECT ai.id FROM kosmos.ai_item ai
           WHERE ai.full_name = $1
         ) AND level = '2-logic'
       `;
@@ -2345,9 +2345,9 @@ class DbService {
 
       if (contextCode) {
         query = `
-          DELETE FROM public.chunk_vector
+          DELETE FROM kosmos.chunk_vector
           WHERE ai_item_id IN (
-            SELECT ai.id FROM public.ai_item ai
+            SELECT ai.id FROM kosmos.ai_item ai
             WHERE ai.full_name = $1 AND ai.context_code = $2
           ) AND level = '2-logic'
         `;
@@ -2372,7 +2372,7 @@ class DbService {
     try {
       const result = await this.pgClient.query(`
         SELECT comment, created_at, updated_at
-        FROM public.ai_comment
+        FROM kosmos.ai_comment
         WHERE context_code = $1 AND full_name = $2
       `, [contextCode, fullName]);
 
@@ -2402,7 +2402,7 @@ class DbService {
   async createAiCommentIfNotExists(contextCode, fullName, comment) {
     try {
       const result = await this.pgClient.query(`
-        INSERT INTO public.ai_comment (context_code, full_name, comment)
+        INSERT INTO kosmos.ai_comment (context_code, full_name, comment)
         VALUES ($1, $2, $3)
         ON CONFLICT (context_code, full_name) DO NOTHING
         RETURNING id
@@ -2429,7 +2429,7 @@ class DbService {
   async createAiComment(contextCode, fullName, comment) {
     try {
       const result = await this.pgClient.query(`
-        INSERT INTO public.ai_comment (context_code, full_name, comment)
+        INSERT INTO kosmos.ai_comment (context_code, full_name, comment)
         VALUES ($1, $2, $3)
         ON CONFLICT (context_code, full_name) 
         DO UPDATE SET 
@@ -2464,7 +2464,7 @@ class DbService {
   async updateAiComment(contextCode, fullName, comment) {
     try {
       const result = await this.pgClient.query(`
-        UPDATE public.ai_comment
+        UPDATE kosmos.ai_comment
         SET comment = $3, updated_at = CURRENT_TIMESTAMP
         WHERE context_code = $1 AND full_name = $2
         RETURNING id, comment, created_at, updated_at
@@ -2498,7 +2498,7 @@ class DbService {
   async deleteAiComment(contextCode, fullName) {
     try {
       const result = await this.pgClient.query(`
-        DELETE FROM public.ai_comment
+        DELETE FROM kosmos.ai_comment
         WHERE context_code = $1 AND full_name = $2
         RETURNING id
       `, [contextCode, fullName]);
@@ -2531,7 +2531,7 @@ class DbService {
     try {
       const result = await this.pgClient.query(`
         SELECT id, script, question
-        FROM public.agent_script
+        FROM kosmos.agent_script
         WHERE context_code = $1 AND question = $2
       `, [contextCode, question]);
 
@@ -2580,7 +2580,7 @@ class DbService {
     try {
       const result = await this.pgClient.query(`
         SELECT id, question, script
-        FROM public.agent_script
+        FROM kosmos.agent_script
         WHERE context_code = $1 AND question = $2 AND is_valid = true
         LIMIT 1
       `, [contextCode, question]);
@@ -2612,7 +2612,7 @@ class DbService {
       const result = await this.pgClient.query(`
         SELECT id, question, script, 
                ts_rank(to_tsvector('russian', question), plainto_tsquery('russian', $1)) as rank
-        FROM public.agent_script
+        FROM kosmos.agent_script
         WHERE context_code = $2
           AND to_tsvector('russian', question) @@ plainto_tsquery('russian', $1)
           AND is_valid = true
@@ -2654,14 +2654,14 @@ class DbService {
     try {
       // Проверяем, нет ли уже такого вопроса (UNIQUE constraint)
       const existing = await this.pgClient.query(`
-        SELECT id FROM public.agent_script
+        SELECT id FROM kosmos.agent_script
         WHERE context_code = $1 AND question = $2
       `, [contextCode, question]);
 
       if (existing.rows.length > 0) {
         // Обновляем существующий
         const result = await this.pgClient.query(`
-          UPDATE public.agent_script
+          UPDATE kosmos.agent_script
           SET script = $1, is_valid = $2, updated_at = CURRENT_TIMESTAMP
           WHERE context_code = $3 AND question = $4
           RETURNING id, question, script, created_at, updated_at
@@ -2675,7 +2675,7 @@ class DbService {
         console.log(`[DB] Сохранение скрипта: ${newlineCount} переводов строк, длина: ${script.length} символов`);
         
         const result = await this.pgClient.query(`
-          INSERT INTO public.agent_script (context_code, question, script, is_valid)
+          INSERT INTO kosmos.agent_script (context_code, question, script, is_valid)
           VALUES ($1, $2, $3, $4)
           RETURNING id, question, script, created_at, updated_at
         `, [contextCode, question, script, isValid]);
@@ -2704,7 +2704,7 @@ class DbService {
   async incrementUsage(scriptId) {
     try {
       const result = await this.pgClient.query(`
-        UPDATE public.agent_script
+        UPDATE kosmos.agent_script
         SET usage_count = usage_count + 1, updated_at = CURRENT_TIMESTAMP
         WHERE id = $1
         RETURNING id, usage_count, question
@@ -2736,7 +2736,7 @@ class DbService {
       const vectorString = `[${embedding.join(',')}]`;
 
       const result = await this.pgClient.query(`
-        UPDATE public.agent_script
+        UPDATE kosmos.agent_script
         SET question_embedding = $2, updated_at = CURRENT_TIMESTAMP
         WHERE id = $1
         RETURNING id, question, updated_at
@@ -2778,7 +2778,7 @@ class DbService {
           is_valid,
           last_result,
           1 - (question_embedding <=> $1::vector) AS similarity
-        FROM public.agent_script
+        FROM kosmos.agent_script
         WHERE context_code = $2
           AND is_valid = true
           AND question_embedding IS NOT NULL
@@ -2811,7 +2811,7 @@ class DbService {
     try {
       const result = await this.pgClient.query(`
         SELECT question_embedding
-        FROM public.agent_script
+        FROM kosmos.agent_script
         WHERE id = $1
       `, [scriptId]);
 
@@ -2847,7 +2847,7 @@ class DbService {
     try {
       const result = await this.pgClient.query(`
         SELECT id, code, name, description, created_at, updated_at
-        FROM public.tag
+        FROM kosmos.tag
         WHERE context_code = $1
         ORDER BY name ASC
       `, [contextCode]);
@@ -2869,7 +2869,7 @@ class DbService {
     try {
       const result = await this.pgClient.query(`
         SELECT id, code, name, description, created_at, updated_at
-        FROM public.tag
+        FROM kosmos.tag
         WHERE context_code = $1 AND code = $2
       `, [contextCode, tagCode]);
 
@@ -2891,7 +2891,7 @@ class DbService {
   async createTag(contextCode, code, name, description = null) {
     try {
       const result = await this.pgClient.query(`
-        INSERT INTO public.tag (context_code, code, name, description)
+        INSERT INTO kosmos.tag (context_code, code, name, description)
         VALUES ($1, $2, $3, $4)
         RETURNING id, code, name, description, created_at, updated_at
       `, [contextCode, code, name, description]);
@@ -2938,7 +2938,7 @@ class DbService {
       values.push(contextCode, tagCode);
 
       const result = await this.pgClient.query(`
-        UPDATE public.tag
+        UPDATE kosmos.tag
         SET ${setClauses.join(', ')}
         WHERE context_code = $${paramIndex++} AND code = $${paramIndex}
         RETURNING id, code, name, description, created_at, updated_at
@@ -2969,7 +2969,7 @@ class DbService {
       // Проверяем, используется ли тег
       const usageCheck = await this.pgClient.query(`
         SELECT COUNT(*) as count
-        FROM public.ai_item_tag
+        FROM kosmos.ai_item_tag
         WHERE tag_id = $1
       `, [tag.id]);
 
@@ -2985,13 +2985,13 @@ class DbService {
       // Удаляем связи (каскадно)
       if (usageCount > 0) {
         await this.pgClient.query(`
-          DELETE FROM public.ai_item_tag WHERE tag_id = $1
+          DELETE FROM kosmos.ai_item_tag WHERE tag_id = $1
         `, [tag.id]);
       }
 
       // Удаляем тег
       await this.pgClient.query(`
-        DELETE FROM public.tag WHERE id = $1
+        DELETE FROM kosmos.tag WHERE id = $1
       `, [tag.id]);
 
       return true;
@@ -3022,15 +3022,15 @@ class DbService {
           f.filename as "filePath",
           COALESCE(
             (SELECT cv.metadata->>'language' 
-             FROM public.chunk_vector cv 
+             FROM kosmos.chunk_vector cv 
              WHERE cv.ai_item_id = ai.id 
              LIMIT 1),
             'unknown'
           ) as language
-        FROM public.ai_item_tag ait
-        JOIN public.ai_item ai ON ai.full_name = ait.ai_item_full_name 
+        FROM kosmos.ai_item_tag ait
+        JOIN kosmos.ai_item ai ON ai.full_name = ait.ai_item_full_name 
           AND ai.context_code = ait.ai_item_context_code
-        LEFT JOIN public.files f ON f.id = ai.file_id
+        LEFT JOIN kosmos.files f ON f.id = ai.file_id
         WHERE ait.tag_id = $1
         ORDER BY ai.full_name ASC
       `, [tag.id]);
@@ -3085,7 +3085,7 @@ class DbService {
     try {
       const result = await this.pgClient.query(`
         SELECT id, code, name, description, is_system, created_at, updated_at
-        FROM public.item_type
+        FROM kosmos.item_type
         WHERE context_code = $1
         ORDER BY name ASC
       `, [contextCode]);
@@ -3105,7 +3105,7 @@ class DbService {
     const types = DbService.BASE_ITEM_TYPES;
     for (const t of types) {
       await this.pgClient.query(`
-        INSERT INTO public.item_type (context_code, code, name, description, is_system)
+        INSERT INTO kosmos.item_type (context_code, code, name, description, is_system)
         VALUES ($1, $2, $3, $4, true)
         ON CONFLICT (context_code, code) DO NOTHING
       `, [contextCode, t.code, t.name, t.description || null]);
@@ -3122,7 +3122,7 @@ class DbService {
     try {
       const result = await this.pgClient.query(`
         SELECT id, code, name, description, is_system, created_at, updated_at
-        FROM public.item_type
+        FROM kosmos.item_type
         WHERE context_code = $1 AND code = $2
       `, [contextCode, typeCode]);
       return result.rows[0] || null;
@@ -3141,7 +3141,7 @@ class DbService {
   async createItemType(contextCode, { code, name, description = null }) {
     try {
       const result = await this.pgClient.query(`
-        INSERT INTO public.item_type (context_code, code, name, description, is_system)
+        INSERT INTO kosmos.item_type (context_code, code, name, description, is_system)
         VALUES ($1, $2, $3, $4, false)
         RETURNING id, code, name, description, is_system, created_at, updated_at
       `, [contextCode, code, name, description]);
@@ -3181,7 +3181,7 @@ class DbService {
       setClauses.push('updated_at = CURRENT_TIMESTAMP');
       values.push(contextCode, typeCode);
       const result = await this.pgClient.query(`
-        UPDATE public.item_type
+        UPDATE kosmos.item_type
         SET ${setClauses.join(', ')}
         WHERE context_code = $${paramIndex++} AND code = $${paramIndex}
         RETURNING id, code, name, description, is_system, created_at, updated_at
@@ -3209,7 +3209,7 @@ class DbService {
         throw error;
       }
       await this.pgClient.query(`
-        DELETE FROM public.item_type WHERE context_code = $1 AND code = $2
+        DELETE FROM kosmos.item_type WHERE context_code = $1 AND code = $2
       `, [contextCode, typeCode]);
       return true;
     } catch (error) {
@@ -3237,13 +3237,13 @@ class DbService {
           f.filename as "filePath",
           COALESCE(
             (SELECT cv.metadata->>'language'
-             FROM public.chunk_vector cv
+             FROM kosmos.chunk_vector cv
              WHERE cv.ai_item_id = ai.id
              LIMIT 1),
             'unknown'
           ) as language
-        FROM public.ai_item ai
-        LEFT JOIN public.files f ON f.id = ai.file_id
+        FROM kosmos.ai_item ai
+        LEFT JOIN kosmos.files f ON f.id = ai.file_id
         WHERE ai.context_code = $1 AND ai.type = $2
         ORDER BY ai.full_name ASC
       `, [contextCode, typeCode]);
@@ -3265,8 +3265,8 @@ class DbService {
     try {
       const result = await this.pgClient.query(`
         SELECT t.id, t.code, t.name, t.description, t.created_at, t.updated_at
-        FROM public.tag t
-        JOIN public.ai_item_tag ait ON ait.tag_id = t.id
+        FROM kosmos.tag t
+        JOIN kosmos.ai_item_tag ait ON ait.tag_id = t.id
         WHERE ait.ai_item_full_name = $1 AND ait.ai_item_context_code = $2
         ORDER BY t.name ASC
       `, [itemFullName, contextCode]);
@@ -3289,7 +3289,7 @@ class DbService {
     try {
       // Проверяем существование AI Item
       const aiItem = await this.pgClient.query(`
-        SELECT full_name FROM public.ai_item
+        SELECT full_name FROM kosmos.ai_item
         WHERE full_name = $1 AND context_code = $2
       `, [itemFullName, contextCode]);
 
@@ -3301,7 +3301,7 @@ class DbService {
 
       // Получаем id тегов по кодам
       const tagsResult = await this.pgClient.query(`
-        SELECT id, code FROM public.tag
+        SELECT id, code FROM kosmos.tag
         WHERE context_code = $1 AND code = ANY($2)
       `, [contextCode, tagCodes]);
 
@@ -3318,7 +3318,7 @@ class DbService {
       // Добавляем связи (ON CONFLICT DO NOTHING для idempotent)
       for (const tag of tagsResult.rows) {
         await this.pgClient.query(`
-          INSERT INTO public.ai_item_tag (ai_item_full_name, ai_item_context_code, tag_id)
+          INSERT INTO kosmos.ai_item_tag (ai_item_full_name, ai_item_context_code, tag_id)
           VALUES ($1, $2, $3)
           ON CONFLICT DO NOTHING
         `, [itemFullName, contextCode, tag.id]);
@@ -3343,7 +3343,7 @@ class DbService {
     try {
       // Получаем id тегов по кодам
       const tagsResult = await this.pgClient.query(`
-        SELECT id FROM public.tag
+        SELECT id FROM kosmos.tag
         WHERE context_code = $1 AND code = ANY($2)
       `, [contextCode, tagCodes]);
 
@@ -3351,7 +3351,7 @@ class DbService {
 
       if (tagIds.length > 0) {
         await this.pgClient.query(`
-          DELETE FROM public.ai_item_tag
+          DELETE FROM kosmos.ai_item_tag
           WHERE ai_item_full_name = $1 
             AND ai_item_context_code = $2 
             AND tag_id = ANY($3)
@@ -3376,7 +3376,7 @@ class DbService {
     try {
       // Проверяем существование AI Item
       const aiItem = await this.pgClient.query(`
-        SELECT full_name FROM public.ai_item
+        SELECT full_name FROM kosmos.ai_item
         WHERE full_name = $1 AND context_code = $2
       `, [itemFullName, contextCode]);
 
@@ -3388,7 +3388,7 @@ class DbService {
 
       // Удаляем все текущие связи
       await this.pgClient.query(`
-        DELETE FROM public.ai_item_tag
+        DELETE FROM kosmos.ai_item_tag
         WHERE ai_item_full_name = $1 AND ai_item_context_code = $2
       `, [itemFullName, contextCode]);
 
@@ -3399,7 +3399,7 @@ class DbService {
 
       // Получаем id тегов по кодам
       const tagsResult = await this.pgClient.query(`
-        SELECT id, code FROM public.tag
+        SELECT id, code FROM kosmos.tag
         WHERE context_code = $1 AND code = ANY($2)
       `, [contextCode, tagCodes]);
 
@@ -3416,7 +3416,7 @@ class DbService {
       // Добавляем новые связи
       for (const tag of tagsResult.rows) {
         await this.pgClient.query(`
-          INSERT INTO public.ai_item_tag (ai_item_full_name, ai_item_context_code, tag_id)
+          INSERT INTO kosmos.ai_item_tag (ai_item_full_name, ai_item_context_code, tag_id)
           VALUES ($1, $2, $3)
         `, [itemFullName, contextCode, tag.id]);
       }
@@ -3438,7 +3438,7 @@ class DbService {
   async aiItemExists(contextCode, itemFullName) {
     try {
       const result = await this.pgClient.query(`
-        SELECT 1 FROM public.ai_item
+        SELECT 1 FROM kosmos.ai_item
         WHERE full_name = $1 AND context_code = $2
         LIMIT 1
       `, [itemFullName, contextCode]);
@@ -3461,7 +3461,7 @@ class DbService {
     try {
       // Получаем все теги по кодам
       const tagsResult = await this.pgClient.query(`
-        SELECT id, code FROM public.tag
+        SELECT id, code FROM kosmos.tag
         WHERE context_code = $1 AND code = ANY($2)
       `, [contextCode, tagCodes]);
 
@@ -3478,7 +3478,7 @@ class DbService {
 
       // Получаем все существующие AI Items
       const itemsResult = await this.pgClient.query(`
-        SELECT full_name FROM public.ai_item
+        SELECT full_name FROM kosmos.ai_item
         WHERE context_code = $1 AND full_name = ANY($2)
       `, [contextCode, itemIds]);
 
@@ -3498,7 +3498,7 @@ class DbService {
           for (const tagCode of tagCodes) {
             const tagId = tagMap.get(tagCode);
             await this.pgClient.query(`
-              INSERT INTO public.ai_item_tag (ai_item_full_name, ai_item_context_code, tag_id)
+              INSERT INTO kosmos.ai_item_tag (ai_item_full_name, ai_item_context_code, tag_id)
               VALUES ($1, $2, $3)
               ON CONFLICT DO NOTHING
             `, [itemId, contextCode, tagId]);
@@ -3528,7 +3528,7 @@ class DbService {
     try {
       // Получаем id тегов по кодам
       const tagsResult = await this.pgClient.query(`
-        SELECT id, code FROM public.tag
+        SELECT id, code FROM kosmos.tag
         WHERE context_code = $1 AND code = ANY($2)
       `, [contextCode, tagCodes]);
 
@@ -3545,7 +3545,7 @@ class DbService {
       for (const itemId of itemIds) {
         try {
           await this.pgClient.query(`
-            DELETE FROM public.ai_item_tag
+            DELETE FROM kosmos.ai_item_tag
             WHERE ai_item_full_name = $1 
               AND ai_item_context_code = $2 
               AND tag_id = ANY($3)
@@ -3573,7 +3573,7 @@ class DbService {
     try {
       // Ищем таблицу по короткому имени (s_name) или по полному имени, заканчивающемуся на .tableName
       const result = await this.pgClient.query(
-        `SELECT * FROM public.ai_item 
+        `SELECT * FROM kosmos.ai_item 
          WHERE context_code = $1 
            AND type = 'table' 
            AND (s_name = $2 OR full_name LIKE $3 OR full_name = $2)
@@ -3602,7 +3602,7 @@ class DbService {
     try {
       // Находим ai_item таблицы
       const tableItemResult = await this.pgClient.query(
-        `SELECT id FROM public.ai_item 
+        `SELECT id FROM kosmos.ai_item 
          WHERE full_name = $1 AND context_code = $2 AND type = 'table'`,
         [tableFullName, contextCode]
       );
@@ -3615,7 +3615,7 @@ class DbService {
 
       // Находим чанк L0 для этой таблицы
       const chunkResult = await this.pgClient.query(
-        `SELECT chunk_content FROM public.chunk_vector 
+        `SELECT chunk_content FROM kosmos.chunk_vector 
          WHERE ai_item_id = $1 AND level = '0-исходник' 
          ORDER BY created_at DESC LIMIT 1`,
         [tableAiItemId]
@@ -3669,7 +3669,7 @@ class DbService {
     try {
       const result = await this.pgClient.query(
         `SELECT cv.chunk_content 
-         FROM public.chunk_vector cv
+         FROM kosmos.chunk_vector cv
          WHERE cv.ai_item_id = $1 AND cv.level = '0-исходник'
          ORDER BY cv.created_at DESC LIMIT 1`,
         [aiItemId]
@@ -3715,7 +3715,7 @@ class DbService {
   async getFileMetaForIncrCheck(filename, contextCode) {
     try {
       const result = await this.pgClient.query(
-        'SELECT id, modified_at, file_hash FROM public.files WHERE filename = $1 AND context_code = $2',
+        'SELECT id, modified_at, file_hash FROM kosmos.files WHERE filename = $1 AND context_code = $2',
         [filename, contextCode]
       );
       return result.rows.length > 0 ? result.rows[0] : null;
@@ -3733,7 +3733,7 @@ class DbService {
   async updateFileModifiedAt(fileId, mtime) {
     try {
       await this.pgClient.query(
-        'UPDATE public.files SET modified_at = $1 WHERE id = $2',
+        'UPDATE kosmos.files SET modified_at = $1 WHERE id = $2',
         [mtime, fileId]
       );
     } catch (error) {
@@ -3751,7 +3751,7 @@ class DbService {
   async getAiItemsByFileId(fileId, contextCode) {
     try {
       const result = await this.pgClient.query(
-        'SELECT id, full_name, content_hash, file_id FROM public.ai_item WHERE file_id = $1 AND context_code = $2',
+        'SELECT id, full_name, content_hash, file_id FROM kosmos.ai_item WHERE file_id = $1 AND context_code = $2',
         [fileId, contextCode]
       );
       return result.rows;
@@ -3770,7 +3770,7 @@ class DbService {
     try {
       if (!fullNames || fullNames.length === 0) return;
       await this.pgClient.query(
-        'UPDATE public.ai_item SET needs_rebuild = true WHERE full_name = ANY($1::text[]) AND context_code = $2',
+        'UPDATE kosmos.ai_item SET needs_rebuild = true WHERE full_name = ANY($1::text[]) AND context_code = $2',
         [fullNames, contextCode]
       );
     } catch (error) {
@@ -3786,7 +3786,7 @@ class DbService {
   async clearNeedsRebuild(aiItemId) {
     try {
       await this.pgClient.query(
-        'UPDATE public.ai_item SET needs_rebuild = false WHERE id = $1',
+        'UPDATE kosmos.ai_item SET needs_rebuild = false WHERE id = $1',
         [aiItemId]
       );
     } catch (error) {
@@ -3805,17 +3805,17 @@ class DbService {
     try {
       // 1. Удалить link'и где source = fullName
       await this.pgClient.query(
-        'DELETE FROM public.link WHERE context_code = $1 AND source = $2',
+        'DELETE FROM kosmos.link WHERE context_code = $1 AND source = $2',
         [contextCode, fullName]
       );
       // 2. Удалить все чанки (L0, L1, 2-logic, все)
       await this.pgClient.query(
-        'DELETE FROM public.chunk_vector WHERE ai_item_id = $1',
+        'DELETE FROM kosmos.chunk_vector WHERE ai_item_id = $1',
         [aiItemId]
       );
       // 3. Удалить сам ai_item
       await this.pgClient.query(
-        'DELETE FROM public.ai_item WHERE id = $1',
+        'DELETE FROM kosmos.ai_item WHERE id = $1',
         [aiItemId]
       );
     } catch (error) {
@@ -3833,7 +3833,7 @@ class DbService {
   async getReverseLinkedItems(fullName, contextCode) {
     try {
       const result = await this.pgClient.query(
-        'SELECT DISTINCT source FROM public.link WHERE target = $1 AND context_code = $2',
+        'SELECT DISTINCT source FROM kosmos.link WHERE target = $1 AND context_code = $2',
         [fullName, contextCode]
       );
       return result.rows.map(r => r.source);
@@ -3850,7 +3850,7 @@ class DbService {
   async deleteChunksByAiItemId(aiItemId) {
     try {
       await this.pgClient.query(
-        'DELETE FROM public.chunk_vector WHERE ai_item_id = $1',
+        'DELETE FROM kosmos.chunk_vector WHERE ai_item_id = $1',
         [aiItemId]
       );
     } catch (error) {
@@ -3867,7 +3867,7 @@ class DbService {
   async deleteLinksBySource(fullName, contextCode) {
     try {
       await this.pgClient.query(
-        'DELETE FROM public.link WHERE context_code = $1 AND source = $2',
+        'DELETE FROM kosmos.link WHERE context_code = $1 AND source = $2',
         [contextCode, fullName]
       );
     } catch (error) {
@@ -3884,7 +3884,7 @@ class DbService {
   async getAiItemFileId(aiItemId) {
     try {
       const result = await this.pgClient.query(
-        'SELECT file_id FROM public.ai_item WHERE id = $1',
+        'SELECT file_id FROM kosmos.ai_item WHERE id = $1',
         [aiItemId]
       );
       return result.rows.length > 0 ? result.rows[0].file_id : null;

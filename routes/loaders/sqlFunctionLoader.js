@@ -568,7 +568,7 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
     for (const code of Object.values(linkTypeMap)) {
         try {
             const res = await dbService.pgClient.query(
-                'SELECT id FROM public.link_type WHERE code = $1',
+                'SELECT id FROM kosmos.link_type WHERE code = $1',
                 [code]
             );
             linkTypeIds[code] = res.rows[0]?.id || null;
@@ -602,7 +602,7 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
                         null, contextCode
                     );
                     await dbService.pgClient.query(
-                        'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+                        'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                         [aiItem.id, chunkIdL0]
                     );
 
@@ -615,7 +615,7 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
                             chunkIdL0, contextCode
                         );
                         await dbService.pgClient.query(
-                            'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+                            'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                             [aiItem.id, chunkIdL1]
                         );
 
@@ -627,7 +627,7 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
                             for (const target of targets) {
                                 try {
                                     await dbService.pgClient.query(
-                                        `INSERT INTO public.link (context_code, source, target, link_type_id, file_id)
+                                        `INSERT INTO kosmos.link (context_code, source, target, link_type_id, file_id)
                                          VALUES ($1, $2, $3, $4, $5)
                                          ON CONFLICT (context_code, source, target, link_type_id) DO NOTHING`,
                                         [contextCode, entity.full_name, target, typeId, fId || null]
@@ -704,7 +704,7 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
                 );
                 functionReport.chunkL0Id = chunkIdL0;
                 await dbService.pgClient.query(
-                    'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+                    'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                     [functionReport.aiItemId, chunkIdL0]
                 );
 
@@ -720,7 +720,7 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
                     );
                     functionReport.chunkL1Id = chunkIdL1;
                     await dbService.pgClient.query(
-                        'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+                        'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                         [functionReport.aiItemId, chunkIdL1]
                     );
 
@@ -732,7 +732,7 @@ async function loadSqlFunctionsFromFile(filePath, contextCode, dbService, pipeli
                             for (const target of targets) {
                                 try {
                                     await dbService.pgClient.query(
-                                        `INSERT INTO public.link (context_code, source, target, link_type_id, file_id)
+                                        `INSERT INTO kosmos.link (context_code, source, target, link_type_id, file_id)
                                          VALUES ($1, $2, $3, $4, $5)
                                          ON CONFLICT (context_code, source, target, link_type_id) DO NOTHING`,
                                         [contextCode, func.full_name, target, typeId, report.fileId || null]

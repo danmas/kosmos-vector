@@ -174,7 +174,7 @@ async function loadTableSchema(fullTableName, contextCode, dbService, pipelineSt
         
         // Check if we have this virtual file in DB
         const dbFile = await dbService.pgClient.query(
-          'SELECT id, file_hash FROM public.files WHERE filename = $1 AND context_code = $2',
+          'SELECT id, file_hash FROM kosmos.files WHERE filename = $1 AND context_code = $2',
           [virtualFilename, contextCode]
         );
         
@@ -205,7 +205,7 @@ async function loadTableSchema(fullTableName, contextCode, dbService, pipelineSt
     } else {
       // Update file hash and content if changed
       await dbService.pgClient.query(
-        'UPDATE public.files SET content = $1, file_hash = $2, modified_at = NOW() WHERE id = $3',
+        'UPDATE kosmos.files SET content = $1, file_hash = $2, modified_at = NOW() WHERE id = $3',
         [schemaText, fileHash, fileId]
       );
     }
@@ -317,7 +317,7 @@ async function loadTableSchema(fullTableName, contextCode, dbService, pipelineSt
 
       // Привязываем чанк к AI Item
       await dbService.pgClient.query(
-        'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+        'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
         [report.aiItemId, chunkId]
       );
 

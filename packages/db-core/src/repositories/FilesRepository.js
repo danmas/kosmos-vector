@@ -1,4 +1,4 @@
-// FilesRepository.js - Репозиторий для работы с таблицей public.files
+// FilesRepository.js - Репозиторий для работы с таблицей kosmos.files
 // Отвечает только за SQL-операции с файлами, без бизнес-логики файловой системы
 
 /**
@@ -51,14 +51,14 @@ class FilesRepository {
 
     // Поиск существующего файла по filename + context_code
     const existing = await this.db.queryOne(
-      `SELECT id FROM public.files WHERE filename = $1 AND context_code = $2`,
+      `SELECT id FROM kosmos.files WHERE filename = $1 AND context_code = $2`,
       [filename, contextCode]
     );
 
     if (!existing) {
       // INSERT
       const result = await this.db.queryOne(
-        `INSERT INTO public.files (filename, file_url, modified_at, content, context_code, file_hash)
+        `INSERT INTO kosmos.files (filename, file_url, modified_at, content, context_code, file_hash)
          VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING id`,
         [filename, fileUrl, modifiedAt, content, contextCode, fileHash]
@@ -67,7 +67,7 @@ class FilesRepository {
     } else {
       // UPDATE
       await this.db.query(
-        `UPDATE public.files
+        `UPDATE kosmos.files
          SET file_url = $1, modified_at = $2, content = $3, context_code = $4, file_hash = $5
          WHERE id = $6`,
         [fileUrl, modifiedAt, content, contextCode, fileHash, existing.id]
@@ -92,7 +92,7 @@ class FilesRepository {
     } = params;
 
     return this.db.queryOne(
-      `INSERT INTO public.files (filename, file_url, modified_at, content, context_code, file_hash)
+      `INSERT INTO kosmos.files (filename, file_url, modified_at, content, context_code, file_hash)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [filename, fileUrl, modifiedAt, content, contextCode, fileHash]
@@ -106,7 +106,7 @@ class FilesRepository {
    */
   async getById(fileId) {
     return this.db.queryOne(
-      `SELECT * FROM public.files WHERE id = $1`,
+      `SELECT * FROM kosmos.files WHERE id = $1`,
       [fileId]
     );
   }
@@ -120,12 +120,12 @@ class FilesRepository {
   async getByFilename(filename, contextCode = null) {
     if (contextCode) {
       return this.db.queryOne(
-        `SELECT * FROM public.files WHERE filename = $1 AND context_code = $2`,
+        `SELECT * FROM kosmos.files WHERE filename = $1 AND context_code = $2`,
         [filename, contextCode]
       );
     }
     return this.db.queryOne(
-      `SELECT * FROM public.files WHERE filename = $1`,
+      `SELECT * FROM kosmos.files WHERE filename = $1`,
       [filename]
     );
   }
@@ -139,12 +139,12 @@ class FilesRepository {
   async getByHash(fileHash, contextCode = null) {
     if (contextCode) {
       return this.db.queryOne(
-        `SELECT * FROM public.files WHERE file_hash = $1 AND context_code = $2`,
+        `SELECT * FROM kosmos.files WHERE file_hash = $1 AND context_code = $2`,
         [fileHash, contextCode]
       );
     }
     return this.db.queryOne(
-      `SELECT * FROM public.files WHERE file_hash = $1`,
+      `SELECT * FROM kosmos.files WHERE file_hash = $1`,
       [fileHash]
     );
   }
@@ -157,8 +157,8 @@ class FilesRepository {
   async getAllWithChunksCount(contextCode = null) {
     let sql = `
       SELECT f.*, 
-             (SELECT COUNT(*) FROM public.chunk_vector WHERE file_id = f.id) as chunks_count
-      FROM public.files f
+             (SELECT COUNT(*) FROM kosmos.chunk_vector WHERE file_id = f.id) as chunks_count
+      FROM kosmos.files f
     `;
     const params = [];
 
@@ -179,7 +179,7 @@ class FilesRepository {
   async getContextCodes() {
     const rows = await this.db.queryAll(
       `SELECT DISTINCT context_code 
-       FROM public.files 
+       FROM kosmos.files 
        WHERE context_code IS NOT NULL 
        ORDER BY context_code`
     );
@@ -203,7 +203,7 @@ class FilesRepository {
    */
   async updateContextCode(fileId, contextCode) {
     const result = await this.db.query(
-      `UPDATE public.files SET context_code = $1 WHERE id = $2`,
+      `UPDATE kosmos.files SET context_code = $1 WHERE id = $2`,
       [contextCode, fileId]
     );
     return result.rowCount > 0;
@@ -217,7 +217,7 @@ class FilesRepository {
    */
   async updateModifiedAt(fileId, modifiedAt = new Date()) {
     const result = await this.db.query(
-      `UPDATE public.files SET modified_at = $1 WHERE id = $2`,
+      `UPDATE kosmos.files SET modified_at = $1 WHERE id = $2`,
       [modifiedAt, fileId]
     );
     return result.rowCount > 0;
@@ -230,7 +230,7 @@ class FilesRepository {
    */
   async delete(fileId) {
     const result = await this.db.query(
-      `DELETE FROM public.files WHERE id = $1`,
+      `DELETE FROM kosmos.files WHERE id = $1`,
       [fileId]
     );
     return result.rowCount > 0;
@@ -243,7 +243,7 @@ class FilesRepository {
    */
   async deleteByContext(contextCode) {
     const result = await this.db.query(
-      `DELETE FROM public.files WHERE context_code = $1`,
+      `DELETE FROM kosmos.files WHERE context_code = $1`,
       [contextCode]
     );
     return result.rowCount;
@@ -266,7 +266,7 @@ class FilesRepository {
    * @returns {Promise<number>}
    */
   async count(contextCode = null) {
-    let sql = 'SELECT COUNT(*) as count FROM public.files';
+    let sql = 'SELECT COUNT(*) as count FROM kosmos.files';
     const params = [];
 
     if (contextCode) {

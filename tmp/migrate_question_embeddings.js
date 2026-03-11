@@ -31,7 +31,7 @@ async function migrateQuestionEmbeddings() {
     // Получаем все скрипты без эмбеддингов (колонка question_embedding IS NULL)
     const scriptsResult = await pgClient.query(`
       SELECT id, question, context_code
-      FROM public.agent_script
+      FROM kosmos.agent_script
       WHERE question_embedding IS NULL
       ORDER BY id
     `);

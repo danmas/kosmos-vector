@@ -61,8 +61,8 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
         // Это просто проверка, исправлять тут сложно без контекста, просто логируем
         const aiItemsNoSchema = await client.query(`
       SELECT ai.id, ai.full_name, f.filename
-      FROM public.ai_item ai
-      LEFT JOIN public.files f ON ai.file_id = f.id
+      FROM kosmos.ai_item ai
+      LEFT JOIN kosmos.files f ON ai.file_id = f.id
       WHERE ai.context_code = $1
         AND (ai.full_name IS NULL OR ai.full_name = '' OR ai.full_name NOT LIKE '%.%')
     `, [contextCode]);
@@ -75,8 +75,8 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
         // 2. Проверка чанков L0 без схемы
         const chunksL0NoSchema = await client.query(`
       SELECT fv.id
-      FROM public.chunk_vector fv
-      JOIN public.files f ON fv.file_id = f.id
+      FROM kosmos.chunk_vector fv
+      JOIN kosmos.files f ON fv.file_id = f.id
       WHERE f.context_code = $1
         AND fv.level LIKE '0%'
         AND fv.full_name IS NOT NULL AND fv.full_name != ''
@@ -92,9 +92,9 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
         // Получаем все чанки уровня 1
         let l1ChunksQuery = `
       SELECT fv.id AS chunk_id, fv.chunk_content, fv.full_name AS parent_func, f.filename, fv.ai_item_id
-      FROM public.chunk_vector fv
-      JOIN public.files f ON fv.file_id = f.id
-      JOIN public.ai_item ai ON fv.ai_item_id = ai.id
+      FROM kosmos.chunk_vector fv
+      JOIN kosmos.files f ON fv.file_id = f.id
+      JOIN kosmos.ai_item ai ON fv.ai_item_id = ai.id
       WHERE f.context_code = $1 AND fv.level LIKE '1-%'`;
         
         if (mode === 'incremental') {
@@ -144,7 +144,7 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
                     // RegExp: имя начинается на что угодно, потом точка, потом shortName, потом конец
                     const candidates = await client.query(`
                     SELECT full_name
-                    FROM public.ai_item
+                    FROM kosmos.ai_item
                     WHERE context_code = $1
                       AND full_name ~ ('^[^.]+\\.' || $2 || '$')
                 `, [contextCode, shortName]);
@@ -188,7 +188,7 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
             // Если были изменения, сохраняем в БД
             if (chunkModified) {
                 await client.query(
-                    `UPDATE public.chunk_vector SET chunk_content = $1 WHERE id = $2`,
+                    `UPDATE kosmos.chunk_vector SET chunk_content = $1 WHERE id = $2`,
                     [content, chunk.chunk_id]
                 );
             }
@@ -215,8 +215,8 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
         // Получаем все связи без схемы в target
         let linksQuery = `
             SELECT l.id, l.source, l.target, l.link_type_id, ai.needs_rebuild
-            FROM public.link l
-            JOIN public.ai_item ai ON l.source = ai.full_name AND l.context_code = ai.context_code
+            FROM kosmos.link l
+            JOIN kosmos.ai_item ai ON l.source = ai.full_name AND l.context_code = ai.context_code
             WHERE l.context_code = $1
               AND l.target NOT LIKE '%.%'`;
               
@@ -239,7 +239,7 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
                 // Ищем кандидатов в ai_item
                 const candidates = await client.query(`
                     SELECT full_name
-                    FROM public.ai_item
+                    FROM kosmos.ai_item
                     WHERE context_code = $1
                       AND full_name ~ ('^[^.]+\\.' || $2 || '$')
                 `, [contextCode, shortName]);
@@ -257,7 +257,7 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
 
                     // Проверяем, не станет ли запись дубликатом после обновления
                     const existingLink = await client.query(`
-                        SELECT id FROM public.link
+                        SELECT id FROM kosmos.link
                         WHERE context_code = $1
                           AND source = $2
                           AND target = $3
@@ -267,7 +267,7 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
 
                     if (existingLink.rows.length > 0) {
                         // Дубликат уже существует — удаляем текущую запись
-                        await client.query(`DELETE FROM public.link WHERE id = $1`, [link.id]);
+                        await client.query(`DELETE FROM kosmos.link WHERE id = $1`, [link.id]);
                         report.summary.linksFixed++;
                         report.details.linkFixes.push({
                             from: shortName,
@@ -279,7 +279,7 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
                         // Обновляем target
                         logger.log(`--- обновляем target для: ${shortName} к ${fullName}`);
                         await client.query(
-                            `UPDATE public.link SET target = $1 WHERE id = $2`,
+                            `UPDATE kosmos.link SET target = $1 WHERE id = $2`,
                             [fullName, link.id]
                         );
                         report.summary.linksFixed++;
@@ -306,8 +306,8 @@ async function runStep2(contextCode, sessionId, dbService, pipelineState, pipeli
 
         // 5. Удаление дубликатов в link (на случай если появились после исправления)
         const deletedDuplicates = await client.query(`
-            DELETE FROM public.link a
-            USING public.link b
+            DELETE FROM kosmos.link a
+            USING kosmos.link b
             WHERE a.id > b.id
               AND a.context_code = b.context_code
               AND a.source = b.source

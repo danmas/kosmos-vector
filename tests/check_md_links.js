@@ -20,8 +20,8 @@ async function checkLinks() {
     // Проверка follows связей
     const followsQuery = await pgClient.query(`
       SELECT l.source, l.target, lt.code as link_type
-      FROM public.link l
-      JOIN public.link_type lt ON l.link_type_id = lt.id
+      FROM kosmos.link l
+      JOIN kosmos.link_type lt ON l.link_type_id = lt.id
       WHERE l.context_code = $1 AND lt.code = 'md_follows'
       ORDER BY l.source
     `, [TEST_CONTEXT]);

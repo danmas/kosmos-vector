@@ -348,7 +348,7 @@ async function loadJsFunctionsFromFile(filePath, contextCode, dbService, pipelin
     for (const code of Object.values(linkTypeMap)) {
         try {
             const res = await dbService.pgClient.query(
-                'SELECT id FROM public.link_type WHERE code = $1',
+                'SELECT id FROM kosmos.link_type WHERE code = $1',
                 [code]
             );
             if (res.rows.length > 0) {
@@ -374,13 +374,13 @@ async function loadJsFunctionsFromFile(filePath, contextCode, dbService, pipelin
                     }
                     const chunkIdL0 = await dbService.saveChunkVector(fId, chunkContent, null,
                         { type: entity.type, level: '0-исходник', full_name: entity.full_name, s_name: entity.sname }, null, contextCode);
-                    await dbService.pgClient.query('UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2', [aiItem.id, chunkIdL0]);
+                    await dbService.pgClient.query('UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2', [aiItem.id, chunkIdL0]);
 
                     try {
                         const l1Result = await parseJsFunctionL1(entity.body);
                         const chunkIdL1 = await dbService.saveChunkVector(fId, { text: l1Result }, null,
                             { type: 'json', level: '1-связи', full_name: entity.full_name, s_name: entity.sname }, chunkIdL0, contextCode);
-                        await dbService.pgClient.query('UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2', [aiItem.id, chunkIdL1]);
+                        await dbService.pgClient.query('UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2', [aiItem.id, chunkIdL1]);
 
                         for (const [key, code] of Object.entries(linkTypeMap)) {
                             const typeId = linkTypeIds[code];
@@ -389,7 +389,7 @@ async function loadJsFunctionsFromFile(filePath, contextCode, dbService, pipelin
                             for (const target of targets) {
                                 try {
                                     await dbService.pgClient.query(
-                                        `INSERT INTO public.link (context_code, source, target, link_type_id, file_id)
+                                        `INSERT INTO kosmos.link (context_code, source, target, link_type_id, file_id)
                                          VALUES ($1, $2, $3, $4, $5)
                                          ON CONFLICT (context_code, source, target, link_type_id) DO NOTHING`,
                                         [contextCode, entity.full_name, target, typeId, fId || null]);
@@ -483,7 +483,7 @@ async function loadJsFunctionsFromFile(filePath, contextCode, dbService, pipelin
 
                 // Привязываем чанк к AI Item
                 await dbService.pgClient.query(
-                    'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+                    'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                     [entityReport.aiItemId, chunkIdL0]
                 );
 
@@ -515,7 +515,7 @@ async function loadJsFunctionsFromFile(filePath, contextCode, dbService, pipelin
 
                     // Привязываем чанк L1 к AI Item
                     await dbService.pgClient.query(
-                        'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+                        'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                         [entityReport.aiItemId, chunkIdL1]
                     );
 
@@ -535,7 +535,7 @@ async function loadJsFunctionsFromFile(filePath, contextCode, dbService, pipelin
                             for (const target of targets) {
                                 try {
                                     await dbService.pgClient.query(
-                                        `INSERT INTO public.link 
+                                        `INSERT INTO kosmos.link 
                                          (context_code, source, target, link_type_id, file_id)
                                          VALUES ($1, $2, $3, $4, $5)
                                          ON CONFLICT (context_code, source, target, link_type_id) DO NOTHING`,

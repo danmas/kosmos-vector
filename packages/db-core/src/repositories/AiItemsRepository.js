@@ -67,13 +67,13 @@ class AiItemsRepository {
     } = params;
 
     const existing = await this.db.queryOne(
-      `SELECT id FROM public.ai_item WHERE full_name = $1 AND context_code = $2`,
+      `SELECT id FROM kosmos.ai_item WHERE full_name = $1 AND context_code = $2`,
       [fullName, contextCode]
     );
 
     if (!existing) {
       const result = await this.db.queryOne(
-        `INSERT INTO public.ai_item (full_name, context_code, file_id, type, s_name, h_name, content_hash)
+        `INSERT INTO kosmos.ai_item (full_name, context_code, file_id, type, s_name, h_name, content_hash)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING id`,
         [fullName, contextCode, fileId, type, sName, hName, contentHash]
@@ -81,7 +81,7 @@ class AiItemsRepository {
       return { id: result.id, isNew: true };
     } else {
       await this.db.query(
-        `UPDATE public.ai_item
+        `UPDATE kosmos.ai_item
          SET file_id = COALESCE($1, file_id),
              type = COALESCE($2, type),
              s_name = COALESCE($3, s_name),
@@ -102,7 +102,7 @@ class AiItemsRepository {
    */
   async getById(itemId) {
     return this.db.queryOne(
-      `SELECT * FROM public.ai_item WHERE id = $1`,
+      `SELECT * FROM kosmos.ai_item WHERE id = $1`,
       [itemId]
     );
   }
@@ -115,7 +115,7 @@ class AiItemsRepository {
    */
   async getByFullName(fullName, contextCode) {
     return this.db.queryOne(
-      `SELECT * FROM public.ai_item WHERE full_name = $1 AND context_code = $2`,
+      `SELECT * FROM kosmos.ai_item WHERE full_name = $1 AND context_code = $2`,
       [fullName, contextCode]
     );
   }
@@ -128,11 +128,11 @@ class AiItemsRepository {
   async getAll(contextCode = null) {
     if (contextCode) {
       return this.db.queryAll(
-        `SELECT * FROM public.ai_item WHERE context_code = $1 ORDER BY full_name`,
+        `SELECT * FROM kosmos.ai_item WHERE context_code = $1 ORDER BY full_name`,
         [contextCode]
       );
     }
-    return this.db.queryAll(`SELECT * FROM public.ai_item ORDER BY full_name`);
+    return this.db.queryAll(`SELECT * FROM kosmos.ai_item ORDER BY full_name`);
   }
 
   /**
@@ -146,7 +146,7 @@ class AiItemsRepository {
       return [];
     }
     return this.db.queryAll(
-      `SELECT id, full_name FROM public.ai_item 
+      `SELECT id, full_name FROM kosmos.ai_item 
        WHERE full_name = ANY($1::text[]) AND context_code = $2`,
       [fullNames, contextCode]
     );
@@ -160,7 +160,7 @@ class AiItemsRepository {
    */
   async updateContextCode(itemId, newContextCode) {
     return this.db.queryOne(
-      `UPDATE public.ai_item 
+      `UPDATE kosmos.ai_item 
        SET context_code = $1, updated_at = CURRENT_TIMESTAMP 
        WHERE id = $2
        RETURNING *`,
@@ -176,7 +176,7 @@ class AiItemsRepository {
    */
   async setNeedsRebuild(itemId, needsRebuild = true) {
     const result = await this.db.query(
-      `UPDATE public.ai_item SET needs_rebuild = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+      `UPDATE kosmos.ai_item SET needs_rebuild = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
       [needsRebuild, itemId]
     );
     return result.rowCount > 0;
@@ -189,7 +189,7 @@ class AiItemsRepository {
    */
   async delete(itemId) {
     const result = await this.db.query(
-      `DELETE FROM public.ai_item WHERE id = $1`,
+      `DELETE FROM kosmos.ai_item WHERE id = $1`,
       [itemId]
     );
     return result.rowCount > 0;
@@ -202,7 +202,7 @@ class AiItemsRepository {
    */
   async deleteByContext(contextCode) {
     const result = await this.db.query(
-      `DELETE FROM public.ai_item WHERE context_code = $1`,
+      `DELETE FROM kosmos.ai_item WHERE context_code = $1`,
       [contextCode]
     );
     return result.rowCount;
@@ -219,12 +219,12 @@ class AiItemsRepository {
 
     if (contextCode) {
       sql = `
-        DELETE FROM public.ai_item
+        DELETE FROM kosmos.ai_item
         WHERE context_code = $1
           AND id NOT IN (
             SELECT DISTINCT fv.ai_item_id 
-            FROM public.chunk_vector fv
-            JOIN public.files f ON fv.file_id = f.id
+            FROM kosmos.chunk_vector fv
+            JOIN kosmos.files f ON fv.file_id = f.id
             WHERE fv.ai_item_id IS NOT NULL 
               AND fv.level = '0-исходник'
               AND f.context_code = $1
@@ -234,10 +234,10 @@ class AiItemsRepository {
       params.push(contextCode);
     } else {
       sql = `
-        DELETE FROM public.ai_item
+        DELETE FROM kosmos.ai_item
         WHERE id NOT IN (
           SELECT DISTINCT ai_item_id 
-          FROM public.chunk_vector 
+          FROM kosmos.chunk_vector 
           WHERE ai_item_id IS NOT NULL AND level = '0-исходник'
         )
         RETURNING id, full_name
@@ -257,7 +257,7 @@ class AiItemsRepository {
    */
   async getComment(contextCode, fullName) {
     return this.db.queryOne(
-      `SELECT * FROM public.ai_comment WHERE context_code = $1 AND full_name = $2`,
+      `SELECT * FROM kosmos.ai_comment WHERE context_code = $1 AND full_name = $2`,
       [contextCode, fullName]
     );
   }
@@ -271,7 +271,7 @@ class AiItemsRepository {
    */
   async createCommentIfNotExists(contextCode, fullName, comment) {
     const result = await this.db.queryOne(
-      `INSERT INTO public.ai_comment (context_code, full_name, comment)
+      `INSERT INTO kosmos.ai_comment (context_code, full_name, comment)
        VALUES ($1, $2, $3)
        ON CONFLICT (context_code, full_name) DO NOTHING
        RETURNING id`,
@@ -293,7 +293,7 @@ class AiItemsRepository {
    */
   async upsertComment(contextCode, fullName, comment) {
     return this.db.queryOne(
-      `INSERT INTO public.ai_comment (context_code, full_name, comment)
+      `INSERT INTO kosmos.ai_comment (context_code, full_name, comment)
        VALUES ($1, $2, $3)
        ON CONFLICT (context_code, full_name) 
        DO UPDATE SET comment = EXCLUDED.comment, updated_at = CURRENT_TIMESTAMP
@@ -311,7 +311,7 @@ class AiItemsRepository {
    */
   async updateComment(contextCode, fullName, comment) {
     return this.db.queryOne(
-      `UPDATE public.ai_comment
+      `UPDATE kosmos.ai_comment
        SET comment = $3, updated_at = CURRENT_TIMESTAMP
        WHERE context_code = $1 AND full_name = $2
        RETURNING *`,
@@ -327,7 +327,7 @@ class AiItemsRepository {
    */
   async deleteComment(contextCode, fullName) {
     const result = await this.db.query(
-      `DELETE FROM public.ai_comment WHERE context_code = $1 AND full_name = $2`,
+      `DELETE FROM kosmos.ai_comment WHERE context_code = $1 AND full_name = $2`,
       [contextCode, fullName]
     );
     return result.rowCount > 0;
@@ -340,7 +340,7 @@ class AiItemsRepository {
    */
   async deleteCommentsByContext(contextCode) {
     const result = await this.db.query(
-      `DELETE FROM public.ai_comment WHERE context_code = $1`,
+      `DELETE FROM kosmos.ai_comment WHERE context_code = $1`,
       [contextCode]
     );
     return result.rowCount;
@@ -355,7 +355,7 @@ class AiItemsRepository {
    */
   async getAllTags(contextCode) {
     return this.db.queryAll(
-      `SELECT * FROM public.tag WHERE context_code = $1 ORDER BY name`,
+      `SELECT * FROM kosmos.tag WHERE context_code = $1 ORDER BY name`,
       [contextCode]
     );
   }
@@ -368,7 +368,7 @@ class AiItemsRepository {
    */
   async getTagByCode(contextCode, tagCode) {
     return this.db.queryOne(
-      `SELECT * FROM public.tag WHERE context_code = $1 AND code = $2`,
+      `SELECT * FROM kosmos.tag WHERE context_code = $1 AND code = $2`,
       [contextCode, tagCode]
     );
   }
@@ -383,7 +383,7 @@ class AiItemsRepository {
    */
   async createTag(contextCode, code, name, description = null) {
     return this.db.queryOne(
-      `INSERT INTO public.tag (context_code, code, name, description)
+      `INSERT INTO kosmos.tag (context_code, code, name, description)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
       [contextCode, code, name, description]
@@ -419,7 +419,7 @@ class AiItemsRepository {
     params.push(contextCode, tagCode);
 
     return this.db.queryOne(
-      `UPDATE public.tag
+      `UPDATE kosmos.tag
        SET ${setClauses.join(', ')}
        WHERE context_code = $${paramIndex++} AND code = $${paramIndex}
        RETURNING *`,
@@ -435,7 +435,7 @@ class AiItemsRepository {
    */
   async deleteTag(contextCode, tagCode) {
     const result = await this.db.query(
-      `DELETE FROM public.tag WHERE context_code = $1 AND code = $2`,
+      `DELETE FROM kosmos.tag WHERE context_code = $1 AND code = $2`,
       [contextCode, tagCode]
     );
     return result.rowCount > 0;
@@ -452,8 +452,8 @@ class AiItemsRepository {
   async getItemTags(fullName, contextCode) {
     return this.db.queryAll(
       `SELECT t.*
-       FROM public.tag t
-       JOIN public.ai_item_tag ait ON ait.tag_id = t.id
+       FROM kosmos.tag t
+       JOIN kosmos.ai_item_tag ait ON ait.tag_id = t.id
        WHERE ait.ai_item_full_name = $1 AND ait.ai_item_context_code = $2`,
       [fullName, contextCode]
     );
@@ -469,7 +469,7 @@ class AiItemsRepository {
   async addTagToItem(fullName, contextCode, tagId) {
     try {
       await this.db.query(
-        `INSERT INTO public.ai_item_tag (ai_item_full_name, ai_item_context_code, tag_id)
+        `INSERT INTO kosmos.ai_item_tag (ai_item_full_name, ai_item_context_code, tag_id)
          VALUES ($1, $2, $3)
          ON CONFLICT DO NOTHING`,
         [fullName, contextCode, tagId]
@@ -489,7 +489,7 @@ class AiItemsRepository {
    */
   async removeTagFromItem(fullName, contextCode, tagId) {
     const result = await this.db.query(
-      `DELETE FROM public.ai_item_tag 
+      `DELETE FROM kosmos.ai_item_tag 
        WHERE ai_item_full_name = $1 AND ai_item_context_code = $2 AND tag_id = $3`,
       [fullName, contextCode, tagId]
     );
@@ -505,10 +505,10 @@ class AiItemsRepository {
   async getItemsByTag(contextCode, tagCode) {
     return this.db.queryAll(
       `SELECT ai.*
-       FROM public.ai_item ai
-       JOIN public.ai_item_tag ait ON ait.ai_item_full_name = ai.full_name 
+       FROM kosmos.ai_item ai
+       JOIN kosmos.ai_item_tag ait ON ait.ai_item_full_name = ai.full_name 
          AND ait.ai_item_context_code = ai.context_code
-       JOIN public.tag t ON t.id = ait.tag_id
+       JOIN kosmos.tag t ON t.id = ait.tag_id
        WHERE t.context_code = $1 AND t.code = $2`,
       [contextCode, tagCode]
     );
@@ -522,7 +522,7 @@ class AiItemsRepository {
    * @returns {Promise<number>}
    */
   async count(contextCode = null) {
-    let sql = 'SELECT COUNT(*) as count FROM public.ai_item';
+    let sql = 'SELECT COUNT(*) as count FROM kosmos.ai_item';
     const params = [];
 
     if (contextCode) {
@@ -542,7 +542,7 @@ class AiItemsRepository {
   async getTypeStats(contextCode = null) {
     let sql = `
       SELECT type, COUNT(*) as count 
-      FROM public.ai_item 
+      FROM kosmos.ai_item 
       WHERE type IS NOT NULL AND type != ''
     `;
     const params = [];

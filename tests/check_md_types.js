@@ -19,7 +19,7 @@ async function checkTypes() {
 
     // Проверка типов
     const typesQuery = await pgClient.query(
-      'SELECT DISTINCT type, COUNT(*) as cnt FROM public.ai_item WHERE context_code = $1 GROUP BY type',
+      'SELECT DISTINCT type, COUNT(*) as cnt FROM kosmos.ai_item WHERE context_code = $1 GROUP BY type',
       [TEST_CONTEXT]
     );
     
@@ -30,7 +30,7 @@ async function checkTypes() {
 
     console.log('\nПримеры AI Items:');
     const itemsQuery = await pgClient.query(
-      'SELECT id, full_name, type, h_name FROM public.ai_item WHERE context_code = $1 LIMIT 10',
+      'SELECT id, full_name, type, h_name FROM kosmos.ai_item WHERE context_code = $1 LIMIT 10',
       [TEST_CONTEXT]
     );
     
