@@ -111,7 +111,7 @@ async function cleanupData() {
         
         // Удаляем файлы (каскад удалит ai_items, chunk_vector, link)
         const deleteFiles = await client.query(
-            `DELETE FROM public.files WHERE context_code = $1`,
+            `DELETE FROM kosmos.files WHERE context_code = $1`,
             [CONTEXT_CODE]
         );
         
@@ -137,7 +137,7 @@ async function checkMultiRoot() {
         
         // Проверяем что файлы загружены из обоих rootPath
         const filesResult = await client.query(
-            `SELECT filename, file_url FROM public.files WHERE context_code = $1 ORDER BY filename`,
+            `SELECT filename, file_url FROM kosmos.files WHERE context_code = $1 ORDER BY filename`,
             [CONTEXT_CODE]
         );
         
@@ -184,7 +184,7 @@ async function checkAiItemsCount() {
         await client.connect();
         
         const result = await client.query(
-            `SELECT COUNT(*) as count FROM public.ai_item WHERE context_code = $1`,
+            `SELECT COUNT(*) as count FROM kosmos.ai_item WHERE context_code = $1`,
             [CONTEXT_CODE]
         );
         
@@ -201,7 +201,7 @@ async function checkAiItemsCount() {
         // DDL таблицы и SQL функции должны начинаться с 'hr.'
         // JS/TS элементы могут не иметь схемы — это нормально
         const hrElementsResult = await client.query(
-            `SELECT COUNT(*) as count FROM public.ai_item 
+            `SELECT COUNT(*) as count FROM kosmos.ai_item 
              WHERE context_code = $1 AND full_name LIKE 'hr.%'`,
             [CONTEXT_CODE]
         );
@@ -209,7 +209,7 @@ async function checkAiItemsCount() {
         
         // Проверяем что нет HR элементов без схемы
         const hrNoSchemaResult = await client.query(
-            `SELECT COUNT(*) as count FROM public.ai_item 
+            `SELECT COUNT(*) as count FROM kosmos.ai_item 
              WHERE context_code = $1 
                AND full_name LIKE 'hr.%'
                AND full_name NOT LIKE '%.%'`,
@@ -231,7 +231,7 @@ async function checkAiItemsCount() {
         
         // Дополнительно: показать статистику по типам
         const statsResult = await client.query(
-            `SELECT type, COUNT(*) as count FROM public.ai_item 
+            `SELECT type, COUNT(*) as count FROM kosmos.ai_item 
              WHERE context_code = $1 GROUP BY type ORDER BY count DESC`,
             [CONTEXT_CODE]
         );
@@ -261,7 +261,7 @@ async function checkL1Links() {
         
         // Общее количество связей
         const totalResult = await client.query(
-            `SELECT COUNT(*) as count FROM public.link WHERE context_code = $1`,
+            `SELECT COUNT(*) as count FROM kosmos.link WHERE context_code = $1`,
             [CONTEXT_CODE]
         );
         const totalLinks = parseInt(totalResult.rows[0].count);
@@ -270,7 +270,7 @@ async function checkL1Links() {
         // Проверяем связи только для SQL элементов (hr.*)
         // HR связи должны иметь схему в target
         const hrLinksNoSchemaResult = await client.query(
-            `SELECT COUNT(*) as count FROM public.link 
+            `SELECT COUNT(*) as count FROM kosmos.link 
              WHERE context_code = $1 
                AND source LIKE 'hr.%'
                AND target NOT LIKE '%.%'`,
@@ -280,7 +280,7 @@ async function checkL1Links() {
         
         // Все связи без схемы (для статистики)
         const allNoSchemaResult = await client.query(
-            `SELECT COUNT(*) as count FROM public.link 
+            `SELECT COUNT(*) as count FROM kosmos.link 
              WHERE context_code = $1 AND target NOT LIKE '%.%'`,
             [CONTEXT_CODE]
         );

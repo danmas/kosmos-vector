@@ -128,7 +128,7 @@ async function runTest() {
     try {
       // Проверяем, что link_type для колонок существуют
       const linkTypeCheck = await pgClient.query(
-        `SELECT code FROM public.link_type WHERE code IN ('reads_column', 'updates_column', 'inserts_column')`
+        `SELECT code FROM kosmos.link_type WHERE code IN ('reads_column', 'updates_column', 'inserts_column')`
       );
       
       if (linkTypeCheck.rows.length < 3) {
@@ -174,7 +174,7 @@ async function runTest() {
     try {
       // Создаём виртуальный file
       const fileResult = await pgClient.query(
-        `INSERT INTO public.files (id, filename, file_url, context_code, created_at, modified_at)
+        `INSERT INTO kosmos.files (id, filename, file_url, context_code, created_at, modified_at)
          VALUES (gen_random_uuid(), 'test_tables.ddl', 'test://test_tables.ddl', $1, now(), now())
          ON CONFLICT (id) DO UPDATE SET modified_at = now()
          RETURNING id`,
@@ -184,7 +184,7 @@ async function runTest() {
       
       // Создаём ai_item для таблицы label
       await pgClient.query(
-        `INSERT INTO public.ai_item (full_name, context_code, type, s_name, file_id)
+        `INSERT INTO kosmos.ai_item (full_name, context_code, type, s_name, file_id)
          VALUES ('carl_data.label', $1, 'table', 'label', $2)
          ON CONFLICT (full_name, context_code) DO UPDATE SET updated_at = now()`,
         [TEST_CONTEXT, fileId]
@@ -199,13 +199,13 @@ async function runTest() {
       ];
       
       const labelAiItemResult = await pgClient.query(
-        `SELECT id FROM public.ai_item WHERE full_name = 'carl_data.label' AND context_code = $1`,
+        `SELECT id FROM kosmos.ai_item WHERE full_name = 'carl_data.label' AND context_code = $1`,
         [TEST_CONTEXT]
       );
       const labelAiItemId = labelAiItemResult.rows[0].id;
       
       await pgClient.query(
-        `INSERT INTO public.chunk_vector (id, file_id, chunk_content, level, type, full_name, s_name, ai_item_id)
+        `INSERT INTO kosmos.chunk_vector (id, file_id, chunk_content, level, type, full_name, s_name, ai_item_id)
          VALUES (gen_random_uuid(), $1, $2, '0-исходник', 'table', 'carl_data.label', 'label', $3)
          ON CONFLICT DO NOTHING`,
         [fileId, JSON.stringify({ text: { full_name: 'carl_data.label', type: 'table', columns: labelColumns } }), labelAiItemId]
@@ -213,7 +213,7 @@ async function runTest() {
       
       // Создаём ai_item для таблицы auction_label
       await pgClient.query(
-        `INSERT INTO public.ai_item (full_name, context_code, type, s_name, file_id)
+        `INSERT INTO kosmos.ai_item (full_name, context_code, type, s_name, file_id)
          VALUES ('carl_data.auction_label', $1, 'table', 'auction_label', $2)
          ON CONFLICT (full_name, context_code) DO UPDATE SET updated_at = now()`,
         [TEST_CONTEXT, fileId]
@@ -225,13 +225,13 @@ async function runTest() {
       ];
       
       const auctionLabelAiItemResult = await pgClient.query(
-        `SELECT id FROM public.ai_item WHERE full_name = 'carl_data.auction_label' AND context_code = $1`,
+        `SELECT id FROM kosmos.ai_item WHERE full_name = 'carl_data.auction_label' AND context_code = $1`,
         [TEST_CONTEXT]
       );
       const auctionLabelAiItemId = auctionLabelAiItemResult.rows[0].id;
       
       await pgClient.query(
-        `INSERT INTO public.chunk_vector (id, file_id, chunk_content, level, type, full_name, s_name, ai_item_id)
+        `INSERT INTO kosmos.chunk_vector (id, file_id, chunk_content, level, type, full_name, s_name, ai_item_id)
          VALUES (gen_random_uuid(), $1, $2, '0-исходник', 'table', 'carl_data.auction_label', 'auction_label', $3)
          ON CONFLICT DO NOTHING`,
         [fileId, JSON.stringify({ text: { full_name: 'carl_data.auction_label', type: 'table', columns: auctionLabelColumns } }), auctionLabelAiItemId]
@@ -239,14 +239,14 @@ async function runTest() {
       
       // Создаём ai_item для функции
       await pgClient.query(
-        `INSERT INTO public.ai_item (full_name, context_code, type, s_name, file_id)
+        `INSERT INTO kosmos.ai_item (full_name, context_code, type, s_name, file_id)
          VALUES ('carl_auct.getAuctLabels', $1, 'function', 'getAuctLabels', $2)
          ON CONFLICT (full_name, context_code) DO UPDATE SET updated_at = now()`,
         [TEST_CONTEXT, fileId]
       );
       
       const functionAiItemResult = await pgClient.query(
-        `SELECT id FROM public.ai_item WHERE full_name = 'carl_auct.getAuctLabels' AND context_code = $1`,
+        `SELECT id FROM kosmos.ai_item WHERE full_name = 'carl_auct.getAuctLabels' AND context_code = $1`,
         [TEST_CONTEXT]
       );
       const functionAiItemId = functionAiItemResult.rows[0].id;
@@ -262,7 +262,7 @@ async function runTest() {
       };
       
       await pgClient.query(
-        `INSERT INTO public.chunk_vector (id, file_id, chunk_content, level, type, full_name, s_name, ai_item_id)
+        `INSERT INTO kosmos.chunk_vector (id, file_id, chunk_content, level, type, full_name, s_name, ai_item_id)
          VALUES (gen_random_uuid(), $1, $2, '0-исходник', 'function', 'carl_auct.getAuctLabels', 'getAuctLabels', $3)
          ON CONFLICT DO NOTHING`,
         [fileId, JSON.stringify(functionContent), functionAiItemId]
@@ -294,7 +294,7 @@ async function runTest() {
     // 8. Проверяем созданные ai_item для колонок
     console.log('[Тест 8] Проверка созданных ai_item для колонок...');
     const columnItemsResult = await pgClient.query(
-      `SELECT full_name FROM public.ai_item 
+      `SELECT full_name FROM kosmos.ai_item 
        WHERE context_code = $1 AND type = 'table_column'`,
       [TEST_CONTEXT]
     );
@@ -308,8 +308,8 @@ async function runTest() {
     console.log('\n[Тест 9] Проверка созданных связей...');
     const linksResult = await pgClient.query(
       `SELECT lt.code, l.target 
-       FROM public.link l
-       JOIN public.link_type lt ON l.link_type_id = lt.id
+       FROM kosmos.link l
+       JOIN kosmos.link_type lt ON l.link_type_id = lt.id
        WHERE l.source = $1 AND l.context_code = $2 
        AND lt.code IN ('reads_column', 'updates_column', 'inserts_column')`,
       ['carl_auct.getAuctLabels', TEST_CONTEXT]
@@ -333,14 +333,14 @@ async function runTest() {
     console.log('[Очистка] Удаление тестовых данных...');
     try {
       if (pgClient) {
-        await pgClient.query(`DELETE FROM public.link WHERE context_code = $1`, [TEST_CONTEXT]);
+        await pgClient.query(`DELETE FROM kosmos.link WHERE context_code = $1`, [TEST_CONTEXT]);
         // chunk_vector не имеет context_code, удаляем через file_id
         await pgClient.query(`
-          DELETE FROM public.chunk_vector 
-          WHERE file_id IN (SELECT id FROM public.files WHERE context_code = $1)
+          DELETE FROM kosmos.chunk_vector 
+          WHERE file_id IN (SELECT id FROM kosmos.files WHERE context_code = $1)
         `, [TEST_CONTEXT]);
-        await pgClient.query(`DELETE FROM public.ai_item WHERE context_code = $1`, [TEST_CONTEXT]);
-        await pgClient.query(`DELETE FROM public.files WHERE context_code = $1`, [TEST_CONTEXT]);
+        await pgClient.query(`DELETE FROM kosmos.ai_item WHERE context_code = $1`, [TEST_CONTEXT]);
+        await pgClient.query(`DELETE FROM kosmos.files WHERE context_code = $1`, [TEST_CONTEXT]);
         console.log('  ✓ Тестовые данные удалены\n');
       }
     } catch (err) {

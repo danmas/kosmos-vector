@@ -1,4 +1,4 @@
-// VectorRepository.js - Репозиторий для работы с таблицей public.chunk_vector
+// VectorRepository.js - Репозиторий для работы с таблицей kosmos.chunk_vector
 // Отвечает за векторный поиск (pgvector), сохранение/получение чанков
 
 /**
@@ -96,12 +96,12 @@ class VectorRepository {
              f.context_code,
              fv.type,
              fv.level
-      FROM public.chunk_vector fv
-      JOIN public.files f ON fv.file_id = f.id
+      FROM kosmos.chunk_vector fv
+      JOIN kosmos.files f ON fv.file_id = f.id
     `;
 
     if (hasItemFilter) {
-      sql += `\n      JOIN public.ai_item ai ON fv.ai_item_id = ai.id`;
+      sql += `\n      JOIN kosmos.ai_item ai ON fv.ai_item_id = ai.id`;
     }
 
     sql += `\n      WHERE 1=1`;
@@ -134,8 +134,8 @@ class VectorRepository {
     if (Array.isArray(tagCodes) && tagCodes.length > 0) {
       sql += ` AND EXISTS (
         SELECT 1
-        FROM public.ai_item_tag ait
-        JOIN public.tag t ON ait.tag_id = t.id
+        FROM kosmos.ai_item_tag ait
+        JOIN kosmos.tag t ON ait.tag_id = t.id
         WHERE ait.ai_item_full_name = ai.full_name
           AND ait.ai_item_context_code = ai.context_code
           AND t.code = ANY($${paramIndex++})
@@ -195,14 +195,14 @@ class VectorRepository {
     let existing = null;
     if (fullName) {
       existing = await this.db.queryOne(
-        `SELECT id, ai_item_id FROM public.chunk_vector
+        `SELECT id, ai_item_id FROM kosmos.chunk_vector
          WHERE file_id = $1 AND full_name = $2 AND level = $3`,
         [fileId, fullName, level]
       );
     } else {
       // Fallback: поиск по chunk_content
       existing = await this.db.queryOne(
-        `SELECT id, ai_item_id FROM public.chunk_vector
+        `SELECT id, ai_item_id FROM kosmos.chunk_vector
          WHERE file_id = $1 AND chunk_content::text = $2::text 
          AND (full_name IS NULL OR full_name = '') AND level = $3`,
         [fileId, JSON.stringify(chunkContent), level]
@@ -212,7 +212,7 @@ class VectorRepository {
     if (!existing) {
       // INSERT
       const result = await this.db.queryOne(
-        `INSERT INTO public.chunk_vector 
+        `INSERT INTO kosmos.chunk_vector 
            (file_id, chunk_content, embedding, type, level, s_name, full_name, h_name, parent_chunk_id, ai_item_id)
          VALUES 
            ($1, (($2)::json->'text')::jsonb, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -223,7 +223,7 @@ class VectorRepository {
     } else {
       // UPDATE
       await this.db.query(
-        `UPDATE public.chunk_vector
+        `UPDATE kosmos.chunk_vector
          SET chunk_content = (($1)::json->'text')::jsonb,
              embedding = $2,
              type = $3,
@@ -250,8 +250,8 @@ class VectorRepository {
       `SELECT fv.*, 
               COALESCE(fv.chunk_content->>'text', fv.chunk_content::text) as content_text,
               f.filename, f.context_code
-       FROM public.chunk_vector fv
-       JOIN public.files f ON fv.file_id = f.id
+       FROM kosmos.chunk_vector fv
+       JOIN kosmos.files f ON fv.file_id = f.id
        WHERE fv.id = $1`,
       [chunkId]
     );
@@ -268,7 +268,7 @@ class VectorRepository {
       SELECT id, 
              COALESCE(chunk_content->>'text', chunk_content::text) as content, 
              chunk_index, type, level, s_name, h_name, full_name, ai_item_id
-      FROM public.chunk_vector
+      FROM kosmos.chunk_vector
       WHERE file_id = $1
     `;
     const params = [fileId];
@@ -294,7 +294,7 @@ class VectorRepository {
       SELECT id, 
              COALESCE(chunk_content->>'text', chunk_content::text) as content, 
              chunk_index, type, level, s_name, h_name, full_name, ai_item_id
-      FROM public.chunk_vector
+      FROM kosmos.chunk_vector
       WHERE parent_chunk_id = $1
     `;
     const params = [parentChunkId];
@@ -348,7 +348,7 @@ class VectorRepository {
     }
 
     return this.db.queryOne(
-      `UPDATE public.chunk_vector
+      `UPDATE kosmos.chunk_vector
        SET ${updateParts.join(', ')}
        WHERE id = $1
        RETURNING *`,
@@ -364,7 +364,7 @@ class VectorRepository {
    */
   async linkToAiItem(chunkId, aiItemId) {
     const result = await this.db.query(
-      `UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2`,
+      `UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2`,
       [aiItemId, chunkId]
     );
     return result.rowCount > 0;
@@ -377,7 +377,7 @@ class VectorRepository {
    */
   async deleteByFileId(fileId) {
     const result = await this.db.query(
-      `DELETE FROM public.chunk_vector WHERE file_id = $1`,
+      `DELETE FROM kosmos.chunk_vector WHERE file_id = $1`,
       [fileId]
     );
     return result.rowCount;
@@ -390,7 +390,7 @@ class VectorRepository {
    * @returns {Promise<number>}
    */
   async deleteChildren(parentChunkId, level = null) {
-    let sql = 'DELETE FROM public.chunk_vector WHERE parent_chunk_id = $1';
+    let sql = 'DELETE FROM kosmos.chunk_vector WHERE parent_chunk_id = $1';
     const params = [parentChunkId];
 
     if (level) {
@@ -409,7 +409,7 @@ class VectorRepository {
    */
   async delete(chunkId) {
     const result = await this.db.query(
-      `DELETE FROM public.chunk_vector WHERE id = $1`,
+      `DELETE FROM kosmos.chunk_vector WHERE id = $1`,
       [chunkId]
     );
     return result.rowCount > 0;
@@ -422,7 +422,7 @@ class VectorRepository {
    * @returns {Promise<number>}
    */
   async countByFileId(fileId, level = null) {
-    let sql = 'SELECT COUNT(*) as count FROM public.chunk_vector WHERE file_id = $1';
+    let sql = 'SELECT COUNT(*) as count FROM kosmos.chunk_vector WHERE file_id = $1';
     const params = [fileId];
 
     if (level) {
@@ -443,7 +443,7 @@ class VectorRepository {
   async getAiItemIdsByFileId(fileId, level = '0-исходник') {
     const rows = await this.db.queryAll(
       `SELECT DISTINCT ai_item_id 
-       FROM public.chunk_vector 
+       FROM kosmos.chunk_vector 
        WHERE file_id = $1 AND level = $2 AND ai_item_id IS NOT NULL`,
       [fileId, level]
     );

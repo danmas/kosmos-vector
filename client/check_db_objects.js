@@ -96,9 +96,9 @@ async function check() {
           ) FILTER (WHERE fv.id IS NOT NULL),
           '[]'::json
         ) AS chunks
-      FROM public.ai_item ai
-      JOIN public.files f ON ai.file_id = f.id
-      LEFT JOIN public.chunk_vector fv ON fv.ai_item_id = ai.id
+      FROM kosmos.ai_item ai
+      JOIN kosmos.files f ON ai.file_id = f.id
+      LEFT JOIN kosmos.chunk_vector fv ON fv.ai_item_id = ai.id
       WHERE ai.context_code = 'CARL'
       GROUP BY ai.id, f.id
       LIMIT 1

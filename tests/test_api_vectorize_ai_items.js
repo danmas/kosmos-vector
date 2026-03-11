@@ -64,7 +64,7 @@ async function testApiVectorizeAiItems() {
 
     // Проверяем, что ai_item был создан
     const aiItemCheck = await pgClient.query(
-      'SELECT id, full_name, type FROM public.ai_item WHERE full_name = $1 AND context_code = $2',
+      'SELECT id, full_name, type FROM kosmos.ai_item WHERE full_name = $1 AND context_code = $2',
       ['test.api.vectorize.function', TEST_CONTEXT]
     );
     
@@ -87,7 +87,7 @@ async function testApiVectorizeAiItems() {
     
     // Сначала удалим embedding, чтобы проверить, что он будет пересоздан
     await pgClient.query(
-      'UPDATE public.chunk_vector SET embedding = NULL WHERE id = $1',
+      'UPDATE kosmos.chunk_vector SET embedding = NULL WHERE id = $1',
       [chunkId]
     );
     console.log('✓ Embedding удален для теста пересоздания');
@@ -110,7 +110,7 @@ async function testApiVectorizeAiItems() {
       
       // Проверим, что embedding был создан
       const updatedChunk = await pgClient.query(
-        'SELECT embedding FROM public.chunk_vector WHERE id = $1',
+        'SELECT embedding FROM kosmos.chunk_vector WHERE id = $1',
         [chunkId]
       );
       

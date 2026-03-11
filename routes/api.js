@@ -1141,7 +1141,7 @@ ${JSON.stringify({
 
       // 1. Получаем AiItem из БД по full_name
       const itemResult = await dbService.pgClient.query(
-        `SELECT id, full_name, type FROM public.ai_item 
+        `SELECT id, full_name, type FROM kosmos.ai_item 
          WHERE full_name = $1 AND context_code = $2`,
         [decodedId, contextCode]
       );
@@ -1283,8 +1283,8 @@ ${JSON.stringify({
               SELECT json_agg(tag_data ORDER BY tag_data->>'name')
               FROM (
                 SELECT json_build_object('id', t.id, 'code', t.code, 'name', t.name) as tag_data
-                FROM public.ai_item_tag ait
-                JOIN public.tag t ON t.id = ait.tag_id
+                FROM kosmos.ai_item_tag ait
+                JOIN kosmos.tag t ON t.id = ait.tag_id
                 WHERE ait.ai_item_full_name = ai.full_name 
                   AND ait.ai_item_context_code = ai.context_code
               ) sub
@@ -1293,13 +1293,13 @@ ${JSON.stringify({
           ) as tags,
           EXISTS(
             SELECT 1 
-            FROM public.chunk_vector cv
+            FROM kosmos.chunk_vector cv
             WHERE cv.ai_item_id = ai.id 
               AND cv.embedding IS NOT NULL
             LIMIT 1
           ) as is_vectorized
-        FROM public.ai_item ai
-        JOIN public.files f ON ai.file_id = f.id
+        FROM kosmos.ai_item ai
+        JOIN kosmos.files f ON ai.file_id = f.id
         WHERE ai.context_code = $1
         GROUP BY ai.id, ai.full_name, ai.type, ai.context_code, f.filename, f.file_url
         ORDER BY ai.full_name

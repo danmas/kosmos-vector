@@ -65,9 +65,9 @@ async function cleanupContext() {
   const client = new Client(dbConfig);
   await client.connect();
   try {
-    await client.query('DELETE FROM public.link WHERE context_code = $1', [CONTEXT_CODE]);
-    await client.query('DELETE FROM public.ai_item WHERE context_code = $1', [CONTEXT_CODE]);
-    await client.query('DELETE FROM public.files WHERE context_code = $1', [CONTEXT_CODE]);
+    await client.query('DELETE FROM kosmos.link WHERE context_code = $1', [CONTEXT_CODE]);
+    await client.query('DELETE FROM kosmos.ai_item WHERE context_code = $1', [CONTEXT_CODE]);
+    await client.query('DELETE FROM kosmos.files WHERE context_code = $1', [CONTEXT_CODE]);
   } finally {
     await client.end();
   }

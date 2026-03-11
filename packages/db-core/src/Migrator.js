@@ -41,7 +41,7 @@ class Migrator {
    */
   async init() {
     await this.db.query(`
-      CREATE TABLE IF NOT EXISTS public.${this.tableName} (
+      CREATE TABLE IF NOT EXISTS kosmos.${this.tableName} (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL UNIQUE,
         applied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -58,7 +58,7 @@ class Migrator {
   async getAppliedMigrations() {
     try {
       const rows = await this.db.queryAll(
-        `SELECT * FROM public.${this.tableName} ORDER BY id`
+        `SELECT * FROM kosmos.${this.tableName} ORDER BY id`
       );
       return rows;
     } catch (error) {
@@ -121,7 +121,7 @@ class Migrator {
 
       // Записываем в таблицу миграций
       await this.db.query(
-        `INSERT INTO public.${this.tableName} (name, checksum) VALUES ($1, $2)`,
+        `INSERT INTO kosmos.${this.tableName} (name, checksum) VALUES ($1, $2)`,
         [migration.name, this._calculateChecksum(migration.content)]
       );
 

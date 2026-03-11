@@ -135,7 +135,7 @@ async function testMdVectorizeAiItemsOpenAI() {
     console.log(`  Секций: ${report.sectionsProcessed}, ошибок: ${report.errors.length}\n`);
 
     const aiItemsRes = await pgClient.query(
-      'SELECT id, full_name, type FROM public.ai_item WHERE context_code = $1 ORDER BY id',
+      'SELECT id, full_name, type FROM kosmos.ai_item WHERE context_code = $1 ORDER BY id',
       [TEST_CONTEXT]
     );
     const aiItemIds = aiItemsRes.rows.map(r => r.id);
@@ -154,7 +154,7 @@ async function testMdVectorizeAiItemsOpenAI() {
     const chunksBefore = await pgClient.query(
       `SELECT COUNT(*) AS total,
               COUNT(embedding) FILTER (WHERE embedding IS NOT NULL) AS with_embedding
-       FROM public.chunk_vector WHERE ai_item_id = ANY($1::int[])`,
+       FROM kosmos.chunk_vector WHERE ai_item_id = ANY($1::int[])`,
       [aiItemIds]
     );
     console.log('[Шаг 5] Чанки до векторизации:', chunksBefore.rows[0].total, 'всего, с embedding:', chunksBefore.rows[0].with_embedding);
@@ -173,7 +173,7 @@ async function testMdVectorizeAiItemsOpenAI() {
     const chunksAfter = await pgClient.query(
       `SELECT COUNT(*) AS total,
               COUNT(embedding) FILTER (WHERE embedding IS NOT NULL) AS with_embedding
-       FROM public.chunk_vector WHERE ai_item_id = ANY($1::int[])`,
+       FROM kosmos.chunk_vector WHERE ai_item_id = ANY($1::int[])`,
       [aiItemIds]
     );
     console.log('[Шаг 7] Чанки после векторизации:', chunksAfter.rows[0].total, 'всего, с embedding:', chunksAfter.rows[0].with_embedding);
@@ -192,7 +192,7 @@ async function testMdVectorizeAiItemsOpenAI() {
     try {
       const dimRes = await pgClient.query(
         `SELECT vector_dims(embedding) AS dim
-         FROM public.chunk_vector
+         FROM kosmos.chunk_vector
          WHERE ai_item_id = $1 AND embedding IS NOT NULL
          LIMIT 1`,
         [aiItemIds[0]]
@@ -204,7 +204,7 @@ async function testMdVectorizeAiItemsOpenAI() {
       // vector_dims может отсутствовать — пробуем по длине строки вектора
       const rawRes = await pgClient.query(
         `SELECT embedding::text AS vec
-         FROM public.chunk_vector
+         FROM kosmos.chunk_vector
          WHERE ai_item_id = $1 AND embedding IS NOT NULL
          LIMIT 1`,
         [aiItemIds[0]]

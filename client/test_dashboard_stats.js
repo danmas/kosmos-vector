@@ -62,7 +62,7 @@ async function testDashboardStats() {
     // 1. Общее количество AiItems
     console.log('\n1️⃣  Тест: Общее количество AiItems');
     try {
-      const totalItemsQuery = `SELECT COUNT(*) AS count FROM public.ai_item WHERE context_code = $1`;
+      const totalItemsQuery = `SELECT COUNT(*) AS count FROM kosmos.ai_item WHERE context_code = $1`;
       const totalItemsRes = await client.query(totalItemsQuery, params);
       console.log(`   ✅ Успешно: ${totalItemsRes.rows[0].count} AI Items`);
     } catch (error) {
@@ -73,8 +73,8 @@ async function testDashboardStats() {
     console.log('\n2️⃣  Тест: Количество чанков уровня 1 (с JOIN files)');
     try {
       const depsQuery = `SELECT COUNT(*) AS count 
-           FROM public.chunk_vector fv
-           JOIN public.files f ON fv.file_id = f.id
+           FROM kosmos.chunk_vector fv
+           JOIN kosmos.files f ON fv.file_id = f.id
            WHERE fv.level LIKE '1-%' AND f.context_code = $1`;
       const depsRes = await client.query(depsQuery, params);
       console.log(`   ✅ Успешно: ${depsRes.rows[0].count} чанков уровня 1`);
@@ -87,7 +87,7 @@ async function testDashboardStats() {
     console.log('\n2️⃣b Тест: Количество чанков уровня 1 (без JOIN)');
     try {
       const depsQuerySimple = `SELECT COUNT(*) AS count 
-           FROM public.chunk_vector 
+           FROM kosmos.chunk_vector 
            WHERE level LIKE '1-%'`;
       const depsResSimple = await client.query(depsQuerySimple, []);
       console.log(`   ✅ Успешно: ${depsResSimple.rows[0].count} чанков уровня 1`);
@@ -100,7 +100,7 @@ async function testDashboardStats() {
     console.log('\n3️⃣  Тест: Статистика по типам AiItem');
     try {
       const typeStatsQuery = `SELECT type, COUNT(*) AS count 
-           FROM public.ai_item 
+           FROM kosmos.ai_item 
            WHERE type IS NOT NULL AND type != '' AND context_code = $1
            GROUP BY type
            ORDER BY count DESC`;
@@ -116,8 +116,8 @@ async function testDashboardStats() {
       const langStatsQuery = `SELECT 
            LOWER(SUBSTRING(f.filename FROM '\.([^\.]+)$')) AS ext,
            COUNT(*) AS count
-           FROM public.files f
-           JOIN public.ai_item ai ON f.id = ai.file_id
+           FROM kosmos.files f
+           JOIN kosmos.ai_item ai ON f.id = ai.file_id
            WHERE f.context_code = $1
            GROUP BY ext
            ORDER BY count DESC`;
@@ -131,8 +131,8 @@ async function testDashboardStats() {
     console.log('\n5️⃣  Тест: Размер векторного индекса (с JOIN files)');
     try {
       const vectorSizeQuery = `SELECT COUNT(*) AS count 
-           FROM public.chunk_vector fv
-           JOIN public.files f ON fv.file_id = f.id
+           FROM kosmos.chunk_vector fv
+           JOIN kosmos.files f ON fv.file_id = f.id
            WHERE fv.embedding IS NOT NULL AND f.context_code = $1`;
       const vectorSizeRes = await client.query(vectorSizeQuery, params);
       console.log(`   ✅ Успешно: ${vectorSizeRes.rows[0].count} векторов`);
@@ -145,7 +145,7 @@ async function testDashboardStats() {
     console.log('\n5️⃣b Тест: Размер векторного индекса (без JOIN)');
     try {
       const vectorSizeQuerySimple = `SELECT COUNT(*) AS count 
-           FROM public.chunk_vector 
+           FROM kosmos.chunk_vector 
            WHERE embedding IS NOT NULL`;
       const vectorSizeResSimple = await client.query(vectorSizeQuerySimple, []);
       console.log(`   ✅ Успешно: ${vectorSizeResSimple.rows[0].count} векторов`);
@@ -158,8 +158,8 @@ async function testDashboardStats() {
     console.log('\n6️⃣  Тест: Дата последней модификации (с JOIN files)');
     try {
       const lastScanQuery = `SELECT MAX(fv.created_at) AS last 
-           FROM public.chunk_vector fv
-           JOIN public.files f ON fv.file_id = f.id
+           FROM kosmos.chunk_vector fv
+           JOIN kosmos.files f ON fv.file_id = f.id
            WHERE f.context_code = $1`;
       const lastScanRes = await client.query(lastScanQuery, params);
       console.log(`   ✅ Успешно: ${lastScanRes.rows[0].last || 'нет данных'}`);
@@ -172,7 +172,7 @@ async function testDashboardStats() {
     console.log('\n6️⃣b Тест: Дата последней модификации (без JOIN)');
     try {
       const lastScanQuerySimple = `SELECT MAX(created_at) AS last 
-           FROM public.chunk_vector`;
+           FROM kosmos.chunk_vector`;
       const lastScanResSimple = await client.query(lastScanQuerySimple, []);
       console.log(`   ✅ Успешно: ${lastScanResSimple.rows[0].last || 'нет данных'}`);
     } catch (error) {

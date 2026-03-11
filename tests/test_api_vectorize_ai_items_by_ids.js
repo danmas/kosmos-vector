@@ -65,7 +65,7 @@ async function testApiVectorizeAiItemsByIds() {
     // Получаем ID ai_item, связанного с этим чанком
     const aiItemResult = await pgClient.query(
       `SELECT ai_item_id 
-       FROM public.chunk_vector 
+       FROM kosmos.chunk_vector 
        WHERE id = $1 AND ai_item_id IS NOT NULL`,
       [chunkId]
     );
@@ -82,7 +82,7 @@ async function testApiVectorizeAiItemsByIds() {
       
       // Свяжем чанк с созданным ai_item
       await pgClient.query(
-        'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+        'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
         [aiItem.id, chunkId]
       );
       
@@ -114,7 +114,7 @@ async function testApiVectorizeAiItemsByIds() {
       
       // Проверим, что embedding был создан
       const updatedChunk = await pgClient.query(
-        'SELECT embedding FROM public.chunk_vector WHERE id = $1',
+        'SELECT embedding FROM kosmos.chunk_vector WHERE id = $1',
         [chunkId]
       );
       

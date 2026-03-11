@@ -127,7 +127,7 @@ module.exports = (dbService, embeddings) => {
       // Если клиент хочет привязать к существующему ai_item — передаёт aiItemId
       if (aiItemId) {
         await dbService.pgClient.query(
-          'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+          'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
           [aiItemId, chunkId]
         );
       }
@@ -533,8 +533,8 @@ module.exports = (dbService, embeddings) => {
                        fv.chunk_index, fv.type, fv.level, 
                        fv.s_name, fv.full_name, fv.h_name, fv.created_at, fv.ai_item_id,
                        f.filename, f.context_code
-                FROM public.chunk_vector fv
-                JOIN public.files f ON fv.file_id = f.id
+                FROM kosmos.chunk_vector fv
+                JOIN kosmos.files f ON fv.file_id = f.id
                 WHERE fv.chunk_index = $1
                 LIMIT 1
             `, [chunkIndex]);
@@ -588,7 +588,7 @@ module.exports = (dbService, embeddings) => {
                 `SELECT id, 
                        COALESCE(chunk_content->>'text', chunk_content::text) as text_content,
                        embedding 
-                FROM public.chunk_vector WHERE id = $1`,
+                FROM kosmos.chunk_vector WHERE id = $1`,
                 [chunkId]
             );
             
@@ -620,7 +620,7 @@ module.exports = (dbService, embeddings) => {
             
             // 5. Обновляем запись
             await dbService.pgClient.query(
-                `UPDATE public.chunk_vector SET embedding = $1 WHERE id = $2`,
+                `UPDATE kosmos.chunk_vector SET embedding = $1 WHERE id = $2`,
                 [vectorString, chunkId]
             );
             

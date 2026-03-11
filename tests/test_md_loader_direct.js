@@ -62,7 +62,7 @@ async function testMdLoaderDirect() {
     console.log('[Шаг 4] Проверка созданных AI Items...\n');
     
     const mdDocQuery = await pgClient.query(
-      'SELECT id, full_name, type, s_name, h_name FROM public.ai_item WHERE context_code = $1 AND type = $2',
+      'SELECT id, full_name, type, s_name, h_name FROM kosmos.ai_item WHERE context_code = $1 AND type = $2',
       [TEST_CONTEXT, 'md_doc']
     );
     console.log(`✓ md_doc элементов: ${mdDocQuery.rows.length}`);
@@ -71,7 +71,7 @@ async function testMdLoaderDirect() {
     });
 
     const h1Query = await pgClient.query(
-      'SELECT id, full_name, type, s_name, h_name FROM public.ai_item WHERE context_code = $1 AND type = $2',
+      'SELECT id, full_name, type, s_name, h_name FROM kosmos.ai_item WHERE context_code = $1 AND type = $2',
       [TEST_CONTEXT, 'head_level_1']
     );
     console.log(`\n✓ head_level_1 элементов: ${h1Query.rows.length}`);
@@ -80,7 +80,7 @@ async function testMdLoaderDirect() {
     });
 
     const h2Query = await pgClient.query(
-      'SELECT id, full_name, type, s_name, h_name FROM public.ai_item WHERE context_code = $1 AND type = $2',
+      'SELECT id, full_name, type, s_name, h_name FROM kosmos.ai_item WHERE context_code = $1 AND type = $2',
       [TEST_CONTEXT, 'head_level_2']
     );
     console.log(`\n✓ head_level_2 элементов: ${h2Query.rows.length}`);
@@ -93,8 +93,8 @@ async function testMdLoaderDirect() {
     
     const linksQuery = await pgClient.query(
       `SELECT l.source, l.target, lt.code as link_type 
-       FROM public.link l
-       JOIN public.link_type lt ON l.link_type_id = lt.id
+       FROM kosmos.link l
+       JOIN kosmos.link_type lt ON l.link_type_id = lt.id
        WHERE l.context_code = $1
        ORDER BY l.source, lt.code`,
       [TEST_CONTEXT]
@@ -126,7 +126,7 @@ async function testMdLoaderDirect() {
     
     const chunksQuery = await pgClient.query(
       `SELECT id, full_name, level, type 
-       FROM public.chunk_vector 
+       FROM kosmos.chunk_vector 
        WHERE file_id = $1
        ORDER BY created_at`,
       [report.fileId]

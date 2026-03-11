@@ -246,7 +246,7 @@ async function extractColumnsFromFunction(aiItemId, contextCode, dbService) {
   try {
     // 1. Получаем информацию о функции
     const functionItemResult = await dbService.pgClient.query(
-      `SELECT full_name, file_id FROM public.ai_item WHERE id = $1`,
+      `SELECT full_name, file_id FROM kosmos.ai_item WHERE id = $1`,
       [aiItemId]
     );
 
@@ -280,7 +280,7 @@ async function extractColumnsFromFunction(aiItemId, contextCode, dbService) {
     for (const code of Object.values(linkTypeMap)) {
       try {
         const res = await dbService.pgClient.query(
-          'SELECT id FROM public.link_type WHERE code = $1',
+          'SELECT id FROM kosmos.link_type WHERE code = $1',
           [code]
         );
         linkTypeIds[code] = res.rows[0]?.id || null;
@@ -294,7 +294,7 @@ async function extractColumnsFromFunction(aiItemId, contextCode, dbService) {
     const columnLinkTypeIds = Object.values(linkTypeIds).filter(id => id !== null);
     if (columnLinkTypeIds.length > 0) {
       await dbService.pgClient.query(
-        `DELETE FROM public.link 
+        `DELETE FROM kosmos.link 
          WHERE source = $1 AND context_code = $2 AND link_type_id = ANY($3)`,
         [report.functionFullName, contextCode, columnLinkTypeIds]
       );
@@ -395,7 +395,7 @@ async function extractColumnsFromFunction(aiItemId, contextCode, dbService) {
 
         // Проверяем, есть ли уже чанк для этой колонки
         const existingChunkResult = await dbService.pgClient.query(
-          `SELECT id FROM public.chunk_vector 
+          `SELECT id FROM kosmos.chunk_vector 
            WHERE ai_item_id = $1 AND level = '0-исходник' AND full_name = $2`,
           [columnAiItem.id, columnFullName]
         );
@@ -405,7 +405,7 @@ async function extractColumnsFromFunction(aiItemId, contextCode, dbService) {
           // Обновляем существующий чанк, добавляя источник
           chunkId = existingChunkResult.rows[0].id;
           const existingChunk = await dbService.pgClient.query(
-            `SELECT chunk_content FROM public.chunk_vector WHERE id = $1`,
+            `SELECT chunk_content FROM kosmos.chunk_vector WHERE id = $1`,
             [chunkId]
           );
           
@@ -422,7 +422,7 @@ async function extractColumnsFromFunction(aiItemId, contextCode, dbService) {
           }
 
           await dbService.pgClient.query(
-            `UPDATE public.chunk_vector SET chunk_content = $1 WHERE id = $2`,
+            `UPDATE kosmos.chunk_vector SET chunk_content = $1 WHERE id = $2`,
             [JSON.stringify({ text: existingText }), chunkId]
           );
         } else {
@@ -443,7 +443,7 @@ async function extractColumnsFromFunction(aiItemId, contextCode, dbService) {
 
           // Привязываем чанк к AI Item
           await dbService.pgClient.query(
-            'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+            'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
             [columnAiItem.id, chunkId]
           );
         }
@@ -455,7 +455,7 @@ async function extractColumnsFromFunction(aiItemId, contextCode, dbService) {
         if (linkTypeId) {
           try {
             await dbService.pgClient.query(
-              `INSERT INTO public.link 
+              `INSERT INTO kosmos.link 
                (context_code, source, target, link_type_id, file_id)
                VALUES ($1, $2, $3, $4, $5)
                ON CONFLICT (context_code, source, target, link_type_id) DO NOTHING`,
@@ -542,8 +542,8 @@ async function extractColumnsFromAllFunctions(contextCode, dbService, options = 
     // 1. Получаем все SQL-функции
     const functionsResult = await dbService.pgClient.query(
       `SELECT ai.id, ai.full_name 
-       FROM public.ai_item ai
-       JOIN public.files f ON ai.file_id = f.id
+       FROM kosmos.ai_item ai
+       JOIN kosmos.files f ON ai.file_id = f.id
        WHERE ai.context_code = $1 
          AND ai.type = 'function'
          AND (f.file_url LIKE '%.sql' OR f.file_url LIKE '%.SQL')

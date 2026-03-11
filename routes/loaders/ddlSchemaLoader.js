@@ -502,7 +502,7 @@ async function loadDdlFromFile(filePath, contextCode, dbService, pipelineState =
                     }
                     const chunkIdL0 = await dbService.saveChunkVector(fId, chunkContent, null,
                         { type: 'table', level: '0-исходник', full_name: table.full_name, s_name: table.sname }, null, contextCode);
-                    await dbService.pgClient.query('UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2', [aiItem.id, chunkIdL0]);
+                    await dbService.pgClient.query('UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2', [aiItem.id, chunkIdL0]);
 
                     // L1 связи (FK)
                     const l1Result = parseTableL1(table);
@@ -510,7 +510,7 @@ async function loadDdlFromFile(filePath, contextCode, dbService, pipelineState =
                     if (l1Result.foreign_keys.length > 0) {
                         const chunkIdL1 = await dbService.saveChunkVector(fId, { text: l1Result }, null,
                             { type: 'json', level: '1-связи', full_name: table.full_name, s_name: table.sname }, chunkIdL0, contextCode);
-                        await dbService.pgClient.query('UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2', [aiItem.id, chunkIdL1]);
+                        await dbService.pgClient.query('UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2', [aiItem.id, chunkIdL1]);
                     }
                 }
             });
@@ -593,7 +593,7 @@ async function loadDdlFromFile(filePath, contextCode, dbService, pipelineState =
                 tableReport.chunkL0Id = chunkIdL0;
                 
                 await dbService.pgClient.query(
-                    'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+                    'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                     [tableReport.aiItemId, chunkIdL0]
                 );
                 
@@ -620,7 +620,7 @@ async function loadDdlFromFile(filePath, contextCode, dbService, pipelineState =
                     tableReport.chunkL1Id = chunkIdL1;
                     
                     await dbService.pgClient.query(
-                        'UPDATE public.chunk_vector SET ai_item_id = $1 WHERE id = $2',
+                        'UPDATE kosmos.chunk_vector SET ai_item_id = $1 WHERE id = $2',
                         [tableReport.aiItemId, chunkIdL1]
                     );
                     
