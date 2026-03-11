@@ -48,6 +48,54 @@ module.exports = (dbService, logBuffer) => {
     }
   });
 
+  // === DELETE /api/logs - очистка логов (БЕЗ валидации context-code) ===
+  router.delete('/logs', (req, res) => {
+    try {
+      const contextCode = req.query['context-code'] || req.query.contextCode;
+      
+      // Очищаем in-memory буфер логов
+      const deletedCount = serverLogs.length;
+      serverLogs.length = 0;
+      
+      // Если указан context-code, удаляем также файлы сессий для этого контекста
+      let deletedSessions = 0;
+      if (contextCode) {
+        const SESSIONS_DIR = require('../server').SESSIONS_DIR;
+        if (fs.existsSync(SESSIONS_DIR)) {
+          const sessionFiles = fs.readdirSync(SESSIONS_DIR)
+            .filter(file => file.endsWith('.json'));
+          
+          for (const file of sessionFiles) {
+            try {
+              const filePath = path.join(SESSIONS_DIR, file);
+              const sessionData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+              if (sessionData.contextCode === contextCode) {
+                fs.unlinkSync(filePath);
+                deletedSessions++;
+              }
+            } catch (err) {
+              console.error(`[API/LOGS/DELETE] Ошибка удаления файла сессии ${file}:`, err);
+            }
+          }
+        }
+      }
+      
+      res.json({
+        success: true,
+        message: 'Logs cleared successfully',
+        deletedCount: deletedCount,
+        deletedSessions: deletedSessions
+      });
+    } catch (error) {
+      console.error('[API/LOGS/DELETE] Ошибка:', error);
+      res.status(500).json({
+        success: false,
+        error: 'CLEAR_LOGS_ERROR',
+        message: error.message
+      });
+    }
+  });
+
   // === SSE поток логов (БЕЗ валидации context-code) ===
   router.get('/logs/stream', (req, res) => {
     try {
@@ -1974,7 +2022,7 @@ ${JSON.stringify({
           stats = fs.statSync(currentAbsPath);
         } catch (err) {
           return {
-            path: currentRootPath + path.sep + currentRelPath.replace(/^\.\//, ''),
+            path: path.normalize(currentRootPath + path.sep + currentRelPath.replace(/^\.\//, '')),
             name: path.basename(currentAbsPath),
             type: 'unknown',
             size: 0,
@@ -1997,7 +2045,7 @@ ${JSON.stringify({
             entries = fs.readdirSync(currentAbsPath);
           } catch (err) {
             return {
-              path: currentRootPath + path.sep + currentRelPath.replace(/^\.\//, ''),
+              path: path.normalize(currentRootPath + path.sep + currentRelPath.replace(/^\.\//, '')),
               name: path.basename(currentAbsPath),
               type: 'directory',
               size: 0,
@@ -2028,7 +2076,7 @@ ${JSON.stringify({
           const hasSelectedChild = children.some(c => c.selected);
 
           return {
-            path: currentRootPath + path.sep + currentRelPath.replace(/^\.\//, ''),
+            path: path.normalize(currentRootPath + path.sep + currentRelPath.replace(/^\.\//, '')),
             name: path.basename(currentAbsPath),
             type: 'directory',
             size: 0,
@@ -2044,7 +2092,7 @@ ${JSON.stringify({
           }
 
           const selected = isIncluded(relativePath);
-          const fullPath = currentRootPath + path.sep + relativePath.replace(/^\.\//, '');
+          const fullPath = path.normalize(currentRootPath + path.sep + relativePath.replace(/^\.\//, ''));
 
           return {
             path: fullPath,
@@ -2161,11 +2209,15 @@ ${JSON.stringify({
             return relPath;
           }
           
+          // Нормализуем путь для корректного сравнения (устраняем смешанные слэши)
+          const normalizedFilePath = filePath.replace(/\//g, path.sep);
+          
           // Если путь абсолютный, пытаемся найти соответствующий rootPath
           for (const rootPath of rootPaths) {
-            if (filePath.startsWith(rootPath)) {
-              const relPath = './' + path.relative(rootPath, filePath).replace(/\\/g, '/');
-              return rootPath + path.sep + relPath.replace(/^\.\//, '');
+            const normalizedRoot = rootPath.replace(/\//g, path.sep);
+            if (normalizedFilePath.startsWith(normalizedRoot)) {
+              const relPath = './' + path.relative(normalizedRoot, normalizedFilePath).replace(/\\/g, '/');
+              return normalizedRoot + path.sep + relPath.replace(/^\.\//, '');
             }
           }
           

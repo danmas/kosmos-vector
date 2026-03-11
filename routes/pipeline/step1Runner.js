@@ -420,6 +420,18 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
    * @returns {{ targetRootPath: string, relativePath: string } | null}
    */
   function resolveFileSelectionEntry(filePath) {
+    // Детектим и исправляем корруптные пути с двумя абсолютными путями (Windows: X:\...\X:\...)
+    let wasCorrupted = false;
+    const driveLetterPattern = /[A-Za-z]:[\\|\/]/g;
+    const matches = [...filePath.matchAll(driveLetterPattern)];
+    if (matches.length > 1) {
+      // Берём последний валидный абсолютный путь
+      const lastMatch = matches[matches.length - 1];
+      filePath = filePath.slice(lastMatch.index);
+      wasCorrupted = true;
+      logger.log(`[Исправлен корруптный путь] -> ${filePath}`);
+    }
+    
     const parsed = parseFileSelectionPath(filePath);
     if (parsed) {
       if (!validRootPaths.includes(parsed.rootPath)) return null;
@@ -427,15 +439,39 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     }
 
     if (path.isAbsolute(filePath)) {
-      const norm = path.normalize(filePath);
+      // Нормализуем путь: устраняем ../ и смешанные слэши
+      const norm = path.normalize(filePath.replace(/\//g, path.sep));
+      
       for (const rp of validRootPaths) {
-        const normRoot = path.normalize(rp).replace(/[\\\/]+$/, '');
+        const normRoot = path.normalize(rp.replace(/\//g, path.sep)).replace(/[\\\/]+$/, '');
         if (norm.toLowerCase().startsWith(normRoot.toLowerCase() + path.sep) ||
             norm.toLowerCase() === normRoot.toLowerCase()) {
           const rest = norm.slice(normRoot.length).replace(/^[\\\/]/, '');
           return { targetRootPath: rp, relativePath: './' + rest.replace(/\\/g, '/') };
         }
       }
+      
+      // Если файл не найден в rootPath, но путь содержит ../ или был исправлен из корруптного -
+      // проверяем родительские директории rootPath
+      // Это позволяет обрабатывать файлы из sibling-директорий и родительских папок
+      if (filePath.includes('..') || wasCorrupted) {
+        for (const rp of validRootPaths) {
+          const normRoot = path.normalize(rp.replace(/\//g, path.sep)).replace(/[\\\/]+$/, '');
+          // Проверяем родительские директории rootPath (до 3 уровней вверх)
+          let parentRoot = normRoot;
+          for (let i = 0; i < 3; i++) {
+            parentRoot = path.dirname(parentRoot);
+            if (parentRoot === path.dirname(parentRoot)) break; // достигли корня диска
+            
+            if (norm.toLowerCase().startsWith(parentRoot.toLowerCase() + path.sep)) {
+              const rest = norm.slice(parentRoot.length).replace(/^[\\\/]/, '');
+              // Используем родительскую директорию как эффективный rootPath
+              return { targetRootPath: parentRoot, relativePath: './' + rest.replace(/\\/g, '/') };
+            }
+          }
+        }
+      }
+      
       return null;
     }
 
