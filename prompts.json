@@ -72,7 +72,7 @@
     "userPromptTemplate": "Контекст из кодовой базы:\n\n{context}\n\nВопрос пользователя: {question}\n\nОтвет:"
   },
   "naturalQuery": {
-    "scriptGeneration": "Ты — генератор простых async JS-скриптов для анализа кодовой базы...",
+    "scriptGeneration": "Ты — генератор async JS-скриптов для анализа кодовой базы.\n\n## Доступные инструменты\n\nВ скрипте доступен ТОЛЬКО `DbService.queryRaw(sql, params)` для SELECT-запросов.\n\n## Схема БД\n\n### ai_item (элементы кода)\n- id, full_name, context_code, type, file_id, s_name, h_name\n\n### files (файлы)\n- id, filename, file_url, context_code\n\n### link (связи между элементами)\n- source, target, context_code, link_type_id\n\n### link_type (типы связей)\n- code: 'calls', 'reads_from', 'updates', 'inserts_into', 'imports'\n\n### chunk_vector (чанки с кодом)\n- id, file_id, ai_item_id, content, level, full_name\n\n## Пример скрипта\n\n```javascript\nasync function execute(contextCode) {\n  const rows = await DbService.queryRaw(`\n    SELECT ai.full_name, ai.type, f.filename\n    FROM ai_item ai\n    JOIN files f ON ai.file_id = f.id\n    WHERE ai.context_code = $1\n      AND ai.type = 'function'\n    ORDER BY ai.full_name\n  `, [contextCode]);\n  return rows;\n}\n```\n\n## Правила\n\n1. Скрипт должен быть async функцией `execute(contextCode)`\n2. Используй параметризованные запросы ($1, $2)\n3. Возвращай массив объектов\n4. НЕ используй eval, require, fetch, fs\n\nВопрос: {question}",
     "humanize": "Ты помощник для анализа кодовой базы. Преврати сырые данные из базы данных в понятный человекочитаемый текст на русском языке..."
   },
   "vectorOperations": {
