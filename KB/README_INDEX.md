@@ -85,7 +85,7 @@
 | [README_TYPES.md](./README_TYPES.md) | Справочник типов AI Items | CRUD типов, GET /api/types, lazy seed, фильтр по типу | 2026-02-11 |
 | [README_UI_COMMENTS.md](./README_UI_COMMENTS.md) | Комментарии AI Items | GET/POST/PUT/DELETE /api/items/{id}/comment, интеграция с UI | |
 | [README_IS_VECTORIZED.md](./README_IS_VECTORIZED.md) | Флаг векторизации | Поле isVectorized в API ответах, проверка наличия эмбеддингов | |
-| [README_agent-script.md](./README_agent-script.md) | Natural Query Engine | Генерация JS-скриптов из вопросов на естественном языке, sandbox, поиск похожих вопросов | |
+| [README_agent-script.md](./README_agent-script.md) | Natural Query Engine | Конвейер запроса, генерация JS-скриптов, sandbox, UI-интерфейс, интеграция с Knowledge Graph | 2026-03-12 |
 
 ---
 
