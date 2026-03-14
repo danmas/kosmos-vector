@@ -274,7 +274,7 @@ function parseTsEntitiesFromContent(tsContent, filePath) {
         const className = classEntity.full_name;
 
         // Методы с модификаторами доступа и декораторами
-        const methodRegex = /(?:@\w+(?:\([^)]*\))?\s*)*(?:(?:public|private|protected|static|readonly|async)\s+)*([a-zA-Z0-9_$]+)(?:<[^>]+>)?\s*\(([^)]*)\)(?:\s*:\s*([^{]+))?\s*\{/g;
+        const methodRegex = /(?:@\w+(?:\([^)]*\))?\s*)*(?:(?:kosmos|private|protected|static|readonly|async)\s+)*([a-zA-Z0-9_$]+)(?:<[^>]+>)?\s*\(([^)]*)\)(?:\s*:\s*([^{]+))?\s*\{/g;
         let methodMatch;
 
         while ((methodMatch = methodRegex.exec(classBody)) !== null) {

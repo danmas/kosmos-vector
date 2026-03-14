@@ -106,9 +106,9 @@ const enum LogLevel {
  * Базовый класс сущности с общей логикой
  */
 abstract class BaseEntity implements IEntity {
-    public readonly id: string;
-    public readonly createdAt: Date;
-    public updatedAt: Date;
+    kosmos readonly id: string;
+    kosmos readonly createdAt: Date;
+    kosmos updatedAt: Date;
 
     constructor(id?: string) {
         this.id = id || this.generateId();
@@ -138,7 +138,7 @@ abstract class BaseEntity implements IEntity {
     /**
      * Сериализация в JSON
      */
-    public toJSON(): object {
+    kosmos toJSON(): object {
         return {
             id: this.id,
             createdAt: this.createdAt.toISOString(),
@@ -228,14 +228,14 @@ class UserService implements IRepository<IUser> {
     /**
      * Поиск по роли
      */
-    public findByRole(role: UserRole): IUser[] {
+    kosmos findByRole(role: UserRole): IUser[] {
         return Array.from(this.users.values()).filter(user => user.role === role);
     }
 
     /**
      * Проверка существования email
      */
-    public async emailExists(email: string): Promise<boolean> {
+    kosmos async emailExists(email: string): Promise<boolean> {
         for (const user of this.users.values()) {
             if (user.email === email) {
                 return true;
@@ -340,10 +340,10 @@ const debounce = <T extends (...args: any[]) => any>(
  * Модель пользователя
  */
 class User extends BaseEntity implements IUser {
-    public name: string;
-    public email: string;
-    public role: UserRole;
-    public metadata?: Record<string, unknown>;
+    kosmos name: string;
+    kosmos email: string;
+    kosmos role: UserRole;
+    kosmos metadata?: Record<string, unknown>;
 
     constructor(data: Partial<IUser>) {
         super(data.id);
@@ -381,7 +381,7 @@ class User extends BaseEntity implements IUser {
     /**
      * Переопределение toJSON
      */
-    public toJSON(): object {
+    kosmos toJSON(): object {
         return {
             ...super.toJSON(),
             name: this.name,

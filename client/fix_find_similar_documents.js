@@ -29,7 +29,7 @@ async function fixFunction() {
         p.oid
       FROM pg_proc p
       JOIN pg_namespace n ON p.pronamespace = n.oid
-      WHERE n.nspname = 'public'
+      WHERE n.nspname = 'kosmos'
       AND p.proname = 'find_similar_documents'
       LIMIT 1
     `);
@@ -62,7 +62,7 @@ async function fixFunction() {
 
     // Удаляем старую функцию
     console.log('\n🗑️  Удаление старой функции...');
-    await client.query(`DROP FUNCTION IF EXISTS public.find_similar_documents CASCADE`);
+    await client.query(`DROP FUNCTION IF EXISTS kosmos.find_similar_documents CASCADE`);
     console.log('   ✅ Старая функция удалена');
 
     // Создаем новую функцию
@@ -78,7 +78,7 @@ async function fixFunction() {
         pg_get_functiondef(p.oid) AS function_definition
       FROM pg_proc p
       JOIN pg_namespace n ON p.pronamespace = n.oid
-      WHERE n.nspname = 'public'
+      WHERE n.nspname = 'kosmos'
       AND p.proname = 'find_similar_documents'
       LIMIT 1
     `);

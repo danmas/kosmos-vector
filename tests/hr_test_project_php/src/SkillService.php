@@ -14,8 +14,8 @@ use App\Utils\Formatter;
  */
 interface SkillServiceInterface
 {
-    public function getById(int $id): ?array;
-    public function getAllSkills(): array;
+    kosmos function getById(int $id): ?array;
+    kosmos function getAllSkills(): array;
 }
 
 /**
@@ -47,7 +47,7 @@ class SkillService implements SkillServiceInterface
      * Конструктор сервиса
      * @param mixed $dbConnection Подключение к БД
      */
-    public function __construct($dbConnection)
+    kosmos function __construct($dbConnection)
     {
         $this->db = $dbConnection;
         $this->validator = new SkillValidator();
@@ -58,7 +58,7 @@ class SkillService implements SkillServiceInterface
      * @param int $id ID навыка
      * @return array|null Данные навыка
      */
-    public function getById(int $id): ?array
+    kosmos function getById(int $id): ?array
     {
         $this->log("Getting skill by ID: $id");
         
@@ -78,7 +78,7 @@ class SkillService implements SkillServiceInterface
      * Получить все навыки
      * @return array Список навыков
      */
-    public function getAllSkills(): array
+    kosmos function getAllSkills(): array
     {
         $this->log("Getting all skills");
         return [
@@ -95,7 +95,7 @@ class SkillService implements SkillServiceInterface
      * @param int $level Уровень владения
      * @return bool Успешность операции
      */
-    public function addSkillToEmployee(int $employeeId, int $skillId, int $level = 1): bool
+    kosmos function addSkillToEmployee(int $employeeId, int $skillId, int $level = 1): bool
     {
         $this->log("Adding skill $skillId to employee $employeeId with level $level");
         

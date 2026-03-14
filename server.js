@@ -263,8 +263,8 @@ if(process.env.PORT!='3200') {
 const port = process.env.PORT || 3200;
 app.use(cors()); // Разрешает всё (удобно для разработки)
 
-// Добавляем middleware для раздачи статических файлов из папки 'public'
-app.use(express.static('public'));
+// Добавляем middleware для раздачи статических файлов из папки 'kosmos'
+app.use(express.static('kosmos'));
 
 app.use(express.json()); // Для парсинга JSON в теле запроса
 

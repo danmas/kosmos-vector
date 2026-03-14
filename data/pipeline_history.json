@@ -62309,22 +62309,22 @@
               {
                 "from": "organ",
                 "to": "carl_data.organ",
-                "in": "carl_inspect.setDefaultCanUserMakePublicReport"
+                "in": "carl_inspect.setDefaultCanUserMakekosmosReport"
               },
               {
                 "from": "user_organ",
                 "to": "carl_data.user_organ",
-                "in": "carl_inspect.setCanUserMakePublicReport"
+                "in": "carl_inspect.setCanUserMakekosmosReport"
               },
               {
                 "from": "_getErrcode",
                 "to": "carl_comm._getErrcode",
-                "in": "carl_inspect.setPublicInspectReportByAdmin"
+                "in": "carl_inspect.setkosmosInspectReportByAdmin"
               },
               {
                 "from": "_getMessage",
                 "to": "carl_comm._getMessage",
-                "in": "carl_inspect.setPublicInspectReportByAdmin"
+                "in": "carl_inspect.setkosmosInspectReportByAdmin"
               },
               {
                 "from": "getUserSmartName",
@@ -62414,12 +62414,12 @@
               {
                 "from": "_getErrcode",
                 "to": "carl_comm._getErrcode",
-                "in": "carl_inspect.setPublicInspectReport"
+                "in": "carl_inspect.setkosmosInspectReport"
               },
               {
                 "from": "_getMessage",
                 "to": "carl_comm._getMessage",
-                "in": "carl_inspect.setPublicInspectReport"
+                "in": "carl_inspect.setkosmosInspectReport"
               },
               {
                 "from": "getCarInspectReport",
@@ -63219,7 +63219,7 @@
                   "carl_data.inspect_report",
                   "unknown.inspect_report"
                 ],
-                "in": "carl_inspect.setPublicInspectReportByAdmin"
+                "in": "carl_inspect.setkosmosInspectReportByAdmin"
               },
               {
                 "dep": "inspect_report",
@@ -63227,7 +63227,7 @@
                   "carl_data.inspect_report",
                   "unknown.inspect_report"
                 ],
-                "in": "carl_inspect.setPublicInspectReportByAdmin"
+                "in": "carl_inspect.setkosmosInspectReportByAdmin"
               },
               {
                 "dep": "inspect_report",
@@ -63339,7 +63339,7 @@
                   "carl_data.inspect_report",
                   "unknown.inspect_report"
                 ],
-                "in": "carl_inspect.setPublicInspectReport"
+                "in": "carl_inspect.setkosmosInspectReport"
               },
               {
                 "dep": "inspect_report",
@@ -63347,7 +63347,7 @@
                   "carl_data.inspect_report",
                   "unknown.inspect_report"
                 ],
-                "in": "carl_inspect.setPublicInspectReport"
+                "in": "carl_inspect.setkosmosInspectReport"
               },
               {
                 "dep": "inspect_report",
@@ -63355,7 +63355,7 @@
                   "carl_data.inspect_report",
                   "unknown.inspect_report"
                 ],
-                "in": "carl_inspect.isPublicInspectReport"
+                "in": "carl_inspect.iskosmosInspectReport"
               },
               {
                 "dep": "inspect_report",
@@ -63371,7 +63371,7 @@
                   "carl_data.inspect_report",
                   "unknown.inspect_report"
                 ],
-                "in": "carl_inspect.getPublicCarInspectReport"
+                "in": "carl_inspect.getkosmosCarInspectReport"
               },
               {
                 "dep": "inspect_report",

@@ -157,7 +157,7 @@ class DbService {
         const oldTableExists = await this.pgClient.query(`
           SELECT EXISTS (
             SELECT FROM information_schema.tables 
-            WHERE table_schema = 'public' 
+            WHERE table_schema = 'kosmos' 
             AND table_name = 'file_vectors'
           )
         `);
@@ -165,7 +165,7 @@ class DbService {
         const newTableExists = await this.pgClient.query(`
           SELECT EXISTS (
             SELECT FROM information_schema.tables 
-            WHERE table_schema = 'public' 
+            WHERE table_schema = 'kosmos' 
             AND table_name = 'chunk_vector'
           )
         `);
@@ -193,7 +193,7 @@ class DbService {
           await this.pgClient.query(`
             DO $$
             BEGIN
-              IF EXISTS (SELECT 1 FROM pg_sequences WHERE schemaname = 'public' AND sequencename = 'file_vectors_id_seq') THEN
+              IF EXISTS (SELECT 1 FROM pg_sequences WHERE schemaname = 'kosmos' AND sequencename = 'file_vectors_id_seq') THEN
                 ALTER SEQUENCE kosmos.file_vectors_id_seq RENAME TO chunk_vector_id_seq;
               END IF;
             END $$;
@@ -214,7 +214,7 @@ class DbService {
           const views = await this.pgClient.query(`
             SELECT viewname, definition 
             FROM pg_views 
-            WHERE schemaname = 'public' 
+            WHERE schemaname = 'kosmos' 
             AND definition LIKE '%file_vectors%'
           `);
           
@@ -233,7 +233,7 @@ class DbService {
           const functions = await this.pgClient.query(`
             SELECT routine_name, routine_definition 
             FROM information_schema.routines 
-            WHERE routine_schema = 'public' 
+            WHERE routine_schema = 'kosmos' 
             AND routine_definition LIKE '%file_vectors%'
           `);
           

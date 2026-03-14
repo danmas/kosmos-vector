@@ -74,9 +74,9 @@ node tests/full_system_test.js
 ### 1. Cleanup
 Удаление данных предыдущего запуска. Порядок важен: сначала link и ai_item, затем files (chunk_vector удалится по CASCADE от files). У таблицы `chunk_vector` нет колонки `context_code`.
 ```sql
-DELETE FROM public.link WHERE context_code = 'FULL_TEST';
-DELETE FROM public.ai_item WHERE context_code = 'FULL_TEST';
-DELETE FROM public.files WHERE context_code = 'FULL_TEST';
+DELETE FROM kosmos.link WHERE context_code = 'FULL_TEST';
+DELETE FROM kosmos.ai_item WHERE context_code = 'FULL_TEST';
+DELETE FROM kosmos.files WHERE context_code = 'FULL_TEST';
 -- chunk_vector удаляется автоматически (ON DELETE CASCADE у file_id)
 ```
 
@@ -185,7 +185,7 @@ Natural Query тесты:
 ### Проверка ai_items вручную
 ```sql
 SELECT type, COUNT(*) 
-FROM public.ai_item 
+FROM kosmos.ai_item 
 WHERE context_code = 'FULL_TEST' 
 GROUP BY type;
 ```
@@ -193,8 +193,8 @@ GROUP BY type;
 ### Проверка связей
 ```sql
 SELECT lt.code, COUNT(*) 
-FROM public.link l
-JOIN public.link_type lt ON l.link_type_id = lt.id
+FROM kosmos.link l
+JOIN kosmos.link_type lt ON l.link_type_id = lt.id
 WHERE l.context_code = 'FULL_TEST'
 GROUP BY lt.code;
 ```
@@ -202,7 +202,7 @@ GROUP BY lt.code;
 ### Проверка файлов из разных rootPath
 ```sql
 SELECT file_url, filename 
-FROM public.files 
+FROM kosmos.files 
 WHERE context_code = 'FULL_TEST';
 ```
 
@@ -210,8 +210,8 @@ WHERE context_code = 'FULL_TEST';
 ```sql
 -- Получить все сохранённые анализы логики
 SELECT ai.full_name, lg.logic, lg.graph
-FROM public.logic_graph lg
-JOIN public.ai_item ai ON lg.ai_item_id = ai.id
+FROM kosmos.logic_graph lg
+JOIN kosmos.ai_item ai ON lg.ai_item_id = ai.id
 WHERE ai.context_code = 'FULL_TEST';
 ```
 
@@ -220,13 +220,13 @@ WHERE ai.context_code = 'FULL_TEST';
 ```sql
 -- Все ai_item типа table_column
 SELECT full_name, s_name 
-FROM public.ai_item 
+FROM kosmos.ai_item 
 WHERE context_code = 'FULL_TEST' AND type = 'table_column';
 
 -- Связи function→column (source/target — full_name)
 SELECT l.source AS function_name, lt.code AS link_type, l.target AS column_name
-FROM public.link l
-JOIN public.link_type lt ON l.link_type_id = lt.id
+FROM kosmos.link l
+JOIN kosmos.link_type lt ON l.link_type_id = lt.id
 WHERE l.context_code = 'FULL_TEST'
   AND lt.code IN ('reads_column', 'updates_column', 'inserts_column');
 ```

@@ -83,9 +83,9 @@ export async function listTables(schema: string): Promise<string[]> {
 }
 
 export async function getTableSchema(tableNameWithSchema: string): Promise<string> {
-  // Парсим схему и имя таблицы из строки вида "schema.table" или просто "table" (по умолчанию public)
+  // Парсим схему и имя таблицы из строки вида "schema.table" или просто "table" (по умолчанию kosmos)
   const parts = tableNameWithSchema.split('.');
-  const schema = parts.length > 1 ? parts[0] : 'public';
+  const schema = parts.length > 1 ? parts[0] : 'kosmos';
   const tableName = parts.length > 1 ? parts[1] : parts[0];
 
   const c = await getMcpClient();

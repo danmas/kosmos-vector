@@ -37,7 +37,7 @@ async function fixIndexes() {
         // Проверяем, существует ли индекс со старым именем
         const checkOld = await client.query(`
           SELECT 1 FROM pg_indexes 
-          WHERE schemaname = 'public' 
+          WHERE schemaname = 'kosmos' 
           AND indexname = $1
         `, [rename.old]);
 
@@ -49,7 +49,7 @@ async function fixIndexes() {
         // Проверяем, не существует ли уже индекс с новым именем
         const checkNew = await client.query(`
           SELECT 1 FROM pg_indexes 
-          WHERE schemaname = 'public' 
+          WHERE schemaname = 'kosmos' 
           AND indexname = $1
         `, [rename.new]);
 
@@ -72,7 +72,7 @@ async function fixIndexes() {
     const indexes = await client.query(`
       SELECT indexname, indexdef
       FROM pg_indexes
-      WHERE schemaname = 'public'
+      WHERE schemaname = 'kosmos'
       AND tablename = 'chunk_vector'
       ORDER BY indexname
     `);
@@ -88,7 +88,7 @@ async function fixIndexes() {
     const oldIndexes = await client.query(`
       SELECT indexname
       FROM pg_indexes
-      WHERE schemaname = 'public'
+      WHERE schemaname = 'kosmos'
       AND indexname LIKE '%file_vectors%'
     `);
 

@@ -86,7 +86,7 @@ parseFileSelectionPath("C:\\project\\./src/file.js")
 
 Создаётся при `DbService.initializeSchema()`:
 
-- `public.files`:
+- `kosmos.files`:
   - `id serial pk`
   - `filename text unique`
   - `context_code text default 'DEFAULT'`
@@ -96,7 +96,7 @@ parseFileSelectionPath("C:\\project\\./src/file.js")
   - `created_at timestamptz default now()`
   - `modified_at timestamptz default now()`
 
-- `public.ai_item`:
+- `kosmos.ai_item`:
   - `id serial pk`
   - `full_name text not null`
   - `context_code text not null default 'DEFAULT'`
@@ -106,7 +106,7 @@ parseFileSelectionPath("C:\\project\\./src/file.js")
   - `created_at timestamptz default now()`
   - `updated_at timestamptz default now()`
 
-- `public.chunk_vector`:
+- `kosmos.chunk_vector`:
   - `id serial pk`
   - `file_id int references files(id) on delete cascade`
   - `ai_item_id int references ai_item(id) on delete set null`

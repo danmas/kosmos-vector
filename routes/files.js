@@ -911,7 +911,7 @@ module.exports = (dbService, embeddings) => {
     router.post('/vectorize-sql/:filename', async (req, res) => {
         try {
             const { filename } = req.params;
-            const { contextCode = 'DEFAULT', defaultSchema = 'public' } = req.body;
+            const { contextCode = 'DEFAULT', defaultSchema = 'kosmos' } = req.body;
             
             // Перенаправляем на общий эндпоинт с правильными параметрами
             req.params = {}; // Сбрасываем параметры

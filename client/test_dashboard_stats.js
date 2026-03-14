@@ -30,7 +30,7 @@ async function testDashboardStats() {
     const tablesCheck = await client.query(`
       SELECT table_name 
       FROM information_schema.tables 
-      WHERE table_schema = 'public' 
+      WHERE table_schema = 'kosmos' 
       AND table_name IN ('files', 'ai_item', 'chunk_vector', 'file_vectors')
       ORDER BY table_name
     `);
@@ -188,7 +188,7 @@ async function testDashboardStats() {
       const views = await client.query(`
         SELECT viewname, definition 
         FROM pg_views 
-        WHERE schemaname = 'public' 
+        WHERE schemaname = 'kosmos' 
         AND definition LIKE '%file_vectors%'
       `);
       
@@ -208,7 +208,7 @@ async function testDashboardStats() {
       const functions = await client.query(`
         SELECT routine_name, routine_definition 
         FROM information_schema.routines 
-        WHERE routine_schema = 'public' 
+        WHERE routine_schema = 'kosmos' 
         AND routine_definition LIKE '%file_vectors%'
       `);
       
@@ -228,7 +228,7 @@ async function testDashboardStats() {
       const triggers = await client.query(`
         SELECT trigger_name, event_object_table, action_statement
         FROM information_schema.triggers
-        WHERE trigger_schema = 'public'
+        WHERE trigger_schema = 'kosmos'
         AND action_statement LIKE '%file_vectors%'
       `);
       

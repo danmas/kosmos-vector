@@ -33,7 +33,7 @@ async function apiPost(endpoint, body) {
 
   console.log('=== Шаг 2: Создание AI Item для функции ===');
   const aiItemRes = await apiPost('/create-or-update-ai-item', {
-    full_name: 'public.calculate_salary',
+    full_name: 'kosmos.calculate_salary',
     contextCode: 'MY_DB',
     type: 'function',
     sName: 'calculate_salary',
@@ -45,7 +45,7 @@ async function apiPost(endpoint, body) {
   console.log('=== Шаг 3: Сохранение чанка уровня 0 (исходный код функции) ===');
   const chunk0Res = await apiPost('/save-chunk', {
     fileId: fileId,
-    content: `CREATE OR REPLACE FUNCTION public.calculate_salary(employee_id INT, base_salary NUMERIC)
+    content: `CREATE OR REPLACE FUNCTION kosmos.calculate_salary(employee_id INT, base_salary NUMERIC)
 RETURNS NUMERIC AS $$
 BEGIN
     RETURN base_salary * 1.15 + 5000;
@@ -54,7 +54,7 @@ $$ LANGUAGE plpgsql;`,
     chunkIndex: 0,
     level: '0-исходник',
     type: 'function',
-    full_name: 'public.calculate_salary',
+    full_name: 'kosmos.calculate_salary',
     sName: 'calculate_salary',
     aiItemId: aiItemId
   });
@@ -68,7 +68,7 @@ $$ LANGUAGE plpgsql;`,
     chunkIndex: 100,
     level: '1-описание',
     type: 'description',
-    full_name: 'public.calculate_salary',
+    full_name: 'kosmos.calculate_salary',
     aiItemId: aiItemId,
     parentChunkId: chunk0Id  // привязка к чанку уровня 0
   });
@@ -76,6 +76,6 @@ $$ LANGUAGE plpgsql;`,
 
   console.log('=== Всё успешно завершено ===');
   console.log(`Файл: 1.sql (fileId=${fileId})`);
-  console.log(`Функция: public.calculate_salary (aiItemId=${aiItemId})`);
+  console.log(`Функция: kosmos.calculate_salary (aiItemId=${aiItemId})`);
   console.log(`Чанки: уровень 0 (id=${chunk0Id}), уровень 1 (id=${chunk1Res.chunkId})`);
 })();

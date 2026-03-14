@@ -70,8 +70,8 @@ async function checkContextIntegrity() {
     console.log('1. AiItem с full_name без схемы (без точки):');
     const aiItemsNoSchema = await client.query(`
       SELECT ai.id, ai.full_name, ai.type, f.filename
-      FROM public.ai_item ai
-      LEFT JOIN public.files f ON ai.file_id = f.id
+      FROM kosmos.ai_item ai
+      LEFT JOIN kosmos.files f ON ai.file_id = f.id
       WHERE ai.context_code = $1
         AND (ai.full_name IS NULL OR ai.full_name = '' OR ai.full_name NOT LIKE '%.%')
       ORDER BY ai.full_name
@@ -94,8 +94,8 @@ async function checkContextIntegrity() {
     console.log('2. Чанки уровня 0 с full_name без схемы:');
     const chunksL0NoSchema = await client.query(`
       SELECT fv.id AS chunk_id, fv.full_name, f.filename
-      FROM public.chunk_vector fv
-      JOIN public.files f ON fv.file_id = f.id
+      FROM kosmos.chunk_vector fv
+      JOIN kosmos.files f ON fv.file_id = f.id
       WHERE f.context_code = $1
         AND fv.level LIKE '0%'
         AND fv.full_name IS NOT NULL AND fv.full_name != ''
@@ -118,8 +118,8 @@ async function checkContextIntegrity() {
     console.log('3. Анализ зависимостей уровня 1 (L1):');
     const l1Chunks = await client.query(`
       SELECT fv.id AS chunk_id, fv.chunk_content, fv.full_name AS parent_func, f.filename
-      FROM public.chunk_vector fv
-      JOIN public.files f ON fv.file_id = f.id
+      FROM kosmos.chunk_vector fv
+      JOIN kosmos.files f ON fv.file_id = f.id
       WHERE f.context_code = $1 AND fv.level LIKE '1-%'
     `, [contextCode]);
 
@@ -166,7 +166,7 @@ async function checkContextIntegrity() {
 
           const candidates = await client.query(`
             SELECT full_name
-            FROM public.ai_item
+            FROM kosmos.ai_item
             WHERE context_code = $1
               AND full_name ~ ('^[^.]+\\.' || $2 || '$')
           `, [contextCode, shortName]);
@@ -239,7 +239,7 @@ async function checkContextIntegrity() {
       for (const match of probableMatches) {
         // Получаем текущий chunk_content
         const chunkRes = await client.query(
-          `SELECT chunk_content FROM public.chunk_vector WHERE id = $1`,
+          `SELECT chunk_content FROM kosmos.chunk_vector WHERE id = $1`,
           [match.chunk_id]
         );
         const content = chunkRes.rows[0].chunk_content;
@@ -252,7 +252,7 @@ async function checkContextIntegrity() {
 
         // Обновляем запись
         await client.query(
-          `UPDATE public.chunk_vector SET chunk_content = $1 WHERE id = $2`,
+          `UPDATE kosmos.chunk_vector SET chunk_content = $1 WHERE id = $2`,
           [content, match.chunk_id]
         );
 

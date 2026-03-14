@@ -165,9 +165,9 @@ node tests/test-sql-order-system.js
 ✓ MD file vectorized: 5 chunks created
 
 --- Step 2: Find AI Items for stored procedures ---
-✓ Found AI Item: "public.calculate_order_total(p_order_id integer)" (ID: 123, type: function)
-✓ Found AI Item: "public.apply_discount(p_customer_id integer, p_subtotal numeric)" (ID: 124, type: function)
-✓ Found AI Item: "public.create_order(p_customer_id integer, p_items jsonb)" (ID: 125, type: function)
+✓ Found AI Item: "kosmos.calculate_order_total(p_order_id integer)" (ID: 123, type: function)
+✓ Found AI Item: "kosmos.apply_discount(p_customer_id integer, p_subtotal numeric)" (ID: 124, type: function)
+✓ Found AI Item: "kosmos.create_order(p_customer_id integer, p_items jsonb)" (ID: 125, type: function)
 ✓ Found AI Item: "calculate_order_total" (ID: 126, type: markdown)
 ✓ All required AI Items found
 
@@ -203,17 +203,17 @@ node tests/test-sql-order-system.js
 ======================================================================
 ✅ [SUCCESS] L0 chunk verified
    Content length: 1234 characters
-   Preview: CREATE OR REPLACE FUNCTION public.calculate_order_total(...
+   Preview: CREATE OR REPLACE FUNCTION kosmos.calculate_order_total(...
 
 ======================================================================
 --- Step 8: Verify chunk hierarchy ---
 ======================================================================
-AI Item "public.apply_discount(p_customer_id integer, p_subtotal numeric)":
+AI Item "kosmos.apply_discount(p_customer_id integer, p_subtotal numeric)":
   L0 chunks: 1
   L1 chunks: 1
   L2 chunks: 0
 
-AI Item "public.create_order(p_customer_id integer, p_items jsonb)":
+AI Item "kosmos.create_order(p_customer_id integer, p_items jsonb)":
   L0 chunks: 1
   L1 chunks: 0
   L2 chunks: 1
@@ -260,7 +260,7 @@ AI Item "public.create_order(p_customer_id integer, p_items jsonb)":
 Для SQL объектов система автоматически извлекает:
 
 - **full_name**: полное имя с схемой и сигнатурой
-  - Пример: `public.calculate_order_total(p_order_id integer)`
+  - Пример: `kosmos.calculate_order_total(p_order_id integer)`
   
 - **s_name**: короткое имя без схемы
   - Пример: `calculate_order_total`
@@ -306,7 +306,7 @@ AI Item "public.create_order(p_customer_id integer, p_items jsonb)":
 1. Добавить проверку VIEW и MATERIALIZED VIEW
 2. Добавить проверку TRIGGER
 3. Проверить генерацию для INDEX и SEQUENCE
-4. Тестировать различные схемы БД (не только public)
+4. Тестировать различные схемы БД (не только kosmos)
 5. Проверить обработку ошибок (несуществующие AI Items)
 6. Добавить тесты производительности для больших SQL файлов
 7. Проверить корректность извлечения сложных сигнатур функций

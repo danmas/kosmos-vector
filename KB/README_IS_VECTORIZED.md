@@ -103,7 +103,7 @@ interface AiItem {
 ```sql
 EXISTS(
   SELECT 1 
-  FROM public.chunk_vector cv
+  FROM kosmos.chunk_vector cv
   WHERE cv.ai_item_id = ai.id 
     AND cv.embedding IS NOT NULL
   LIMIT 1

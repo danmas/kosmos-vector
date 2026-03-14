@@ -2,7 +2,7 @@
 -- Adds link_type entries for hierarchical and sequential relations in MD files
 
 -- Markdown hierarchical inclusion (parent includes children)
-INSERT INTO public.link_type (code, label, description, is_active)
+INSERT INTO kosmos.link_type (code, label, description, is_active)
 VALUES 
   ('md_includes', 'Includes', 'MD parent section includes child sections (mdDoc->H1, H1->H2)', true),
   ('md_included_in', 'Included in', 'MD child section is included in parent (H2->H1, H1->mdDoc)', true),
@@ -11,4 +11,4 @@ VALUES
 ON CONFLICT (code) DO NOTHING;
 
 -- Verify
-SELECT code, label, description FROM public.link_type WHERE code LIKE 'md_%' ORDER BY code;
+SELECT code, label, description FROM kosmos.link_type WHERE code LIKE 'md_%' ORDER BY code;

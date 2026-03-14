@@ -64,7 +64,7 @@ async function rebuildSqlLinksFromDb(fullName, contextCode, dbService) {
   };
 
   const parts = fullName.split('.');
-  const schema = (parts.length > 1 ? parts[0] : 'public').toLowerCase();
+  const schema = (parts.length > 1 ? parts[0] : 'kosmos').toLowerCase();
   const name = (parts.length > 1 ? parts[1] : parts[0]).toLowerCase();
 
   const aiResult = await dbService.pgClient.query(

@@ -76,7 +76,7 @@ CREATE TABLE ai_item (
 
 #### SQL сплиттер: `splitSqlByObjects()`
 - Извлекает: таблицы, функции, процедуры, views, materialized views, triggers, indexes, sequences, types, domains, schemas, roles, grants
-- Определяет имена со схемой (например: `public.users`)
+- Определяет имена со схемой (например: `kosmos.users`)
 - Для функций включает сигнатуру
 
 #### Markdown сплиттер: `splitMarkdownBySections()`
@@ -92,7 +92,7 @@ CREATE TABLE ai_item (
 
 ```sql
 -- Таблица ai_item - основная сущность
-CREATE TABLE public.ai_item (
+CREATE TABLE kosmos.ai_item (
   id serial PRIMARY KEY,
   full_name text NOT NULL,              -- Полное имя объекта
   context_code text NOT NULL DEFAULT 'DEFAULT',
@@ -105,7 +105,7 @@ CREATE TABLE public.ai_item (
 );
 
 -- Таблица chunk_vector - чанки с векторизацией
-CREATE TABLE public.chunk_vector (
+CREATE TABLE kosmos.chunk_vector (
   id serial PRIMARY KEY,
   file_id int REFERENCES files(id) ON DELETE CASCADE,
   ai_item_id int REFERENCES ai_item(id) ON DELETE SET NULL,  -- Связь с AI Item
