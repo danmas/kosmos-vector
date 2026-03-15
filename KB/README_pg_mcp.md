@@ -40,7 +40,7 @@ POSTGRES_URL=postgresql://postgres:mypassword@localhost:5432/mydb
 Возвращает список таблиц в указанной схеме базы данных.
 
 **Параметры:**
-- `schema` — имя схемы (например, `"public"`, `"carl_data"`)
+- `schema` — имя схемы (например, `"kosmos"`, `"carl_data"`)
 
 **Возвращает:**
 - Массив строк с именами таблиц
@@ -56,7 +56,7 @@ console.log(tables); // ["users", "orders", "products", ...]
 Возвращает схему таблицы в текстовом формате.
 
 **Параметры:**
-- `tableNameWithSchema` — имя таблицы со схемой через точку (например, `"carl_data.users"`) или просто имя таблицы (по умолчанию используется схема `"public"`)
+- `tableNameWithSchema` — имя таблицы со схемой через точку (например, `"carl_data.users"`) или просто имя таблицы (по умолчанию используется схема `"kosmos"`)
 
 **Возвращает:**
 - Строку с описанием колонок таблицы в формате:
@@ -150,15 +150,15 @@ import "dotenv/config";
 import { pgMcp } from "./pg-mcp";
 
 // Получаем таблицы из разных схем
-const publicTables = await pgMcp.listTables("public");
+const kosmosTables = await pgMcp.listTables("kosmos");
 const carlTables = await pgMcp.listTables("carl_data");
 
-console.log("Public схема:", publicTables);
+console.log("kosmos схема:", kosmosTables);
 console.log("Carl_data схема:", carlTables);
 
 // Получаем схемы таблиц
 const userSchema = await pgMcp.getTableSchema("carl_data.users");
-const orderSchema = await pgMcp.getTableSchema("public.orders");
+const orderSchema = await pgMcp.getTableSchema("kosmos.orders");
 
 await pgMcp.closeClient();
 ```

@@ -68,16 +68,16 @@ langchain-rag-example/
 │   ├── document1.txt
 │   ├── document2.txt
 │   └── document3.txt
-└── public/         # Статические файлы для веб-интерфейса
+└── kosmos/         # Статические файлы для веб-интерфейса
     └── index.html  # Веб-интерфейс
 ```
 
 ## Настройка PostgreSQL
 
-Для хранения векторных представлений используется таблица `file_vectors` в схеме `public`:
+Для хранения векторных представлений используется таблица `file_vectors` в схеме `kosmos`:
 
 ```sql
-CREATE TABLE IF NOT EXISTS public.file_vectors (
+CREATE TABLE IF NOT EXISTS kosmos.file_vectors (
   id UUID DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
   file_url TEXT NOT NULL,
   embedding VECTOR(1536),

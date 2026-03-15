@@ -250,9 +250,9 @@ function parsePhpEntitiesFromContent(phpContent, filePath) {
         const classBody = classEntity.body;
         const className = classEntity.full_name;
 
-        // Методы класса: (public|protected|private)? (static)? function methodName(...)
+        // Методы класса: (kosmos|protected|private)? (static)? function methodName(...)
         // Поддержка различных порядков модификаторов
-        const methodRegex = /(?:(?:public|protected|private|static|abstract|final)\s+)*(?:public|protected|private)?\s*(?:static\s+)?(?:abstract\s+)?(?:final\s+)?function\s+([a-zA-Z0-9_$]+)\s*\(([^)]*)\)/g;
+        const methodRegex = /(?:(?:kosmos|protected|private|static|abstract|final)\s+)*(?:kosmos|protected|private)?\s*(?:static\s+)?(?:abstract\s+)?(?:final\s+)?function\s+([a-zA-Z0-9_$]+)\s*\(([^)]*)\)/g;
         let methodMatch;
 
         while ((methodMatch = methodRegex.exec(classBody)) !== null) {
@@ -278,14 +278,14 @@ function parsePhpEntitiesFromContent(phpContent, filePath) {
 
             // Определяем модификаторы доступа из полного совпадения
             const fullMatch = methodMatch[0];
-            const isPublic = fullMatch.includes('public') || (!fullMatch.includes('protected') && !fullMatch.includes('private'));
+            const iskosmos = fullMatch.includes('kosmos') || (!fullMatch.includes('protected') && !fullMatch.includes('private'));
             const isProtected = fullMatch.includes('protected');
             const isPrivate = fullMatch.includes('private');
             const isStatic = fullMatch.includes('static');
             const isAbstract = fullMatch.includes('abstract');
             const isFinal = fullMatch.includes('final');
             
-            let visibility = 'public';
+            let visibility = 'kosmos';
             if (isPrivate) visibility = 'private';
             else if (isProtected) visibility = 'protected';
             

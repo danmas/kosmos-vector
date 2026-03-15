@@ -7,14 +7,14 @@
 
 ```sql
 -- 1. files: убрать UNIQUE(filename), добавить file_hash, добавить UNIQUE(filename, context_code)
-ALTER TABLE public.files DROP CONSTRAINT IF EXISTS files_filename_key;
-ALTER TABLE public.files ADD COLUMN IF NOT EXISTS file_hash TEXT;
-ALTER TABLE public.files ADD CONSTRAINT files_filename_context_code_unique UNIQUE (filename, context_code);
+ALTER TABLE kosmos.files DROP CONSTRAINT IF EXISTS files_filename_key;
+ALTER TABLE kosmos.files ADD COLUMN IF NOT EXISTS file_hash TEXT;
+ALTER TABLE kosmos.files ADD CONSTRAINT files_filename_context_code_unique UNIQUE (filename, context_code);
 
 -- 2. ai_item: добавить content_hash и needs_rebuild
-ALTER TABLE public.ai_item ADD COLUMN IF NOT EXISTS content_hash TEXT;
-ALTER TABLE public.ai_item ADD COLUMN IF NOT EXISTS needs_rebuild BOOLEAN DEFAULT false;
-CREATE INDEX IF NOT EXISTS idx_ai_item_needs_rebuild ON public.ai_item (context_code, needs_rebuild) WHERE needs_rebuild = true;
+ALTER TABLE kosmos.ai_item ADD COLUMN IF NOT EXISTS content_hash TEXT;
+ALTER TABLE kosmos.ai_item ADD COLUMN IF NOT EXISTS needs_rebuild BOOLEAN DEFAULT false;
+CREATE INDEX IF NOT EXISTS idx_ai_item_needs_rebuild ON kosmos.ai_item (context_code, needs_rebuild) WHERE needs_rebuild = true;
 ```
 
 ### 0.2 Обновить `DbService.initializeSchema()`
@@ -46,13 +46,13 @@ CREATE INDEX IF NOT EXISTS idx_ai_item_needs_rebuild ON public.ai_item (context_
 ### 2.2 Новый метод `getFileMetaForIncrCheck(filename, contextCode)`
 ```js
 // Возвращает { id, modified_at, file_hash } или null
-SELECT id, modified_at, file_hash FROM public.files
+SELECT id, modified_at, file_hash FROM kosmos.files
 WHERE filename = $1 AND context_code = $2
 ```
 
 ### 2.3 Новый метод `updateFileModifiedAt(fileId, mtime)`
 ```js
-UPDATE public.files SET modified_at = $1 WHERE id = $2
+UPDATE kosmos.files SET modified_at = $1 WHERE id = $2
 ```
 Используется при skip-by-hash (файл не изменился, но mtime обновить надо).
 
@@ -62,42 +62,42 @@ UPDATE public.files SET modified_at = $1 WHERE id = $2
 
 ### 2.5 Новый метод `getAiItemsByFileId(fileId, contextCode)`
 ```js
-SELECT id, full_name, content_hash FROM public.ai_item
+SELECT id, full_name, content_hash FROM kosmos.ai_item
 WHERE file_id = $1 AND context_code = $2
 ```
 
 ### 2.6 Новый метод `markNeedsRebuild(fullNames, contextCode)`
 ```js
-UPDATE public.ai_item SET needs_rebuild = true
+UPDATE kosmos.ai_item SET needs_rebuild = true
 WHERE full_name = ANY($1::text[]) AND context_code = $2
 ```
 
 ### 2.7 Новый метод `clearNeedsRebuild(aiItemId)`
 ```js
-UPDATE public.ai_item SET needs_rebuild = false WHERE id = $1
+UPDATE kosmos.ai_item SET needs_rebuild = false WHERE id = $1
 ```
 
 ### 2.8 Новый метод `deleteAiItemCascade(aiItemId, fullName, contextCode)`
 Порядок:
-1. `DELETE FROM public.link WHERE context_code = $1 AND source = $2`
-2. `DELETE FROM public.chunk_vector WHERE ai_item_id = $3`
-3. `DELETE FROM public.ai_item WHERE id = $3`
+1. `DELETE FROM kosmos.link WHERE context_code = $1 AND source = $2`
+2. `DELETE FROM kosmos.chunk_vector WHERE ai_item_id = $3`
+3. `DELETE FROM kosmos.ai_item WHERE id = $3`
 
 ### 2.9 Новый метод `getReverseLinkedItems(fullName, contextCode)`
 ```js
-SELECT DISTINCT source FROM public.link
+SELECT DISTINCT source FROM kosmos.link
 WHERE target = $1 AND context_code = $2
 ```
 Для маркировки обратных соседей при удалении.
 
 ### 2.10 Новый метод `deleteChunksByAiItemId(aiItemId)`
 ```js
-DELETE FROM public.chunk_vector WHERE ai_item_id = $1
+DELETE FROM kosmos.chunk_vector WHERE ai_item_id = $1
 ```
 
 ### 2.11 Новый метод `deleteLinksBySource(fullName, contextCode)`
 ```js
-DELETE FROM public.link WHERE context_code = $1 AND source = $2
+DELETE FROM kosmos.link WHERE context_code = $1 AND source = $2
 ```
 
 ---

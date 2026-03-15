@@ -70,7 +70,7 @@ ddl_loading:
 # Загрузка таблиц из БД
 table_loading:
   enabled: true
-  schema: "public"                    # Схема (или несколько через запятую)
+  schema: "kosmos"                    # Схема (или несколько через запятую)
   include_patterns: ["user%", "order%"]  # SQL LIKE паттерны для включения
   exclude_patterns: ["temp%", "log%"]    # SQL LIKE паттерны для исключения
   exclude_names: ["migrations", "seeds"] # Точные имена для исключения
@@ -376,7 +376,7 @@ fileSelection: [
 
 ```sql
 -- Поиск кандидатов по regexp
-SELECT full_name FROM public.ai_item
+SELECT full_name FROM kosmos.ai_item
 WHERE context_code = $1
   AND full_name ~ ('^[^.]+\.' || $2 || '$')
 ```
@@ -393,7 +393,7 @@ WHERE context_code = $1
 ### AI Item
 
 ```sql
-INSERT INTO public.ai_item (
+INSERT INTO kosmos.ai_item (
   full_name,      -- полное имя сущности (schema.name или Class.method)
   context_code,   -- код контекста
   type,           -- тип: function, class, method, interface, etc.
@@ -406,7 +406,7 @@ INSERT INTO public.ai_item (
 ### Chunk Vector (L0)
 
 ```sql
-INSERT INTO public.chunk_vector (
+INSERT INTO kosmos.chunk_vector (
   file_id,
   chunk_content,  -- JSON: { text: {...}, comment: "..." }
   metadata,       -- { type, level: "0-исходник", full_name, s_name }
@@ -417,7 +417,7 @@ INSERT INTO public.chunk_vector (
 ### Chunk Vector (L1)
 
 ```sql
-INSERT INTO public.chunk_vector (
+INSERT INTO kosmos.chunk_vector (
   file_id,
   chunk_content,  -- JSON: { text: { called_functions: [...], imports: [...] } }
   metadata,       -- { type: "json", level: "1-связи", full_name, s_name }
@@ -429,7 +429,7 @@ INSERT INTO public.chunk_vector (
 ### Link (L1 связи)
 
 ```sql
-INSERT INTO public.link (
+INSERT INTO kosmos.link (
   context_code,
   source,         -- full_name источника
   target,         -- full_name цели (или короткое имя до исправления)
@@ -551,7 +551,7 @@ GET /api/pipeline/step/{id}/history?context-code=MY_CONTEXT
   "ignorePatterns": "**/node_modules/**, **/*.test.js, **/*.spec.js",
   "fileSelection": [],
   "metadata": {
-    "custom_settings": "functions_loading:\n  enabled: true\njs_loading:\n  enabled: true\nts_loading:\n  enabled: true\nmd_loading:\n  enabled: true\ntable_loading:\n  enabled: true\n  schema: public\n  include_patterns: []\n  exclude_patterns: [\"log_%\", \"temp_%\"]\n  exclude_names: [\"migrations\"]"
+    "custom_settings": "functions_loading:\n  enabled: true\njs_loading:\n  enabled: true\nts_loading:\n  enabled: true\nmd_loading:\n  enabled: true\ntable_loading:\n  enabled: true\n  schema: kosmos\n  include_patterns: []\n  exclude_patterns: [\"log_%\", \"temp_%\"]\n  exclude_names: [\"migrations\"]"
   }
 }
 ```

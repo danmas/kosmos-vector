@@ -263,8 +263,8 @@ if(process.env.PORT!='3200') {
 const port = process.env.PORT || 3200;
 app.use(cors()); // Разрешает всё (удобно для разработки)
 
-// Добавляем middleware для раздачи статических файлов из папки 'public'
-app.use(express.static('public'));
+// Добавляем middleware для раздачи статических файлов из папки 'kosmos'
+app.use(express.static('kosmos'));
 
 app.use(express.json()); // Для парсинга JSON в теле запроса
 
@@ -326,6 +326,7 @@ const PG_IDLE_TIMEOUT_MS = 30000;
 
 const pgClient = new Pool({
   ...pgConfig,
+  options: '-csearch_path=kosmos,public',  // Схема kosmos первая в search_path
   max: 5,
   idleTimeoutMillis: PG_IDLE_TIMEOUT_MS,
   connectionTimeoutMillis: PG_CONNECTION_TIMEOUT_MS,

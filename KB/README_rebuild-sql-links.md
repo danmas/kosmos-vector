@@ -85,9 +85,9 @@ sequenceDiagram
 - Формирует l1Result: `{ foreign_keys: [...], referenced_tables: [...] }`
 - linkTypeMap: `{ referenced_tables: 'reads_from' }` (FK — это по сути ссылка на другую таблицу)
 - **Общая часть (после получения l1Result):**
-  1. `DELETE FROM public.link WHERE source = $1 AND context_code = $2` — очищаем старые связи
-  2. Резолвим link_type_id через `SELECT id FROM public.link_type WHERE code = $1`
-  3. INSERT новых связей через `INSERT INTO public.link ... ON CONFLICT DO NOTHING`
+  1. `DELETE FROM kosmos.link WHERE source = $1 AND context_code = $2` — очищаем старые связи
+  2. Резолвим link_type_id через `SELECT id FROM kosmos.link_type WHERE code = $1`
+  3. INSERT новых связей через `INSERT INTO kosmos.link ... ON CONFLICT DO NOTHING`
   4. Обновляем L1-чанк в chunk_vector:
     - Ищем существующий: `SELECT id FROM chunk_vector WHERE ai_item_id = $1 AND level LIKE '1-%'`
     - Если есть — `UPDATE chunk_vector SET chunk_content = $1 WHERE id = $2`

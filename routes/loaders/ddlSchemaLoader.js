@@ -47,7 +47,7 @@ function parseTablesFromContent(sqlContent, filePath) {
         
         // Разбор имени на schema.table
         const parts = tableName.split('.');
-        const schema = parts.length > 1 ? parts[0] : 'public';
+        const schema = parts.length > 1 ? parts[0] : 'kosmos';
         const shortName = parts.length > 1 ? parts[1] : parts[0];
         
         tables.push({

@@ -30,6 +30,8 @@ Natural Query Engine — интеллектуальный слой для ана
    - Скрипт сохраняется в таблицу `agent_script` с векторизованным вопросом.
    - При следующем похожем вопросе можно использовать готовый скрипт.
 
+
+
 ## Архитектура
 
 ```mermaid
@@ -180,7 +182,7 @@ SELECT
   is_valid,
   last_result,
   1 - (question_embedding <=> $1::vector) AS similarity
-FROM public.agent_script
+FROM kosmos.agent_script
 WHERE context_code = $2
   AND is_valid = true
   AND question_embedding IS NOT NULL
@@ -223,7 +225,7 @@ LIMIT $4
 ## Таблица agent_script
 
 ```sql
-CREATE TABLE public.agent_script (
+CREATE TABLE kosmos.agent_script (
     id serial PRIMARY KEY,
     context_code text NOT NULL,
     question text NOT NULL,
@@ -237,13 +239,13 @@ CREATE TABLE public.agent_script (
 );
 
 CREATE UNIQUE INDEX idx_agent_script_unique 
-    ON public.agent_script (context_code, question);
+    ON kosmos.agent_script (context_code, question);
 
 CREATE INDEX idx_agent_script_question_fts 
-    ON public.agent_script USING gin (to_tsvector('russian', question));
+    ON kosmos.agent_script USING gin (to_tsvector('russian', question));
 
 CREATE INDEX idx_agent_script_question_embedding
-    ON public.agent_script
+    ON kosmos.agent_script
     USING ivfflat (question_embedding vector_cosine_ops)
     WITH (lists = 100);
 ```

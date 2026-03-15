@@ -28,7 +28,7 @@ async function findAllReferences() {
         p.prokind
       FROM pg_proc p
       JOIN pg_namespace n ON p.pronamespace = n.oid
-      WHERE n.nspname = 'public'
+      WHERE n.nspname = 'kosmos'
       AND p.prokind = 'f'  -- только обычные функции, не агрегаты
     `);
 
@@ -63,7 +63,7 @@ async function findAllReferences() {
     const views = await client.query(`
       SELECT viewname, definition 
       FROM pg_views 
-      WHERE schemaname = 'public'
+      WHERE schemaname = 'kosmos'
     `);
 
     const viewsWithRef = views.rows.filter(row => 
@@ -90,7 +90,7 @@ async function findAllReferences() {
       FROM pg_trigger t
       JOIN pg_class c ON t.tgrelid = c.oid
       JOIN pg_namespace n ON c.relnamespace = n.oid
-      WHERE n.nspname = 'public'
+      WHERE n.nspname = 'kosmos'
       AND NOT t.tgisinternal
     `);
 
@@ -116,7 +116,7 @@ async function findAllReferences() {
         conrelid::regclass AS table_name,
         pg_get_constraintdef(oid) AS definition
       FROM pg_constraint
-      WHERE connamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+      WHERE connamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'kosmos')
     `);
 
     const constraintsWithRef = constraints.rows.filter(row => 
@@ -141,7 +141,7 @@ async function findAllReferences() {
         tablename,
         indexdef
       FROM pg_indexes
-      WHERE schemaname = 'public'
+      WHERE schemaname = 'kosmos'
     `);
 
     const indexesWithRef = indexes.rows.filter(row => 
@@ -166,7 +166,7 @@ async function findAllReferences() {
         tablename,
         definition
       FROM pg_rules
-      WHERE schemaname = 'public'
+      WHERE schemaname = 'kosmos'
     `);
 
     const rulesWithRef = rules.rows.filter(row => 
@@ -188,7 +188,7 @@ async function findAllReferences() {
     const tableOid = await client.query(`
       SELECT oid FROM pg_class 
       WHERE relname = 'file_vectors' 
-      AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+      AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'kosmos')
     `);
 
     if (tableOid.rows.length > 0) {

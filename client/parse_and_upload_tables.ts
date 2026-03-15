@@ -88,7 +88,7 @@ async function processTable(fullTableName: string) {
 
   // 4. Разбор имени
   const parts = fullTableName.split(".");
-  const schema = parts.length > 1 ? parts[0] : "public";
+  const schema = parts.length > 1 ? parts[0] : "kosmos";
   const tableName = parts.length > 1 ? parts[1] : parts[0];
 
   // 5. Контент чанка
