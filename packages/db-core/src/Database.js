@@ -75,6 +75,7 @@ class Database {
           database: this.config.database,
           user: this.config.user,
           password: this.config.password,
+          options: this.config.options || '-csearch_path=kosmos,public',
           max: this.maxPoolSize,
           idleTimeoutMillis: 10000,
           connectionTimeoutMillis: 10000
@@ -91,7 +92,8 @@ class Database {
           port: this.config.port,
           database: this.config.database,
           user: this.config.user,
-          password: this.config.password
+          password: this.config.password,
+          options: this.config.options || '-csearch_path=kosmos,public'
         });
         await this.connection.connect();
       }

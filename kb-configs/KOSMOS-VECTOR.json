@@ -3,7 +3,7 @@
   "includeMask": "**/*.{sql,**/*.js,**/*.ts,**/*.tsх,**/*.md",
   "ignorePatterns": "**/.cursor/**,**/.qoder/**,**/.vscode/**,**/data/**,**/tmp/**,**/tests/**,**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**,**/docs/**",
   "fileSelection": [],
-  "lastUpdated": "2026-02-19T05:42:23.998Z",
+  "lastUpdated": "2026-03-14T08:50:20.406Z",
   "metadata": {
     "projectName": "New Project",
     "description": "RAG knowledge base",

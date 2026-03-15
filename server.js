@@ -326,6 +326,7 @@ const PG_IDLE_TIMEOUT_MS = 30000;
 
 const pgClient = new Pool({
   ...pgConfig,
+  options: '-csearch_path=kosmos,public',  // Схема kosmos первая в search_path
   max: 5,
   idleTimeoutMillis: PG_IDLE_TIMEOUT_MS,
   connectionTimeoutMillis: PG_CONNECTION_TIMEOUT_MS,
