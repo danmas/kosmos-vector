@@ -407,6 +407,10 @@ app.use('/api', chatRoutes(dbService, vectorStore, embeddings));
 const ragRoutes = require('./routes/rag');
 app.use('/api/rag', ragRoutes(dbService, vectorStore, embeddings));
 
+// Подключаем роуты для Graph Snapshots
+const graphSnapshotsRoutes = require('./routes/graphSnapshots');
+app.use('/api/graph-snapshots', graphSnapshotsRoutes(dbService));
+
 // Конфигурация моделей для UI (DEPRECATED - используйте /api/config из routes/api.js)
 app.get('/api/ui-config', (req, res) => {
   try {

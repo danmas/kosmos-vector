@@ -75418,6 +75418,202 @@
             }
           ]
         }
+      },
+      {
+        "timestamp": "2026-03-27T10:46:33.637Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-27T10:46:33.749Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 3,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-27T10:46:37.827Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 3,
+        "totalItems": 3,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 2,
+            "totalTables": 0,
+            "totalFunctions": 16,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 1,
+            "skippedFiles": 0,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 16
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "generated_1.sql",
+                "fileId": "26a2ed23-621e-4106-9add-73a6d81269e8",
+                "isNew": true,
+                "functionsFound": 15,
+                "functionsProcessed": 15,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 15,
+                  "updated": 0,
+                  "unchanged": 0,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "generated_tests_1.sql",
+                "fileId": "b995646e-fe51-439f-a42a-7f9b2b55eff6",
+                "isNew": true,
+                "functionsFound": 1,
+                "functionsProcessed": 1,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 1,
+                  "updated": 0,
+                  "unchanged": 0,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "generated_workflow.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-27T10:46:33.714Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.715Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.715Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/gene*.sql\""
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.715Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.715Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 0 файлов"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.719Z",
+              "level": "info",
+              "message": "[Step1] Режим: сканирование по glob-маскам"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.743Z",
+              "level": "info",
+              "message": "[Step1] Найдено 3 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.744Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.744Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.744Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.745Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.746Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.747Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.749Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.768Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.768Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 3 (3 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:33.768Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-03-27T10:46:37.826Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:37.826Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 2 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
       }
     ],
     "2": [
@@ -79188,6 +79384,554 @@
             },
             {
               "timestamp": "2026-03-12T09:16:40.682Z",
+              "level": "info",
+              "message": "[Step2] [Таблица link] Исправлено: 0, неоднозначных: 0, отсутствующих: 0"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-03-27T10:46:50.606Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-27T10:46:51.220Z",
+        "status": "running",
+        "progress": 59,
+        "itemsProcessed": 10,
+        "totalItems": 17,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-03-27T10:46:51.557Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 17,
+        "totalItems": 17,
+        "error": null,
+        "report": {
+          "summary": {
+            "aiItemsNoSchema": 8,
+            "l0ChunksNoSchema": 8,
+            "l1ChunksAnalyzed": 17,
+            "missingDeps": 24,
+            "ambiguousDeps": 0,
+            "fixedDeps": 68,
+            "linksAnalyzed": 0,
+            "linksFixed": 0,
+            "linksMissing": 0,
+            "linksAmbiguous": 0
+          },
+          "details": {
+            "fixes": [
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct.getLeadBidJ"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_auct._getAuctionHistory_1"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_auct._getAuctionHistory_1"
+              },
+              {
+                "from": "_getProfTargetNameInAuct",
+                "to": "carl_auct._getProfTargetNameInAuct",
+                "in": "carl_auct._getAuctionHistory_1"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct._getAuctionHistory_1"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_auct._makeBid"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_auct._makeBid"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct._makeBid"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_auct._makeBid"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct._makeBid"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct._makeBid"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_auct._makeBid"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct._makeBid"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct._makeBid"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct._makeBid"
+              },
+              {
+                "from": "_makeBid",
+                "to": "carl_auct._makeBid",
+                "in": "carl_auct.makeBid"
+              },
+              {
+                "from": "makeBid",
+                "to": "carl_auct.makeBid",
+                "in": "carl_auct.makeBid"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_auct.makeBid"
+              },
+              {
+                "from": "_makeBid",
+                "to": "carl_auct._makeBid",
+                "in": "carl_auct.setProxyPrice"
+              },
+              {
+                "from": "setProxyPrice",
+                "to": "carl_auct.setProxyPrice",
+                "in": "carl_auct.setProxyPrice"
+              },
+              {
+                "from": "getBalance",
+                "to": "carl_prof.getBalance",
+                "in": "carl_auct.balancesAfterBid"
+              },
+              {
+                "from": "writelog",
+                "to": "unknown.writelog",
+                "in": "carl_auct.balancesAfterBid"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_auct.buyNow"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_auct.buyNow"
+              },
+              {
+                "from": "_que_before_buynow",
+                "to": "carl_auct._que_before_buynow",
+                "in": "carl_auct.buyNow"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct.buyNow"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.buyNow"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct.buyNow"
+              },
+              {
+                "from": "queue",
+                "to": "carl_data.queue",
+                "in": "carl_auct.buyNow"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_auct.buyNow"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.buyNow"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct.buyNow"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct.buyNow"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_auct.changeMinPrice"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_auct.changeMinPrice"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.changeMinPrice"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct.changeMinPrice"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_auct.changeMinPrice"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.changeMinPrice"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_auct.changeBuyNowPrice"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_auct.changeBuyNowPrice"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.changeBuyNowPrice"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct.changeBuyNowPrice"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_auct.changeBuyNowPrice"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.changeBuyNowPrice"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_auct._genGetPromoContactState"
+              },
+              {
+                "from": "users",
+                "to": "carl_data.users",
+                "in": "carl_auct._genGetPromoContactState"
+              },
+              {
+                "from": "queue",
+                "to": "carl_data.queue",
+                "in": "carl_auct.checkQueue"
+              },
+              {
+                "from": "_get_auct_status",
+                "to": "carl_auct._get_auct_status",
+                "in": "carl_auct._checkQueuePause"
+              },
+              {
+                "from": "_isBonusTimeConditoin",
+                "to": "carl_auct._isBonusTimeConditoin",
+                "in": "carl_auct._checkQueuePause"
+              },
+              {
+                "from": "getQueCurrent",
+                "to": "carl_auct.getQueCurrent",
+                "in": "carl_auct._checkQueuePause"
+              },
+              {
+                "from": "writeLog",
+                "to": "carl_comm.writeLog",
+                "in": "carl_auct._checkQueuePause"
+              },
+              {
+                "from": "queue",
+                "to": "carl_data.queue",
+                "in": "carl_auct._checkQueuePause"
+              },
+              {
+                "from": "queue_auction",
+                "to": "carl_data.queue_auction",
+                "in": "carl_auct._checkQueuePause"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct._checkQueuePause"
+              },
+              {
+                "from": "queue_check_result",
+                "to": "carl_data.queue_check_result",
+                "in": "carl_auct._checkQueuePause"
+              },
+              {
+                "from": "_get_auct_status",
+                "to": "carl_auct._get_auct_status",
+                "in": "carl_auct._checkQueue"
+              },
+              {
+                "from": "_isBonusTimeConditoin",
+                "to": "carl_auct._isBonusTimeConditoin",
+                "in": "carl_auct._checkQueue"
+              },
+              {
+                "from": "getQueCurrent",
+                "to": "carl_auct.getQueCurrent",
+                "in": "carl_auct._checkQueue"
+              },
+              {
+                "from": "writeLog",
+                "to": "carl_comm.writeLog",
+                "in": "carl_auct._checkQueue"
+              },
+              {
+                "from": "queue",
+                "to": "carl_data.queue",
+                "in": "carl_auct._checkQueue"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct._checkQueue"
+              },
+              {
+                "from": "queue_check_result",
+                "to": "carl_data.queue_check_result",
+                "in": "carl_auct._checkQueue"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_tests._genMakeBidOpen"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_tests._genMakeBidOpen"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_tests._genMakeBidOpen"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_tests._genMakeBidOpen"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_tests._genMakeBidOpen"
+              }
+            ],
+            "ambiguous": [],
+            "missing": [
+              {
+                "dep": "clock_timestamp",
+                "in": "carl_auct._getAuctionHistory_1",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "varchar",
+                "in": "carl_auct._getAuctionHistory_1",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "_dt_set",
+                "in": "carl_auct._getAuctionHistory_1",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "clock_timestamp",
+                "in": "carl_auct._makeBid",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "pg_sleep",
+                "in": "carl_auct._makeBid",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "varchar",
+                "in": "carl_auct._makeBid",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "_t_s1",
+                "in": "carl_auct._makeBid",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "_t_s1_php",
+                "in": "carl_auct._makeBid",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "clock_timestamp",
+                "in": "carl_auct.setProxyPrice",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "clock_timestamp",
+                "in": "carl_auct.buyNow",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "clock_timestamp",
+                "in": "carl_auct._checkQueuePause",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_auct._checkQueuePause",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "_dt_check",
+                "in": "carl_auct._checkQueuePause",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "_dt_end",
+                "in": "carl_auct._checkQueuePause",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "_dt_start",
+                "in": "carl_auct._checkQueuePause",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "clock_timestamp",
+                "in": "carl_auct._checkQueuePause",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_auct._checkQueuePause",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "clock_timestamp",
+                "in": "carl_auct._checkQueue",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_auct._checkQueue",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "_dt_check",
+                "in": "carl_auct._checkQueue",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "_dt_end",
+                "in": "carl_auct._checkQueue",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "_dt_start",
+                "in": "carl_auct._checkQueue",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "clock_timestamp",
+                "in": "carl_auct._checkQueue",
+                "file": "generated_1.sql"
+              },
+              {
+                "dep": "json_populate_record",
+                "in": "carl_auct._checkQueue",
+                "file": "generated_1.sql"
+              }
+            ],
+            "errors": [],
+            "linkFixes": [],
+            "linkMissing": [],
+            "linkAmbiguous": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-03-27T10:46:50.634Z",
+              "level": "info",
+              "message": "[Step2] Запуск анализа и исправления зависимостей для контекста \"CARL\" (mode=incremental)"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:50.643Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 8 AiItem без схемы"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:50.658Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 8 L0 чанков без схемы"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:51.531Z",
+              "level": "info",
+              "message": "[Step2] Анализ таблицы link..."
+            },
+            {
+              "timestamp": "2026-03-27T10:46:51.556Z",
+              "level": "info",
+              "message": "[Step2] Шаг 2 завершён."
+            },
+            {
+              "timestamp": "2026-03-27T10:46:51.557Z",
+              "level": "info",
+              "message": "[Step2] [L1 чанки] Исправлено: 68, неоднозначных: 0, отсутствующих: 24"
+            },
+            {
+              "timestamp": "2026-03-27T10:46:51.557Z",
               "level": "info",
               "message": "[Step2] [Таблица link] Исправлено: 0, неоднозначных: 0, отсутствующих: 0"
             }
