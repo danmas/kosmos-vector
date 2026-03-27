@@ -1,13 +1,9 @@
 {
-  "rootPath": "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api",
-  "includeMask": "**/api_*.sql",
+  "rootPath": "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\",
+  "includeMask": "**/gene*.sql",
   "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
-  "fileSelection": [
-    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\",
-    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\api_address_universal.sql",
-    "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\api\\api_address.sql"
-  ],
-  "lastUpdated": "2026-03-15T17:19:30.380Z",
+  "fileSelection": [],
+  "lastUpdated": "2026-03-27T10:46:19.481Z",
   "metadata": {
     "projectName": "New Project",
     "description": "RAG knowledge base",
