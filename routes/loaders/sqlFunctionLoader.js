@@ -29,14 +29,14 @@ async function parsePlpgsqlFunctionL1(code) {
     }
     const functionName = match[1].trim();
 
-    // 4. Поиск начала тела функции: AS $$ или as $$ или As $$ и т.д., а также AS '
-    const asRegex = /\bAS\s*('|\$\$)/i;
+    // 4. Поиск начала тела функции: AS $$, AS $tag$ (например $function$, $body$), или AS '
+    const asRegex = /\bAS\s*('|\$\w*\$)/i;
     const asMatch = cleaned.match(asRegex);
     if (!asMatch) {
-        throw new Error("Не найден блок AS $$ или AS '");
+        throw new Error("Не найден блок AS $$ / AS $tag$ / AS '");
     }
 
-    const delimiter = asMatch[1]; // ' или $$
+    const delimiter = asMatch[1]; // ' или $$ или $function$ и т.д.
     const asIndex = cleaned.indexOf(asMatch[0]);
 
     let bodyStart = asIndex + asMatch[0].length;
@@ -50,14 +50,13 @@ async function parsePlpgsqlFunctionL1(code) {
         }
         body = cleaned.substring(bodyStart, endQuoteIndex);
     } else {
-        // Для AS $$ ... $$
-        // Ищем последнее вхождение $$ (но не внутри строк, упрощённо)
-        const dollarParts = cleaned.substring(bodyStart).split('$$');
+        // Для AS $$ ... $$ или AS $function$ ... $function$
+        const dollarParts = cleaned.substring(bodyStart).split(delimiter);
         if (dollarParts.length < 2) {
-            throw new Error("Не найден закрывающий $$");
+            throw new Error(`Не найден закрывающий ${delimiter}`);
         }
-        // Берём всё до последнего $$ (тело функции)
-        body = dollarParts.slice(0, -1).join('$$').trim();
+        // Берём всё до последнего вхождения тега (тело функции)
+        body = dollarParts.slice(0, -1).join(delimiter).trim();
     }
 
     // 5. Удаляем динамический SQL (EXECUTE ...)

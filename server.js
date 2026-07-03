@@ -434,9 +434,9 @@ app.get('/api/ui-config', (req, res) => {
 // Прокси для получения доступных моделей
 app.get('/api/available-models', async (req, res) => {
   try {
-    // Проверяем, настроен ли URL для запросов к внешнему серверу
-    const reqServerUrl = process.env.REQ_SERVER_URL;
-    if (!reqServerUrl) {
+    // Используем KOSMOS_BASE_URL (обрезаем /v1 для REST-эндпоинтов)
+    const baseUrl = KOSMOS_BASE_URL();
+    if (!baseUrl) {
       return res.json({
         models: [
           { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo (mock)', default: true },
@@ -447,7 +447,8 @@ app.get('/api/available-models', async (req, res) => {
     }
 
     // Пытаемся получить список моделей с внешнего сервера
-    const response = await fetch(`${reqServerUrl}/api/available-models`);
+    const serverOrigin = new URL(baseUrl).origin; // http://localhost:3002
+    const response = await fetch(`${serverOrigin}/api/available-models`);
     if (!response.ok) {
       throw new Error(`External server responded with status: ${response.status}`);
     }

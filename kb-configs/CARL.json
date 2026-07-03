@@ -1,9 +1,9 @@
 {
   "rootPath": "C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\",
-  "includeMask": "**/gene*.sql",
+  "includeMask": "**/api*.sql",
   "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
   "fileSelection": [],
-  "lastUpdated": "2026-03-27T10:46:19.481Z",
+  "lastUpdated": "2026-07-02T10:10:29.639Z",
   "metadata": {
     "projectName": "New Project",
     "description": "RAG knowledge base",
