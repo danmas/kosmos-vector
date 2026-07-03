@@ -45,7 +45,6 @@ module.exports = {
       BASE_URL: process.env.BASE_URL,
       MAX_RESULTS: process.env.MAX_RESULTS,
       DOCS_DIR: process.env.DOCS_DIR,
-      REQ_SERVER_URL: process.env.REQ_SERVER_URL,
       
       // User DB
       POSTGRES_URL: process.env.POSTGRES_URL
