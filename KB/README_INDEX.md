@@ -55,6 +55,7 @@
 |------|----------|---------------|--------------|
 | [README_LOADING_FILES.md](./README_LOADING_FILES.md) | **Общая логика загрузки файлов** | Двухшаговый pipeline (Step1/Step2), kb-config, loaders, AI Items, L0/L1 чанки, TSX | 2026-02-11 |
 | [README_MD_LOADING.md](./README_MD_LOADING.md) | Загрузка Markdown файлов | md_doc, H1/H2 структура, иерархические связи, md_includes, md_follows | |
+| [README_ONTO_LOADING.md](./README_ONTO_LOADING.md) | Загрузка онтологии (понятия домена) | concept, onto_* link types, grounding, валидация, onto_loading в kb-config | 2026-07-10 |
 
 ### Подробнее: README_LOADING_FILES.md
 

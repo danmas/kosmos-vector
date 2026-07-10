@@ -1,0 +1,268 @@
+// Онтология: валидация консистентности и актуальности
+// GET /api/ontology/validate?context-code=XXX[&dir=путь_к_папке_понятий]
+// См. Ontology/ONTOLOGY_PLAN.md (Этап 3) и KB/README_ONTO_LOADING.md
+
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const { parseConceptFile, validateOntology } = require('./loaders/ontoLoader');
+const { callLLM } = require('../packages/core/llmClient');
+
+const GROUNDING_CODES = ['onto_implemented_in', 'onto_stored_in', 'onto_documented_in', 'onto_configured_in'];
+const RELATION_CODES = [
+  'onto_part_of', 'onto_has_part', 'onto_uses', 'onto_used_by', 'onto_manages', 'onto_managed_by',
+  'onto_produces', 'onto_produced_by', 'onto_consumes', 'onto_consumed_by',
+  'onto_precedes', 'onto_follows', 'onto_related_to'
+];
+
+module.exports = (dbService, embeddings) => {
+  const router = express.Router();
+
+  router.get('/validate', async (req, res) => {
+    const contextCode = req.query['context-code'] || req.query.contextCode;
+    const dir = req.query.dir || null;
+    if (!contextCode) {
+      return res.status(400).json({ error: 'Обязателен параметр context-code' });
+    }
+
+    const q = async (sql, params) => (await dbService.pgClient.query(sql, params)).rows;
+    const report = {
+      contextCode,
+      checkedAt: new Date().toISOString(),
+      summary: {},
+      details: {}
+    };
+
+    try {
+      // --- 1. Битый grounding: цель не резолвится ни в один ai_item ---
+      report.details.brokenGrounding = await q(
+        `SELECT lt.code AS role, l.source AS concept, l.target
+         FROM kosmos.link l JOIN kosmos.link_type lt ON lt.id = l.link_type_id
+         WHERE l.context_code = $1 AND lt.code = ANY($2)
+           AND NOT EXISTS (SELECT 1 FROM kosmos.ai_item ai
+                           WHERE ai.full_name = l.target OR ai.full_name LIKE l.target || '#%')
+         ORDER BY l.source, l.target`,
+        [contextCode, GROUNDING_CODES]
+      );
+
+      // --- 2. Протухший grounding: у цели needs_rebuild = true ---
+      report.details.staleGrounding = await q(
+        `SELECT l.source AS concept, l.target, lt.code AS role,
+                count(DISTINCT ai.full_name)::int AS stale_items,
+                min(ai.full_name) AS example_item
+         FROM kosmos.link l
+         JOIN kosmos.link_type lt ON lt.id = l.link_type_id
+         JOIN kosmos.ai_item ai ON ai.context_code = l.context_code
+           AND (ai.full_name = l.target OR ai.full_name LIKE l.target || '#%')
+         WHERE l.context_code = $1 AND lt.code = ANY($2) AND ai.needs_rebuild = true
+         GROUP BY l.source, l.target, lt.code
+         ORDER BY l.source, l.target`,
+        [contextCode, GROUNDING_CODES]
+      );
+
+      // --- 3. Понятия без grounding (гипотезы) ---
+      report.details.conceptsWithoutGrounding = (await q(
+        `SELECT c.full_name FROM kosmos.ai_item c
+         WHERE c.type = 'concept' AND c.context_code = $1
+           AND NOT EXISTS (SELECT 1 FROM kosmos.link l JOIN kosmos.link_type lt ON lt.id = l.link_type_id
+                           WHERE l.source = c.full_name AND l.context_code = $1 AND lt.code = ANY($2))
+         ORDER BY 1`,
+        [contextCode, GROUNDING_CODES]
+      )).map(r => r.full_name);
+
+      // --- 4. Висячие отношения: concept:* цель без ai_item ---
+      report.details.danglingRelations = await q(
+        `SELECT lt.code AS relation, l.source, l.target
+         FROM kosmos.link l JOIN kosmos.link_type lt ON lt.id = l.link_type_id
+         WHERE l.context_code = $1 AND lt.code = ANY($2) AND l.target LIKE 'concept:%'
+           AND NOT EXISTS (SELECT 1 FROM kosmos.ai_item ai
+                           WHERE ai.full_name = l.target AND ai.context_code = $1)
+         ORDER BY l.source`,
+        [contextCode, RELATION_CODES]
+      );
+
+      // --- 5. Coverage: значимые items, не покрытые понятиями ---
+      report.details.coverageByType = await q(
+        `SELECT ai.type, count(*)::int AS total,
+           count(*) FILTER (WHERE EXISTS (
+             SELECT 1 FROM kosmos.link l JOIN kosmos.link_type lt ON lt.id = l.link_type_id
+             WHERE lt.code = ANY($2) AND l.context_code = ai.context_code
+               AND (l.target = ai.full_name OR ai.full_name LIKE l.target || '#%')
+           ))::int AS covered
+         FROM kosmos.ai_item ai
+         WHERE ai.context_code = $1 AND ai.type IN ('class','function','method','table','md_doc','interface')
+         GROUP BY ai.type ORDER BY total DESC`,
+        [contextCode, GROUNDING_CODES]
+      );
+
+      // Примеры непокрытых крупных items (по числу чанков)
+      report.details.uncoveredSamples = await q(
+        `SELECT ai.full_name, ai.type, count(cv.id)::int AS chunks
+         FROM kosmos.ai_item ai LEFT JOIN kosmos.chunk_vector cv ON cv.ai_item_id = ai.id
+         WHERE ai.context_code = $1 AND ai.type IN ('class','table','md_doc')
+           AND NOT EXISTS (
+             SELECT 1 FROM kosmos.link l JOIN kosmos.link_type lt ON lt.id = l.link_type_id
+             WHERE lt.code = ANY($2) AND l.context_code = ai.context_code
+               AND (l.target = ai.full_name OR ai.full_name LIKE l.target || '#%'))
+         GROUP BY ai.full_name, ai.type ORDER BY chunks DESC, ai.full_name LIMIT 20`,
+        [contextCode, GROUNDING_CODES]
+      );
+
+      // --- 6. Файловая валидация (если передан dir) ---
+      if (dir) {
+        const fileValidation = { dir, errors: [], warnings: [] };
+        try {
+          const files = fs.readdirSync(dir).filter(f => f.endsWith('.md'));
+          const concepts = [];
+          for (const f of files) {
+            const parsed = parseConceptFile(fs.readFileSync(path.join(dir, f), 'utf8'), f);
+            fileValidation.errors.push(...parsed.errors);
+            fileValidation.warnings.push(...parsed.warnings);
+            if (parsed.concept) concepts.push(parsed.concept);
+          }
+          const v = validateOntology(concepts);
+          fileValidation.errors.push(...v.errors);
+          fileValidation.warnings.push(...v.warnings);
+          fileValidation.filesFound = files.length;
+          fileValidation.conceptsParsed = concepts.length;
+        } catch (e) {
+          fileValidation.errors.push(`Не удалось прочитать директорию ${dir}: ${e.message}`);
+        }
+        report.details.fileValidation = fileValidation;
+      }
+
+      // --- Сводка ---
+      report.summary = {
+        brokenGrounding: report.details.brokenGrounding.length,
+        staleGroundingTargets: report.details.staleGrounding.length,
+        staleConcepts: [...new Set(report.details.staleGrounding.map(r => r.concept))].length,
+        conceptsWithoutGrounding: report.details.conceptsWithoutGrounding.length,
+        danglingRelations: report.details.danglingRelations.length,
+        coverage: report.details.coverageByType.map(r => `${r.type}: ${r.covered}/${r.total}`).join(', '),
+        fileErrors: report.details.fileValidation ? report.details.fileValidation.errors.length : null,
+        ok: report.details.brokenGrounding.length === 0
+          && report.details.danglingRelations.length === 0
+          && (!report.details.fileValidation || report.details.fileValidation.errors.length === 0)
+      };
+
+      res.json(report);
+    } catch (err) {
+      console.error('[Ontology-Validate] Ошибка:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // === Concept-first retrieval ===
+  // POST /api/ontology/ask?context-code=XXX
+  // body: { question, maxConcepts=3, maxChunks=8, generateAnswer=true }
+  router.post('/ask', async (req, res) => {
+    const contextCode = req.query['context-code'] || req.query.contextCode;
+    const { question, maxConcepts = 3, maxChunks = 8, generateAnswer = true } = req.body || {};
+    if (!contextCode) return res.status(400).json({ error: 'Обязателен параметр context-code' });
+    if (!question || typeof question !== 'string') return res.status(400).json({ error: 'Обязательно поле question' });
+    if (!embeddings) return res.status(500).json({ error: 'Embeddings не сконфигурированы' });
+
+    const q = async (sql, params) => (await dbService.pgClient.query(sql, params)).rows;
+
+    try {
+      // --- 1. Вопрос -> ближайшие понятия ---
+      const queryVector = await embeddings.embedQuery(question);
+      const vecLiteral = `[${queryVector.join(',')}]`;
+
+      const concepts = await q(
+        `SELECT ai.full_name, ai.h_name AS name,
+                round((1 - (cv.embedding <=> $1::vector))::numeric, 4)::float AS similarity
+         FROM kosmos.chunk_vector cv
+         JOIN kosmos.ai_item ai ON ai.id = cv.ai_item_id
+         WHERE cv.type = 'concept' AND ai.context_code = $2 AND cv.embedding IS NOT NULL
+         ORDER BY cv.embedding <=> $1::vector
+         LIMIT $3`,
+        [vecLiteral, contextCode, maxConcepts]
+      );
+
+      if (concepts.length === 0) {
+        return res.json({ question, contextCode, concepts: [], chain: [], chunks: [],
+          note: 'Понятия не найдены: онтология не загружена или не векторизована' });
+      }
+      const conceptNames = concepts.map(c => c.full_name);
+
+      // --- 2. Отношения и grounding найденных понятий ---
+      const chain = await q(
+        `SELECT l.source, lt.code AS relation, l.target
+         FROM kosmos.link l JOIN kosmos.link_type lt ON lt.id = l.link_type_id
+         WHERE l.context_code = $1 AND lt.code LIKE 'onto_%' AND l.source = ANY($2)
+         ORDER BY l.source, lt.code, l.target`,
+        [contextCode, conceptNames]
+      );
+
+      // --- 3. Grounding-цели -> реальные items -> их L0-чанки, ранжированные по вопросу ---
+      const chunks = await q(
+        `WITH grounded AS (
+           SELECT DISTINCT ai.id AS ai_item_id, ai.full_name AS item_name, l.source AS concept, lt.code AS role
+           FROM kosmos.link l
+           JOIN kosmos.link_type lt ON lt.id = l.link_type_id
+           JOIN kosmos.ai_item ai ON ai.context_code = l.context_code
+             AND (ai.full_name = l.target OR ai.full_name LIKE l.target || '#%')
+           WHERE l.context_code = $1 AND l.source = ANY($2)
+             AND lt.code IN ('onto_implemented_in','onto_stored_in','onto_documented_in','onto_configured_in')
+         )
+         SELECT g.concept, g.role, g.item_name, cv.full_name AS chunk_name,
+                left(coalesce(cv.chunk_content->>'text', cv.chunk_content::text), 2500) AS content,
+                CASE WHEN cv.embedding IS NULL THEN null
+                     ELSE round((1 - (cv.embedding <=> $3::vector))::numeric, 4)::float END AS similarity
+         FROM grounded g
+         JOIN kosmos.chunk_vector cv ON cv.ai_item_id = g.ai_item_id
+         WHERE cv.level LIKE '0-%'
+         ORDER BY (cv.embedding IS NULL), cv.embedding <=> $3::vector
+         LIMIT $4`,
+        [contextCode, conceptNames, vecLiteral, maxChunks]
+      );
+
+      // --- 4. Сборка контекста ---
+      const conceptDescriptions = await q(
+        `SELECT ai.full_name, coalesce(cv.chunk_content->>'text', '') AS text
+         FROM kosmos.ai_item ai JOIN kosmos.chunk_vector cv ON cv.ai_item_id = ai.id
+         WHERE ai.full_name = ANY($1) AND ai.context_code = $2 AND cv.type = 'concept'`,
+        [conceptNames, contextCode]
+      );
+
+      const chainText = chain
+        .map(r => `${r.source} —${r.relation.replace('onto_', '')}→ ${r.target}`)
+        .join('\n');
+      const contextText = [
+        '=== ПОНЯТИЯ ОНТОЛОГИИ (верхний уровень) ===',
+        ...conceptDescriptions.map(c => `--- ${c.full_name} ---\n${c.text}`),
+        '=== СВЯЗИ ===',
+        chainText,
+        '=== РЕАЛЬНОСТЬ (код, таблицы, документы нижнего уровня) ===',
+        ...chunks.map(c => `--- ${c.chunk_name} (grounding: ${c.concept} ${c.role.replace('onto_', '')}) ---\n${c.content}`)
+      ].join('\n\n');
+
+      const result = { question, contextCode, concepts, chain, chunks: chunks.map(c => ({
+        concept: c.concept, role: c.role.replace('onto_', ''), item: c.item_name,
+        chunk: c.chunk_name, similarity: c.similarity
+      })) };
+
+      // --- 5. Генерация ответа (опционально) ---
+      if (generateAnswer) {
+        try {
+          result.answer = await callLLM([
+            { role: 'system', content: 'Ты отвечаешь на вопросы о программной системе. Используй сначала ПОНЯТИЯ онтологии (верхний уровень), затем подтверждай деталями из РЕАЛЬНОСТИ (код/таблицы/документы). В конце ответа укажи цепочку: понятие → отношение → элемент кода. Отвечай на русском.' },
+            { role: 'user', content: `Контекст:\n${contextText}\n\nВопрос: ${question}` }
+          ]);
+        } catch (e) {
+          result.answerError = `LLM недоступен: ${e.message}`;
+        }
+      } else {
+        result.contextText = contextText;
+      }
+
+      res.json(result);
+    } catch (err) {
+      console.error('[Ontology-Ask] Ошибка:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  return router;
+};

@@ -411,6 +411,10 @@ app.use('/api/rag', ragRoutes(dbService, vectorStore, embeddings));
 const graphSnapshotsRoutes = require('./routes/graphSnapshots');
 app.use('/api/graph-snapshots', graphSnapshotsRoutes(dbService));
 
+// Онтология: валидация консистентности (см. KB/README_ONTO_LOADING.md)
+const ontologyRoutes = require('./routes/ontology');
+app.use('/api/ontology', ontologyRoutes(dbService, embeddings));
+
 // Конфигурация моделей для UI (DEPRECATED - используйте /api/config из routes/api.js)
 app.get('/api/ui-config', (req, res) => {
   try {

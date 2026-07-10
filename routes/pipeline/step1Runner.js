@@ -15,6 +15,7 @@ const { loadPhpFunctionsFromFile } = require('../loaders/phpFunctionLoader');
 const { loadDdlFromFile } = require('../loaders/ddlSchemaLoader');
 const { getFilteredTableNames, loadTableSchema } = require('../loaders/tableSchemaLoader');
 const { loadMarkdownFromFile } = require('../loaders/mdLoader');
+const { loadOntologyFromDir } = require('../loaders/ontoLoader');
 const { createStepLogger } = require('./stepLogger');
 
 /**
@@ -48,9 +49,12 @@ function parseTableLoadingConfig(customSettingsYaml) {
       return null;
     }
 
+    // Источник таблиц: 'client' (клиентская БД через pg-mcp, по умолчанию) или 'self' (собственная БД сервера)
+    const source = tableLoading.source === 'self' ? 'self' : 'client';
+
     if (!tableLoading.enabled) {
       console.log('[Step1] Загрузка таблиц отключена в конфигурации (table_loading.enabled = false)');
-      return { enabled: false, schemas: [], schema: null, includePatterns: [], excludePatterns: [], excludeNames: [] };
+      return { enabled: false, schemas: [], schema: null, includePatterns: [], excludePatterns: [], excludeNames: [], source };
     }
 
     if (!tableLoading.schema || typeof tableLoading.schema !== 'string') {
@@ -89,7 +93,8 @@ function parseTableLoadingConfig(customSettingsYaml) {
       schema: schemas[0], // первая схема для обратной совместимости
       includePatterns: includePatterns,
       excludePatterns: excludePatterns,
-      excludeNames: excludeNames
+      excludeNames: excludeNames,
+      source: source
     };
   } catch (error) {
     console.error(`[Step1] Ошибка парсинга YAML из custom_settings: ${error.message}`);
@@ -302,6 +307,38 @@ function parseMdLoadingConfig(customSettingsYaml) {
 }
 
 /**
+ * Парсинг настроек загрузки онтологии из YAML строки custom_settings
+ * Формат:
+ *   onto_loading:
+ *     enabled: true
+ *     dirs:
+ *       - C:\path\to\Ontology\concepts   # абсолютный путь или относительный к первому rootPath
+ * @param {string|null} customSettingsYaml
+ * @returns {object} { enabled, dirs }
+ */
+function parseOntoLoadingConfig(customSettingsYaml) {
+  if (!customSettingsYaml || typeof customSettingsYaml !== 'string' || customSettingsYaml.trim() === '') {
+    return { enabled: false, dirs: [] };
+  }
+  try {
+    const parsed = yaml.load(customSettingsYaml);
+    if (!parsed || typeof parsed !== 'object') return { enabled: false, dirs: [] };
+    const ontoLoading = parsed.onto_loading;
+    if (!ontoLoading || typeof ontoLoading !== 'object') return { enabled: false, dirs: [] };
+    if (ontoLoading.enabled !== true) return { enabled: false, dirs: [] };
+    const dirs = Array.isArray(ontoLoading.dirs) ? ontoLoading.dirs.filter(d => typeof d === 'string' && d.trim()) : [];
+    if (dirs.length === 0) {
+      console.warn('[Step1] onto_loading.enabled = true, но onto_loading.dirs пуст — пропускаем');
+      return { enabled: false, dirs: [] };
+    }
+    return { enabled: true, dirs };
+  } catch (error) {
+    console.error(`[Step1] Ошибка парсинга YAML из custom_settings для onto_loading: ${error.message}`);
+    return { enabled: false, dirs: [] };
+  }
+}
+
+/**
  * Парсинг настроек загрузки DDL схем из YAML строки custom_settings
  * @param {string|null} customSettingsYaml - YAML строка из metadata.custom_settings
  * @returns {object} Объект с настройками { enabled, files } (по умолчанию enabled: false)
@@ -403,6 +440,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
   const phpLoadingConfig = parsePhpLoadingConfig(customSettings);
   const mdLoadingConfig = parseMdLoadingConfig(customSettings);
   const ddlLoadingConfig = parseDdlLoadingConfig(customSettings);
+  const ontoLoadingConfig = parseOntoLoadingConfig(customSettings);
 
   // Подготовка матчеров (используем общие функции для синхронизации с /api/project/tree)
   const { includeMatcher, ignoreMatchers } = createMatchers(includeMask, ignorePatterns);
@@ -910,6 +948,19 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
     logger.log('Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)');
   }
 
+  // === Онтология (если включено) ===
+  if (ontoLoadingConfig.enabled) {
+    logger.log(`Загрузка онтологии включена: ${ontoLoadingConfig.dirs.length} директорий`);
+    for (const dir of ontoLoadingConfig.dirs) {
+      const absDir = path.isAbsolute(dir) ? dir : path.join(validRootPaths[0] || '', dir);
+      if (!fs.existsSync(absDir)) {
+        logger.warn(`Директория онтологии не найдена, пропускаем: ${absDir}`);
+        continue;
+      }
+      tasks.push({ type: 'onto', path: absDir, name: path.basename(absDir) });
+    }
+  }
+
   // === Сканирование DDL-файлов (если включено) ===
   let ddlFilePaths = [];
   
@@ -974,7 +1025,9 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
           schema,
           tableLoadingConfig.includePatterns,
           tableLoadingConfig.excludePatterns,
-          tableLoadingConfig.excludeNames
+          tableLoadingConfig.excludeNames,
+          tableLoadingConfig.source,
+          dbService
         );
         logger.log(`  Найдено ${schemaTables.length} таблиц в схеме "${schema}"`);
         
@@ -1042,6 +1095,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
       phpFiles: [],
       mdFiles: [],
       ddlFiles: [],
+      ontology: [],
       tables: [],
       errors: []
     }
@@ -1303,6 +1357,21 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
         } else {
           report.summary.skipped++;
         }
+      } else if (task.type === 'onto') {
+        const ontoReport = await loadOntologyFromDir(task.path, contextCode, dbService);
+
+        if (ontoReport) {
+          report.details.ontology.push(ontoReport);
+          report.summary.totalAiItems += ontoReport.conceptsLoaded || 0;
+          report.summary.totalChunks += ontoReport.conceptsLoaded || 0;
+          if (ontoReport.errors?.length > 0) {
+            report.summary.errors += ontoReport.errors.length;
+            ontoReport.errors.forEach(err => report.details.errors.push({ type: 'onto', name: task.name, message: err }));
+          }
+          if (ontoReport.warnings?.length > 0) {
+            ontoReport.warnings.forEach(w => logger.warn(`[Onto] ${w}`));
+          }
+        }
       } else if (task.type === 'ddl') {
         const fileReport = await loadDdlFromFile(task.path, contextCode, dbService, pipelineState, mode);
 
@@ -1344,7 +1413,7 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
         }
       } else if (task.type === 'table') {
         logger.log(`----${task.name}-----`);
-        const tableReport = await loadTableSchema(task.name, contextCode, dbService, pipelineState, mode);
+        const tableReport = await loadTableSchema(task.name, contextCode, dbService, pipelineState, mode, tableLoadingConfig ? tableLoadingConfig.source : 'client');
         logger.log(`---------------------`);
 
         if (tableReport) {
@@ -1406,3 +1475,4 @@ async function runStep1(contextCode, sessionId, dbService, pipelineState, pipeli
 }
 
 module.exports = { runStep1 };
+// onto-loader integration: см. Ontology/ONTOLOGY_SPEC.md
