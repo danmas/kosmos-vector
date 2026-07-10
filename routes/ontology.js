@@ -207,7 +207,7 @@ module.exports = (dbService, embeddings) => {
              AND lt.code IN ('onto_implemented_in','onto_stored_in','onto_documented_in','onto_configured_in')
          )
          SELECT g.concept, g.role, g.item_name, cv.full_name AS chunk_name,
-                left(coalesce(cv.chunk_content->>'text', cv.chunk_content::text), 2500) AS content,
+                left(coalesce(cv.chunk_content->>'text', cv.chunk_content #>> '{}'), 2500) AS content,
                 CASE WHEN cv.embedding IS NULL THEN null
                      ELSE round((1 - (cv.embedding <=> $3::vector))::numeric, 4)::float END AS similarity
          FROM grounded g
@@ -220,7 +220,7 @@ module.exports = (dbService, embeddings) => {
 
       // --- 4. Сборка контекста ---
       const conceptDescriptions = await q(
-        `SELECT ai.full_name, coalesce(cv.chunk_content->>'text', '') AS text
+        `SELECT ai.full_name, coalesce(cv.chunk_content->>'text', cv.chunk_content #>> '{}', '') AS text
          FROM kosmos.ai_item ai JOIN kosmos.chunk_vector cv ON cv.ai_item_id = ai.id
          WHERE ai.full_name = ANY($1) AND ai.context_code = $2 AND cv.type = 'concept'`,
         [conceptNames, contextCode]
