@@ -1,14 +1,14 @@
 {
   "rootPath": "C:\\ERV\\projects-ex\\kosmos-vector-UI, C:\\ERV\\projects-ex\\kosmos-vector",
-  "includeMask": "**/*.{sql,**/*.js,**/*.ts,**/*.tsх,**/*.md",
+  "includeMask": "**/*.{sql,js,ts,tsx,md}",
   "ignorePatterns": "**/.cursor/**,**/.qoder/**,**/.vscode/**,**/data/**,**/tmp/**,**/tests/**,**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**,**/docs/**",
   "fileSelection": [],
-  "lastUpdated": "2026-03-14T08:50:20.406Z",
+  "lastUpdated": "2026-07-10T09:26:55.793Z",
   "metadata": {
     "projectName": "New Project",
     "description": "RAG knowledge base",
     "tags": [],
-    "custom_settings": "md_loading:\n  enabled: true\n\njs_loading:\n  enabled: true\n\nts_loading:\n  enabled: true\n\ntsx_loading:\n  enabled: true\n\nfunctions_loading:\n  enabled: true\n\nddl_loading:\n  enabled: true\n  files:\n    - ./KB/current_DB_schema.sql\n    - ./migrations/schema.sql\n\ntable_loading:\n  enabled: false\n  schema: kosmos\n  include_patterns:\n    - \"%\"\n  exclude_patterns:\n    - \"pg_%\""
+    "custom_settings": "md_loading:\n  enabled: true\n\njs_loading:\n  enabled: true\n\nts_loading:\n  enabled: true\n\ntsx_loading:\n  enabled: true\n\nfunctions_loading:\n  enabled: true\n\nddl_loading:\n  enabled: true\n  files:\n    - ./KB/current_DB_schema.sql\n    - ./migrations/schema.sql\n\ntable_loading:\n  enabled: true\n  source: self\n  schema: kosmos\n  include_patterns:\n    - \"%\"\n  exclude_patterns:\n    - \"pg_%\"\n\nonto_loading:\n  enabled: true\n  dirs:\n    - C:\\ERV\\projects-ex\\Ontology\\concepts"
   },
   "pipelineConfig": {
     "parsing": {},

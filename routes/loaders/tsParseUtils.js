@@ -10,46 +10,101 @@
 function findBlockEnd(text, startPos) {
     let braceLevel = 0;
     let parenLevel = 0;
-    let angleLevel = 0;
+    let firstBraceFound = false;
     let inString = false;
     let stringChar = null;
-    let firstBraceFound = false;
+    let inLineComment = false;
+    let inBlockComment = false;
+    let inRegex = false;
+    let inRegexClass = false;
+    // Последний значащий символ вне строк/комментариев/regex —
+    // нужен, чтобы отличить деление (a / b) от начала regex-литерала (/['"]/)
+    let lastSig = null;
+    const REGEX_ALLOWED_BEFORE = new Set(['(', '[', '{', '=', ',', ';', ':', '!', '&', '|', '?', '+', '-', '*', '%', '<', '>', '~', '^']);
 
     for (let i = startPos; i < text.length; i++) {
         const char = text[i];
-        const prevChar = i > 0 ? text[i - 1] : '';
+        const nextChar = i + 1 < text.length ? text[i + 1] : '';
 
-        // Обработка строк
-        if (!inString && (char === '"' || char === "'" || char === '`')) {
+        // --- Комментарии: кавычки и скобки внутри них не считаются
+        // (иначе апостроф в комментарии типа "// link'и" ломает подсчёт)
+        if (inLineComment) {
+            if (char === '\n') inLineComment = false;
+            continue;
+        }
+        if (inBlockComment) {
+            if (char === '*' && nextChar === '/') {
+                inBlockComment = false;
+                i++; // пропускаем '/'
+            }
+            continue;
+        }
+
+        // --- Строки (escape обрабатываем пропуском следующего символа)
+        if (inString) {
+            if (char === '\\') { i++; continue; }
+            if (char === stringChar) { inString = false; stringChar = null; lastSig = '"'; }
+            continue;
+        }
+
+        // --- Regex-литералы: /['"}(]/ и т.п. не должны включать строковый режим и счёт скобок
+        if (inRegex) {
+            if (char === '\\') { i++; continue; }
+            if (char === '[') { inRegexClass = true; continue; }
+            if (char === ']') { inRegexClass = false; continue; }
+            if (char === '/' && !inRegexClass) { inRegex = false; lastSig = 'r'; }
+            continue;
+        }
+
+        if (char === '/' && nextChar === '/') { inLineComment = true; i++; continue; }
+        if (char === '/' && nextChar === '*') { inBlockComment = true; i++; continue; }
+        if (char === '/') {
+            // regex или деление? Regex возможен только в позиции выражения
+            let regexPossible = lastSig === null || REGEX_ALLOWED_BEFORE.has(lastSig);
+            if (!regexPossible && /[a-zA-Z]/.test(lastSig)) {
+                // после ключевого слова (return /x/.test(...)) regex тоже возможен
+                const before = text.slice(Math.max(0, i - 12), i);
+                const wordMatch = before.match(/([a-zA-Z_$]+)\s*$/);
+                const KEYWORDS = ['return', 'case', 'typeof', 'do', 'else', 'in', 'of', 'instanceof', 'new', 'void', 'delete', 'yield', 'await'];
+                if (wordMatch && KEYWORDS.includes(wordMatch[1])) regexPossible = true;
+            }
+            if (regexPossible) {
+                inRegex = true;
+                inRegexClass = false;
+                continue;
+            }
+            lastSig = '/';
+            continue;
+        }
+
+        if (char === '"' || char === "'" || char === '`') {
             inString = true;
             stringChar = char;
             continue;
         }
-        if (inString && char === stringChar && prevChar !== '\\') {
-            inString = false;
-            stringChar = null;
-            continue;
-        }
-        if (inString) continue;
 
-        // Подсчёт скобок
-        if (char === '{') {
-            braceLevel++;
-            firstBraceFound = true;
-        } else if (char === '}') {
-            braceLevel--;
-            if (firstBraceFound && braceLevel === 0) {
-                return i + 1;
-            }
-        } else if (char === '(') {
+        // --- Подсчёт скобок.
+        // Фигурные скобки внутри круглых не открывают блок:
+        // иначе default-параметр вида (options = {}) немедленно "закрывает" функцию.
+        if (char === '(') {
             parenLevel++;
         } else if (char === ')') {
-            parenLevel--;
-        } else if (char === '<') {
-            angleLevel++;
-        } else if (char === '>') {
-            angleLevel--;
+            parenLevel = Math.max(0, parenLevel - 1);
+        } else if (char === '{') {
+            if (parenLevel === 0 || firstBraceFound) {
+                braceLevel++;
+                firstBraceFound = true;
+            }
+        } else if (char === '}') {
+            if (firstBraceFound) {
+                braceLevel--;
+                if (braceLevel === 0) {
+                    return i + 1;
+                }
+            }
         }
+
+        if (!/\s/.test(char)) lastSig = char;
     }
 
     return -1; // Не найден конец

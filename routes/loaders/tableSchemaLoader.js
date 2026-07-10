@@ -16,6 +16,50 @@ async function getPgMcp() {
 }
 
 /**
+ * Executor для source='self': собственная БД сервера через dbService.pgClient.
+ * Интерфейс совместим с pgMcp: executeQuery -> {columns, rows[][]}, getTableSchema -> text.
+ */
+function createSelfExecutor(dbService) {
+  return {
+    async executeQuery(sql) {
+      const res = await dbService.pgClient.query(sql);
+      const columns = res.fields ? res.fields.map(f => f.name) : [];
+      return {
+        columns,
+        rows: res.rows.map(r => columns.map(c => r[c]))
+      };
+    },
+    async getTableSchema(tableNameWithSchema) {
+      const parts = tableNameWithSchema.split('.');
+      const schema = parts.length > 1 ? parts[0] : 'kosmos';
+      const tableName = parts.length > 1 ? parts[1] : parts[0];
+      const res = await dbService.pgClient.query(
+        `SELECT column_name, data_type, is_nullable, column_default
+         FROM information_schema.columns
+         WHERE table_schema = $1 AND table_name = $2
+         ORDER BY ordinal_position`,
+        [schema, tableName]
+      );
+      // Формат идентичен pgMcp.getTableSchema
+      return res.rows
+        .map(c => `${c.column_name} ${c.data_type}${c.is_nullable === 'NO' ? ' NOT NULL' : ''}${c.column_default ? ` DEFAULT ${c.column_default}` : ''}`)
+        .join('\n');
+    }
+  };
+}
+
+/**
+ * Выбор источника таблиц: 'client' (клиентская БД через pg-mcp) или 'self' (собственная БД сервера).
+ */
+async function getExecutor(source, dbService) {
+  if (source === 'self') {
+    if (!dbService) throw new Error("table_loading.source='self' требует dbService");
+    return createSelfExecutor(dbService);
+  }
+  return await getPgMcp();
+}
+
+/**
  * Экранирование строки для использования в SQL запросе
  * @param {string} str - Строка для экранирования
  * @returns {string} Экранированная строка
@@ -32,9 +76,9 @@ function escapeSqlString(str) {
  * @param {string[]} excludePatterns - Паттерны для исключения (SQL LIKE)
  * @param {string[]} excludeNames - Точные имена для исключения
  */
-async function getFilteredTableNames(schema, includePatterns = [], excludePatterns = [], excludeNames = []) {
-  // Получаем экземпляр pgMcp для работы с клиентской БД
-  const pgMcpInstance = await getPgMcp();
+async function getFilteredTableNames(schema, includePatterns = [], excludePatterns = [], excludeNames = [], source = 'client', dbService = null) {
+  // Источник: клиентская БД (pg-mcp) или собственная БД сервера (source='self')
+  const pgMcpInstance = await getExecutor(source, dbService);
   
   // Экранируем значения для предотвращения SQL injection
   const escapedSchema = escapeSqlString(schema);
@@ -104,11 +148,18 @@ async function getFilteredTableNames(schema, includePatterns = [], excludePatter
 /**
  * Генерация виртуального имени файла для таблицы
  */
-function getVirtualFilename() {
+function getVirtualFilename(source = 'client') {
+  if (source === 'self') {
+    const host = process.env.PGHOST || 'localhost';
+    const port = process.env.PGPORT || '5432';
+    const dbname = process.env.PGDATABASE || 'unknown';
+    return `from_db_${host}_${port}_${dbname}.ddl`;
+  }
+
   if (!process.env.POSTGRES_URL) {
     return 'from_db_unknown.ddl';
   }
-  
+
   try {
     const postgresUrl = new URL(process.env.POSTGRES_URL);
     const host = postgresUrl.hostname || 'localhost';
@@ -128,7 +179,7 @@ function getVirtualFilename() {
  * @param {PipelineStateManager} pipelineState - Менеджер состояния pipeline (опционально)
  * @returns {Promise<Object>} Отчет о загрузке таблицы
  */
-async function loadTableSchema(fullTableName, contextCode, dbService, pipelineState = null, mode = 'incremental') {
+async function loadTableSchema(fullTableName, contextCode, dbService, pipelineState = null, mode = 'incremental', source = 'client') {
   console.log(`[Table-Loader] Обработка таблицы: ${fullTableName}`);
 
   // Инициализация отчета
@@ -143,8 +194,8 @@ async function loadTableSchema(fullTableName, contextCode, dbService, pipelineSt
   };
 
   try {
-    // 2. Получение схемы таблицы через MCP
-    const pgMcpInstance = await getPgMcp();
+    // 2. Получение схемы таблицы (клиентская БД через MCP или собственная при source='self')
+    const pgMcpInstance = await getExecutor(source, dbService);
     let schemaText;
     try {
       schemaText = await pgMcpInstance.getTableSchema(fullTableName);
@@ -162,7 +213,7 @@ async function loadTableSchema(fullTableName, contextCode, dbService, pipelineSt
     }
 
     // 1. Проверка изменений для виртуального файла (таблица)
-    const virtualFilename = getVirtualFilename();
+    const virtualFilename = getVirtualFilename(source);
     let fileHash = null;
     let fileId = null;
     let isNew = true;
