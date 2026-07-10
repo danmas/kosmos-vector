@@ -13,19 +13,17 @@
   "pipelineConfig": {
     "parsing": {},
     "dependencies": {},
-    "enrichment": {},
     "vectorization": {
-      "embeddingModel": "Google Gemini (text-embedding-004)",
-      "chunkStrategy": "Semantic (Ailtem / Function-based)"
-    },
-    "indexing": {}
+      "embeddingModel": "OpenAI (USE_OPENAI=true) / SimpleEmbeddings",
+      "chunkStrategy": "Semantic (AiItem / Function-based)"
+    }
   },
   "pipelineDefinitions": [
     {
       "id": 1,
       "name": "parsing",
-      "label": "Polyglot Parsing (L0)",
-      "description": "Parsing AST for .py, .ts, .go, .java files...",
+      "label": "Загрузка и парсинг (Step 1)",
+      "description": "Сканирование по kb-config, загрузчики SQL/JS/TS/PHP/MD/DDL/таблицы/онтология, создание AI Items и L0-чанков",
       "configurationSchema": {
         "type": "object",
         "properties": {}
@@ -34,18 +32,8 @@
     {
       "id": 2,
       "name": "dependencies",
-      "label": "Dependencies Extraction (L1)",
-      "description": "Resolving imports, class hierarchy, and calls...",
-      "configurationSchema": {
-        "type": "object",
-        "properties": {}
-      }
-    },
-    {
-      "id": 3,
-      "name": "enrichment",
-      "label": "Enrichment (L2)",
-      "description": "Generating natural language descriptions via LLM...",
+      "label": "Зависимости и граф (Step 2)",
+      "description": "Резолв L1-зависимостей в связи (link), построение графа, сброс needs_rebuild",
       "configurationSchema": {
         "type": "object",
         "properties": {}
@@ -54,37 +42,8 @@
     {
       "id": 4,
       "name": "vectorization",
-      "label": "Vectorization",
-      "description": "Creating embeddings (text-embedding-ada-002 or Gecko)...",
-      "configurationSchema": {
-        "type": "object",
-        "properties": {
-          "embeddingModel": {
-            "type": "string",
-            "description": "Embedding model to use",
-            "default": "Google Gemini (text-embedding-004)",
-            "enum": [
-              "Google Gemini (text-embedding-004)",
-              "text-embedding-ada-002",
-              "Gecko"
-            ]
-          },
-          "chunkStrategy": {
-            "type": "string",
-            "description": "Strategy for chunking code",
-            "default": "Semantic (Ailtem / Function-based)",
-            "enum": [
-              "Semantic (Ailtem / Function-based)"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": 5,
-      "name": "indexing",
-      "label": "Indexing",
-      "description": "Building FAISS/ChromaDB index...",
+      "label": "Векторизация (Step 4)",
+      "description": "Эмбеддинги всех невекторизованных L0-чанков контекста (OpenAI/Simple, pgvector), батчами",
       "configurationSchema": {
         "type": "object",
         "properties": {}
