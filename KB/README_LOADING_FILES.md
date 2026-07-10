@@ -576,14 +576,25 @@ GET /api/pipeline/step/{id}/history?context-code=MY_CONTEXT
 
 ---
 
+## Step 4: Массовая векторизация
+
+`POST /api/pipeline/step/4/run?context-code=XXX` — эмбеддинги для всех невекторизованных L0-чанков контекста.
+
+- Реализация: `routes/pipeline/step4Vectorize.js` (батчи через `embeddings.embedDocuments`, прогресс в `pipelineStateManager`, шаг 4).
+- Body: `{ batchSize=50, allLevels=false, force=false }` (`force=true` — пересчитать все, включая уже векторизованные).
+- Прерывается после 3 ошибок батчей подряд (например, 429 от OpenAI); статус шага → failed.
+- Векторизация НЕ входит в `/api/pipeline/start` (он выполняет только Step1→Step2) — запускается отдельно: из UI PipelineView или напрямую.
+- Точечная векторизация по items: `POST /vectorize-ai-items`.
+
 ## Связанная документация
 
 - [README_MD_LOADING.md](README_MD_LOADING.md) — подробно о загрузке Markdown
 - [README_AI_ITEM_COMPLETE.md](README_AI_ITEM_COMPLETE.md) — AI Items
 - [README_links.md](README_links.md) — система связей L1
 - [README_DB-VECTOR.md](README_DB-VECTOR.md) — структура БД
+- [README_ONTO_LOADING.md](README_ONTO_LOADING.md) — онтологический уровень
 - [README_REST.md](README_REST.md) — API endpoints
 
 ---
 
-**Последнее обновление:** 11 февраля 2026
+**Последнее обновление:** 10 июля 2026

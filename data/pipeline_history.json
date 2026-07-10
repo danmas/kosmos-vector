@@ -175385,6 +175385,210 @@
           ]
         }
       }
+    ],
+    "4": [
+      {
+        "timestamp": "2026-07-10T19:27:05.020Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-10T19:27:28.063Z",
+        "status": "running",
+        "progress": 35,
+        "itemsProcessed": 500,
+        "totalItems": 1435,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-10T19:27:49.918Z",
+        "status": "running",
+        "progress": 70,
+        "itemsProcessed": 1000,
+        "totalItems": 1435,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-10T19:28:06.946Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 1435,
+        "totalItems": 1435,
+        "error": null,
+        "report": {
+          "totalChunks": 1435,
+          "vectorized": 1250,
+          "skippedEmpty": 0,
+          "batchErrors": 4,
+          "logs": [
+            {
+              "timestamp": "2026-07-10T19:27:05.071Z",
+              "level": "info",
+              "message": "[Step4] Массовая векторизация: контекст KOSMOS-VECTOR, level LIKE '0-%', force=false"
+            },
+            {
+              "timestamp": "2026-07-10T19:27:05.086Z",
+              "level": "info",
+              "message": "[Step4] Чанков к векторизации: 1435"
+            },
+            {
+              "timestamp": "2026-07-10T19:27:49.917Z",
+              "level": "error",
+              "message": "[Step4] Батч 950..1000: 400 This model's maximum context length is 8192 tokens, however you requested 8596 tokens (8596 in your prompt; 0 for the completion). Please reduce your prompt; or completion length."
+            },
+            {
+              "timestamp": "2026-07-10T19:27:54.157Z",
+              "level": "error",
+              "message": "[Step4] Батч 1100..1150: 400 This model's maximum context length is 8192 tokens, however you requested 8738 tokens (8738 in your prompt; 0 for the completion). Please reduce your prompt; or completion length."
+            },
+            {
+              "timestamp": "2026-07-10T19:27:59.604Z",
+              "level": "error",
+              "message": "[Step4] Батч 1250..1300: 400 This model's maximum context length is 8192 tokens, however you requested 8421 tokens (8421 in your prompt; 0 for the completion). Please reduce your prompt; or completion length."
+            },
+            {
+              "timestamp": "2026-07-10T19:28:06.943Z",
+              "level": "error",
+              "message": "[Step4] Батч 1400..1435: 400 This model's maximum context length is 8192 tokens, however you requested 8664 tokens (8664 in your prompt; 0 for the completion). Please reduce your prompt; or completion length."
+            },
+            {
+              "timestamp": "2026-07-10T19:28:06.945Z",
+              "level": "info",
+              "message": "[Step4] Шаг 4 завершён: векторизовано 1250, пустых 0, ошибок батчей 4"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-07-10T19:32:58.507Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": {
+          "totalChunks": 2080,
+          "vectorized": 2080,
+          "skippedEmpty": 0,
+          "batchErrors": 0,
+          "logs": [
+            {
+              "timestamp": "2026-07-10T19:30:56.925Z",
+              "level": "info",
+              "message": "[Step4] Массовая векторизация: контекст CARL, level LIKE '0-%', force=false"
+            },
+            {
+              "timestamp": "2026-07-10T19:30:56.940Z",
+              "level": "info",
+              "message": "[Step4] Чанков к векторизации: 2080"
+            },
+            {
+              "timestamp": "2026-07-10T19:32:21.994Z",
+              "level": "info",
+              "message": "[Step4] Шаг 4 завершён: векторизовано 2080, пустых 0, ошибок батчей 0"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-07-10T19:33:09.762Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 185,
+        "totalItems": 185,
+        "error": null,
+        "report": {
+          "totalChunks": 185,
+          "vectorized": 185,
+          "skippedEmpty": 0,
+          "batchErrors": 0,
+          "logs": [
+            {
+              "timestamp": "2026-07-10T19:32:58.554Z",
+              "level": "info",
+              "message": "[Step4] Массовая векторизация: контекст KOSMOS-VECTOR, level LIKE '0-%', force=false"
+            },
+            {
+              "timestamp": "2026-07-10T19:32:58.565Z",
+              "level": "info",
+              "message": "[Step4] Чанков к векторизации: 185"
+            },
+            {
+              "timestamp": "2026-07-10T19:33:09.761Z",
+              "level": "info",
+              "message": "[Step4] Шаг 4 завершён: векторизовано 185, пустых 0, ошибок батчей 0"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-07-10T19:34:11.926Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": {
+          "totalChunks": 185,
+          "vectorized": 185,
+          "skippedEmpty": 0,
+          "batchErrors": 0,
+          "logs": [
+            {
+              "timestamp": "2026-07-10T19:32:58.554Z",
+              "level": "info",
+              "message": "[Step4] Массовая векторизация: контекст KOSMOS-VECTOR, level LIKE '0-%', force=false"
+            },
+            {
+              "timestamp": "2026-07-10T19:32:58.565Z",
+              "level": "info",
+              "message": "[Step4] Чанков к векторизации: 185"
+            },
+            {
+              "timestamp": "2026-07-10T19:33:09.761Z",
+              "level": "info",
+              "message": "[Step4] Шаг 4 завершён: векторизовано 185, пустых 0, ошибок батчей 0"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-07-10T19:34:12.006Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": {
+          "totalChunks": 0,
+          "vectorized": 0,
+          "skippedEmpty": 0,
+          "batchErrors": 0,
+          "logs": [
+            {
+              "timestamp": "2026-07-10T19:34:11.975Z",
+              "level": "info",
+              "message": "[Step4] Массовая векторизация: контекст KOSMOS-VECTOR, level LIKE '0-%', force=false"
+            },
+            {
+              "timestamp": "2026-07-10T19:34:12.006Z",
+              "level": "info",
+              "message": "[Step4] Чанков к векторизации: 0"
+            },
+            {
+              "timestamp": "2026-07-10T19:34:12.006Z",
+              "level": "info",
+              "message": "[Step4] Шаг 4 завершён: векторизовано 0, пустых 0, ошибок батчей 0"
+            }
+          ]
+        }
+      }
     ]
   },
   "KJSMOS-PANEL": {
@@ -255573,6 +255777,84 @@
               "timestamp": "2026-07-03T07:45:28.210Z",
               "level": "info",
               "message": "[Step2] [Таблица link] Исправлено: 0, неоднозначных: 0, отсутствующих: 0"
+            }
+          ]
+        }
+      }
+    ],
+    "4": [
+      {
+        "timestamp": "2026-07-10T19:30:56.870Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-10T19:31:14.987Z",
+        "status": "running",
+        "progress": 24,
+        "itemsProcessed": 500,
+        "totalItems": 2080,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-10T19:31:35.702Z",
+        "status": "running",
+        "progress": 48,
+        "itemsProcessed": 1000,
+        "totalItems": 2080,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-10T19:31:56.327Z",
+        "status": "running",
+        "progress": 72,
+        "itemsProcessed": 1500,
+        "totalItems": 2080,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-10T19:32:15.929Z",
+        "status": "running",
+        "progress": 96,
+        "itemsProcessed": 2000,
+        "totalItems": 2080,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-10T19:32:21.995Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 2080,
+        "totalItems": 2080,
+        "error": null,
+        "report": {
+          "totalChunks": 2080,
+          "vectorized": 2080,
+          "skippedEmpty": 0,
+          "batchErrors": 0,
+          "logs": [
+            {
+              "timestamp": "2026-07-10T19:30:56.925Z",
+              "level": "info",
+              "message": "[Step4] Массовая векторизация: контекст CARL, level LIKE '0-%', force=false"
+            },
+            {
+              "timestamp": "2026-07-10T19:30:56.940Z",
+              "level": "info",
+              "message": "[Step4] Чанков к векторизации: 2080"
+            },
+            {
+              "timestamp": "2026-07-10T19:32:21.994Z",
+              "level": "info",
+              "message": "[Step4] Шаг 4 завершён: векторизовано 2080, пустых 0, ошибок батчей 0"
             }
           ]
         }

@@ -368,7 +368,7 @@ app.use('/api', agentScriptRoutes(dbService, embeddings));
 const promptsConfigRoutes = require('./routes/promptsConfig');
 app.use('/api', promptsConfigRoutes(dbService));
 
-const apiRouter = require('./routes/api')(dbService, serverLogs);
+const apiRouter = require('./routes/api')(dbService, serverLogs, embeddings);
 app.use('/api', apiRouter);
 
 // Информация о сервере

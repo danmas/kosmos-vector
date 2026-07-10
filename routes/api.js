@@ -17,7 +17,14 @@ const { serverLogs, logsSseConnections, getLogsBySession, saveSessionLogs } = re
 
 const router = express.Router();
 
-module.exports = (dbService, logBuffer) => {
+module.exports = (dbService, logBuffer, embeddings = null) => {
+  // Fallback: если embeddings не передали, создаём из фабрики (нужно шагу 4 pipeline)
+  const getEmbeddings = () => {
+    if (embeddings) return embeddings;
+    const { EmbeddingsFactory } = require('../packages/core');
+    embeddings = new EmbeddingsFactory().createEmbeddings();
+    return embeddings;
+  };
 
   // === Маршруты логов (БЕЗ валидации context-code, логи глобальные) ===
   router.get('/logs', (req, res) => {
@@ -1587,6 +1594,68 @@ ${JSON.stringify({
           console.error(`[Pipeline] Ошибка сохранения сессии:`, err);
         });
       }
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  // === 7.2. Запуск шага 4 pipeline: массовая векторизация ===
+  router.post('/pipeline/step/4/run', async (req, res) => {
+    const contextCode = req.contextCode;
+    const { batchSize = 50, allLevels = false, force = false } = req.body || {};
+
+    try {
+      const stepStatus = pipelineStateManager.getStep(4);
+      if (stepStatus.status === 'running') {
+        return res.status(409).json({
+          success: false,
+          error: 'Шаг 4 уже выполняется. Дождитесь завершения.'
+        });
+      }
+
+      const sessionId = `${contextCode}-4-${Date.now()}`;
+      pipelineStateManager.updateStep(4, {
+        status: 'running',
+        progress: 0,
+        itemsProcessed: 0,
+        totalItems: 0,
+        startedAt: new Date().toISOString(),
+        error: null,
+        sessionId: sessionId
+      });
+      pipelineHistoryManager.addHistoryEntry(contextCode, 4, pipelineStateManager.getStep(4));
+
+      console.log(`[Pipeline] Запущен шаг 4 (векторизация) для контекста ${contextCode}, sessionId: ${sessionId}`);
+
+      const { runStep4 } = require('./pipeline/step4Vectorize');
+      runStep4(contextCode, sessionId, dbService, getEmbeddings(), pipelineStateManager, pipelineHistoryManager, { batchSize, allLevels, force })
+        .then(() => {
+          const stepData = pipelineStateManager.getStep(4);
+          if (stepData.status === 'completed' || stepData.status === 'failed') {
+            saveSessionLogs(sessionId, contextCode, 4, stepData).catch(err => {
+              console.error(`[Pipeline] Ошибка сохранения сессии ${sessionId}:`, err);
+            });
+          }
+        })
+        .catch(error => {
+          console.error(`[Pipeline] Ошибка выполнения шага 4:`, error);
+          const stepData = pipelineStateManager.updateStep(4, {
+            status: 'failed',
+            error: error.message,
+            completedAt: new Date().toISOString()
+          });
+          pipelineHistoryManager.addHistoryEntry(contextCode, 4, stepData);
+          saveSessionLogs(sessionId, contextCode, 4, stepData).catch(() => {});
+        });
+
+      res.json({
+        success: true,
+        step: pipelineStateManager.getStep(4)
+      });
+    } catch (error) {
+      console.error('[Pipeline] Ошибка запуска шага 4:', error);
       res.status(500).json({
         success: false,
         error: error.message
