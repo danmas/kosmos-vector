@@ -1852,6 +1852,186 @@ async function getBuilderStatus(dbService, contextCode) {
   };
 }
 
+/**
+ * Clear ontology for a context: concept ai_items, onto_* links, concept chunks, optional MD files.
+ * Does NOT touch non-concept reality (functions, tables, etc.).
+ *
+ * @param {object} dbService
+ * @param {string} contextCode
+ * @param {object} [options]
+ * @param {boolean} [options.confirm=false] — must be true
+ * @param {boolean} [options.deleteDb=true]
+ * @param {boolean} [options.deleteFiles=true] — *.md in onto_loading.dirs
+ * @param {boolean} [options.dryRun=false]
+ */
+async function clearOntologyForContext(dbService, contextCode, options = {}) {
+  if (!options.confirm) {
+    const err = new Error(
+      'Для очистки онтологии передайте { "confirm": true }. ' +
+        'Опции: deleteDb (default true), deleteFiles (default true), dryRun.'
+    );
+    err.status = 400;
+    err.code = 'CONFIRM_REQUIRED';
+    err.userFacing = true;
+    throw err;
+  }
+
+  const deleteDb = options.deleteDb !== false;
+  const deleteFiles = options.deleteFiles !== false;
+  const dryRun = !!options.dryRun;
+  const client = dbService.pgClient;
+  const q = async (sql, params) => (await client.query(sql, params)).rows;
+
+  const report = {
+    contextCode,
+    dryRun,
+    deleteDb,
+    deleteFiles,
+    conceptsFound: 0,
+    conceptIds: [],
+    linksDeleted: 0,
+    chunksDeleted: 0,
+    aiItemsDeleted: 0,
+    filesDeletedDb: 0,
+    mdFilesDeleted: [],
+    mdFilesSkipped: [],
+    dirs: [],
+    warnings: []
+  };
+
+  // --- DB: concept items ---
+  const concepts = await q(
+    `SELECT id, full_name, file_id FROM kosmos.ai_item
+     WHERE context_code = $1 AND type = 'concept'
+     ORDER BY full_name`,
+    [contextCode]
+  );
+  report.conceptsFound = concepts.length;
+  report.conceptIds = concepts.map((c) => c.full_name);
+  const conceptPkIds = concepts.map((c) => c.id);
+  const fileIds = [...new Set(concepts.map((c) => c.file_id).filter(Boolean))];
+
+  if (deleteDb) {
+    // onto_* links + any link touching concept:* for this context
+    const linkCountSql = dryRun
+      ? `SELECT count(*)::int AS n FROM kosmos.link l
+         JOIN kosmos.link_type lt ON lt.id = l.link_type_id
+         WHERE l.context_code = $1
+           AND (lt.code LIKE 'onto_%' OR l.source LIKE 'concept:%' OR l.target LIKE 'concept:%')`
+      : null;
+
+    if (dryRun) {
+      const lr = await q(linkCountSql, [contextCode]);
+      report.linksDeleted = lr[0]?.n || 0;
+      if (conceptPkIds.length) {
+        const cr = await q(
+          `SELECT count(*)::int AS n FROM kosmos.chunk_vector WHERE ai_item_id = ANY($1)`,
+          [conceptPkIds]
+        );
+        report.chunksDeleted = cr[0]?.n || 0;
+      }
+      report.aiItemsDeleted = concepts.length;
+      report.filesDeletedDb = fileIds.length;
+    } else {
+      const delLinks = await client.query(
+        `DELETE FROM kosmos.link l
+         USING kosmos.link_type lt
+         WHERE l.link_type_id = lt.id
+           AND l.context_code = $1
+           AND (lt.code LIKE 'onto_%' OR l.source LIKE 'concept:%' OR l.target LIKE 'concept:%')`,
+        [contextCode]
+      );
+      report.linksDeleted = delLinks.rowCount || 0;
+
+      if (conceptPkIds.length) {
+        const delChunks = await client.query(
+          `DELETE FROM kosmos.chunk_vector WHERE ai_item_id = ANY($1)`,
+          [conceptPkIds]
+        );
+        report.chunksDeleted = delChunks.rowCount || 0;
+
+        const delItems = await client.query(
+          `DELETE FROM kosmos.ai_item WHERE context_code = $1 AND type = 'concept'`,
+          [contextCode]
+        );
+        report.aiItemsDeleted = delItems.rowCount || 0;
+      }
+
+      // Remove concept source files from kosmos.files if orphaned (only used by concepts)
+      if (fileIds.length) {
+        const delFiles = await client.query(
+          `DELETE FROM kosmos.files f
+           WHERE f.id = ANY($1)
+             AND f.context_code = $2
+             AND NOT EXISTS (SELECT 1 FROM kosmos.ai_item ai WHERE ai.file_id = f.id)
+             AND NOT EXISTS (SELECT 1 FROM kosmos.chunk_vector cv WHERE cv.file_id = f.id)`,
+          [fileIds, contextCode]
+        );
+        report.filesDeletedDb = delFiles.rowCount || 0;
+      }
+    }
+  }
+
+  // --- Files on disk ---
+  if (deleteFiles) {
+    let dirs = [];
+    try {
+      const resolved = await getOntoDirs(contextCode, {
+        createIfMissing: false,
+        persistConfig: false
+      });
+      dirs = resolved.dirs || [];
+    } catch (e) {
+      report.warnings.push(`onto dirs: ${e.message}`);
+    }
+    report.dirs = dirs;
+
+    for (const dir of dirs) {
+      if (!fs.existsSync(dir)) {
+        report.warnings.push(`dir missing: ${dir}`);
+        continue;
+      }
+      const mdFiles = fs.readdirSync(dir).filter((f) => f.endsWith('.md'));
+      for (const f of mdFiles) {
+        const fp = path.join(dir, f);
+        // Only delete files that look like concept MD (frontmatter type: concept) when possible
+        let isConcept = true;
+        try {
+          const head = fs.readFileSync(fp, 'utf8').slice(0, 800);
+          if (head.includes('type:') && !/type:\s*concept/.test(head)) {
+            isConcept = false;
+          }
+        } catch {
+          /* delete anyway if unreadable? skip */
+          isConcept = true;
+        }
+        if (!isConcept) {
+          report.mdFilesSkipped.push(fp);
+          continue;
+        }
+        if (dryRun) {
+          report.mdFilesDeleted.push(fp);
+        } else {
+          try {
+            fs.unlinkSync(fp);
+            report.mdFilesDeleted.push(fp);
+          } catch (e) {
+            report.warnings.push(`delete ${fp}: ${e.message}`);
+          }
+        }
+      }
+    }
+  }
+
+  report.clearedAt = new Date().toISOString();
+  report.success = true;
+  console.log(
+    `[Ontology-Clear] ${contextCode} dryRun=${dryRun}: concepts=${report.aiItemsDeleted}, ` +
+      `links=${report.linksDeleted}, md=${report.mdFilesDeleted.length}`
+  );
+  return report;
+}
+
 module.exports = {
   assertVectorizedReality,
   suggestOntology,
@@ -1859,6 +2039,7 @@ module.exports = {
   serializeConceptToMd,
   applyOntologyBuild,
   getBuilderStatus,
+  clearOntologyForContext,
   getOntoDirs,
   checkOntoLoadingConfig,
   parseOntoLoading,

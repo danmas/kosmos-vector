@@ -350,6 +350,29 @@ module.exports = (dbService, embeddings) => {
     }
   });
 
+  // POST /api/ontology/clear — wipe ontology for context (concepts + onto links + optional MD)
+  // body: { confirm: true, deleteDb?: true, deleteFiles?: true, dryRun?: false }
+  router.post('/clear', async (req, res) => {
+    const contextCode = req.query['context-code'] || req.query.contextCode;
+    if (!contextCode) return res.status(400).json({ error: 'Обязателен параметр context-code' });
+    try {
+      const report = await ontologyBuilder.clearOntologyForContext(
+        dbService,
+        contextCode,
+        req.body || {}
+      );
+      res.json(report);
+    } catch (err) {
+      const status = err.status || 500;
+      if (err.userFacing || err.code === 'CONFIRM_REQUIRED') {
+        console.warn(`[Ontology-Clear] ${err.code || status}: ${err.message}`);
+        return res.status(status).json({ error: err.message, code: err.code });
+      }
+      console.error('[Ontology-Clear] Ошибка:', err);
+      res.status(status).json({ error: err.message, code: err.code });
+    }
+  });
+
   // POST /api/ontology/build/materialize — write concepts/*.md
   router.post('/build/materialize', async (req, res) => {
     const contextCode = req.query['context-code'] || req.query.contextCode;
