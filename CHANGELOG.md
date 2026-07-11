@@ -4,6 +4,33 @@
 
 ---
 
+## [2.12.2] - 2026-07-11
+
+### Изменено
+
+#### Ontology Builder — factory = P2 (domain-agnostic)
+
+- `config/ontology_builder.defaults.json` запечён из `tools/ontology-tuning/variants/P2.*`
+  (system/user/outputRules/retry/byo); knobs без изменений
+- После bake: restart + `POST /api/config/reset` (live config := factory)
+- Тюнинг: KV 8/10 gold, CARL greenfield домен+процессы, HR=0
+- Инструмент: `tools/ontology-tuning/bake-factory.mjs`
+
+### Исправлено
+
+#### Ontology Builder — якоря по degree + бюджет кода
+
+- `selectAnchorsForPrompt`: таблицы по **L1 degree DESC** (не по алфавиту)
+- Резерв ~50% `anchorCap` под классы/функции/docs — большие контексты (CARL 242 tables)
+  больше не съедают все 32 слота
+- `collectTableAnchors` SQL: `ORDER BY degree DESC, full_name`
+- `collectAnchors`: только non-table (class/function/doc/method) — таблицы приходят из
+  `collectTableAnchors`; иначе LIMIT 120 + table-first на 242 tables обнулял код
+- Малые контексты (≤ budget tables) без регрессии
+- OpenSpec: `fix-anchor-selection-by-degree`
+
+---
+
 ## [2.12.1] - 2026-07-11
 
 ### Изменено

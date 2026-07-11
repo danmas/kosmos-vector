@@ -1,0 +1,34 @@
+Propose up to {{maxConcepts}} ontology concepts for context-code "{{contextCode}}".
+
+First infer the domain from the anchors below, then propose concepts in that domain's language. Do NOT reuse ids from unrelated domains.
+
+Seed policy:
+- Avoid inventing duplicates of these ids (user avoid-list; may be empty):
+{{seedConcepts}}
+- Existing concepts already in DB — you MAY reuse/refine these ids; do NOT invent parallel "ops"/"mutation" clones:
+{{existingConcepts}}
+
+Anchors (vectorized reality — put exact "n" values into anchorFullNames):
+{{anchors}}
+
+Priority when choosing concepts:
+1) Cover the CENTRAL tables (t=table) that are core to the domain; skip peripheral/utility tables.
+2) Main classes/interfaces/modules that carry the domain.
+3) Important SQL functions (schema.fn) as anchors under the right domain.
+4) Do NOT create a concept per method.
+
+Output schema:
+{
+  "concepts": [
+    {
+      "id": "kebab-case",
+      "name": "Human Name",
+      "rationale": "one short business sentence in Russian",
+      "aspects": ["domain"],
+      "anchorFullNames": ["exact n from anchors"],
+      "relations": [{ "type": "uses", "target": "other-id", "comment": "optional" }]
+    }
+  ]
+}
+
+Max concepts: {{maxConcepts}}. Complete valid JSON only.

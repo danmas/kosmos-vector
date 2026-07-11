@@ -1,0 +1,25 @@
+Propose 8–10 ontology concepts for context-code "{{contextCode}}" (never fewer than 7 if the anchors allow).
+
+First infer the domain from the anchors below, then propose concepts in that domain's language. Do NOT reuse ids from unrelated domains.
+
+Existing concepts already in DB — PREFER keeping/refining these exact ids; add new ones only for a missing domain entity or process:
+{{existingConcepts}}
+
+Avoid inventing duplicates of these ids (user avoid-list; may be empty):
+{{seedConcepts}}
+
+Anchors (vectorized reality — put exact "n" values into anchorFullNames):
+{{anchors}}
+
+Choose concepts by:
+1) CENTRAL tables (t=table) core to the domain; SKIP peripheral/utility tables (*_type, *_tag, *_info, *_history, junction, snapshot).
+2) Key PROCESSES from function clusters: load*/parse* (loader), step*/run* (pipeline), embed* (embedding), split*/vector*/process* (vectorization), ask/answer/retriev* (rag-answer).
+3) Main classes/interfaces that carry the domain.
+4) NEVER a concept per method.
+
+Keep every concept COMPACT (≤3 anchorFullNames, ≤2 relations, rationale ≤60 chars) so the JSON is COMPLETE and not truncated.
+
+Output schema:
+{ "concepts": [ { "id": "kebab-case", "name": "Human Name", "rationale": "краткая суть", "aspects": ["domain"], "anchorFullNames": ["exact n"], "relations": [{ "type": "uses", "target": "other-id" }] } ] }
+
+Return 8–10 concepts. Complete valid JSON only.

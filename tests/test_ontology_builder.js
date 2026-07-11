@@ -163,6 +163,85 @@ async function main() {
     console.log('  skip: parseLlmConceptsResponse not exported');
   }
 
+  // 10. selectAnchorsForPrompt — degree ranking + reserved code budget
+  const {
+    selectAnchorsForPrompt,
+    TABLE_BUDGET_RATIO
+  } = require('../routes/ontology/ontologyBuilder');
+  ok(TABLE_BUDGET_RATIO === 0.5, 'TABLE_BUDGET_RATIO is 0.5');
+
+  // Large context: 242 tables alphabetical early vs high-degree core + code
+  const bigTables = [];
+  for (let i = 0; i < 242; i++) {
+    const letter = String.fromCharCode(97 + (i % 26));
+    bigTables.push({
+      full_name: `schema.aa_early_${letter}_${i}`,
+      type: 'table',
+      degree: 1 + (i % 5) // low degree alphabetically early names
+    });
+  }
+  // Central-ish high degree (alphabetically late names would lose without degree sort)
+  const central = [
+    { full_name: 'carl_data.auction', type: 'table', degree: 123 },
+    { full_name: 'carl_data.profile', type: 'table', degree: 61 },
+    { full_name: 'carl_data.users', type: 'table', degree: 45 },
+    { full_name: 'carl_data.workflow', type: 'table', degree: 40 },
+    { full_name: 'carl_data.commission', type: 'table', degree: 38 }
+  ];
+  const codeAnchors = [];
+  for (let i = 0; i < 40; i++) {
+    codeAnchors.push({
+      full_name: `pkg.Fn${i}`,
+      type: i % 3 === 0 ? 'class' : 'function',
+      degree: 50 - (i % 20)
+    });
+  }
+  const bigSelected = selectAnchorsForPrompt(codeAnchors, [...bigTables, ...central], 32);
+  ok(bigSelected.length <= 32, 'large context sample length ≤ cap 32');
+  ok(bigSelected.length === 32, 'large context fills cap when enough anchors');
+  const bigNames = new Set(bigSelected.map((a) => a.full_name));
+  ok(bigNames.has('carl_data.auction'), 'highest-degree table auction in sample');
+  ok(bigNames.has('carl_data.profile'), 'high-degree table profile in sample');
+  ok(bigNames.has('carl_data.workflow'), 'high-degree table workflow in sample');
+  const tableCount = bigSelected.filter((a) => a.type === 'table').length;
+  const codeCount = bigSelected.filter((a) => a.type !== 'table').length;
+  ok(tableCount <= 16, `tables do not exceed budget (~half of 32), got ${tableCount}`);
+  ok(codeCount >= 14, `code anchors not starved, got ${codeCount}`);
+  // Alphabetically-first low-degree must not displace central solely by name
+  ok(
+    !bigNames.has('schema.aa_early_a_0') || bigSelected.find((a) => a.full_name === 'carl_data.auction'),
+    'degree ranking preferred over alphabet for tables'
+  );
+
+  // Small context: 15 tables all kept + code
+  const smallTables = Array.from({ length: 15 }, (_, i) => ({
+    full_name: `kosmos.t${i}`,
+    type: 'table',
+    degree: 10 - (i % 10)
+  }));
+  const smallCode = Array.from({ length: 20 }, (_, i) => ({
+    full_name: `mod.F${i}`,
+    type: 'function',
+    degree: i
+  }));
+  const smallSelected = selectAnchorsForPrompt(smallCode, smallTables, 32);
+  ok(smallSelected.filter((a) => a.type === 'table').length === 15, 'small context keeps all 15 tables');
+  ok(smallSelected.length <= 32, 'small context never exceeds cap');
+  ok(
+    smallSelected.filter((a) => a.type === 'function').length >= 15,
+    'small context fills remaining slots with code'
+  );
+
+  // Backfill when almost no code anchors
+  const onlyTables = Array.from({ length: 50 }, (_, i) => ({
+    full_name: `t.b${i}`,
+    type: 'table',
+    degree: 50 - i
+  }));
+  const backfill = selectAnchorsForPrompt([], onlyTables, 32);
+  ok(backfill.length === 32, 'backfill fills cap with tables when no code');
+  ok(backfill[0].full_name === 't.b0', 'backfill tables ordered by degree DESC');
+
   // cleanup
   fs.rmSync(tmp, { recursive: true, force: true });
 

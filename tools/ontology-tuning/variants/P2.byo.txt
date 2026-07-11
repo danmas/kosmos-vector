@@ -1,0 +1,1 @@
+Paste ONLY the JSON object {"concepts":[...]} back into Ontology Builder → «Вставить ответ LLM». Reuse existing/domain ids derived from THIS system's anchors; do not invent *-ops / *-mutation style clones or ids from unrelated domains.

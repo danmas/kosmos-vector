@@ -249,8 +249,10 @@ function uniqueKebab(base, used) {
 }
 
 /**
- * Collect anchor items for ontology suggest.
- * Priority: tables → class/interface → functions → methods (methods deprioritized for prompts).
+ * Collect non-table anchor items for ontology suggest (class/function/doc/method).
+ * Tables are loaded separately via collectTableAnchors (all tables, by degree) and
+ * merged in prepareSuggestContext — including them here with ORDER BY table-first
+ * + LIMIT would starve code anchors on large schemas (e.g. CARL 242 tables).
  */
 async function collectAnchors(dbService, contextCode, limit = 80) {
   const q = async (sql, params) => (await dbService.pgClient.query(sql, params)).rows;
@@ -264,12 +266,11 @@ async function collectAnchors(dbService, contextCode, limit = 80) {
        AND (l.source = ai.full_name OR l.target = ai.full_name)
      LEFT JOIN kosmos.chunk_vector cv ON cv.ai_item_id = ai.id
      WHERE ai.context_code = $1
-       AND ai.type IN ('function','method','class','table','md_doc','interface')
+       AND ai.type IN ('function','method','class','md_doc','interface')
      GROUP BY ai.full_name, ai.type, ai.h_name, ai.s_name
      HAVING count(DISTINCT cv.id) FILTER (WHERE cv.embedding IS NOT NULL) > 0
      ORDER BY
        CASE ai.type
-         WHEN 'table' THEN 0
          WHEN 'class' THEN 1
          WHEN 'interface' THEN 2
          WHEN 'function' THEN 3
@@ -302,7 +303,7 @@ async function collectTableAnchors(dbService, contextCode) {
      LEFT JOIN kosmos.chunk_vector cv ON cv.ai_item_id = ai.id
      WHERE ai.context_code = $1 AND ai.type = 'table'
      GROUP BY ai.full_name, ai.type, ai.h_name, ai.s_name
-     ORDER BY ai.full_name`,
+     ORDER BY degree DESC, ai.full_name`,
     [contextCode]
   );
 }
@@ -331,27 +332,82 @@ function buildPromptSeedList(userSeeds, existingIds, seedMode) {
 }
 
 /**
- * Merge anchors: tables always first, drop most methods from the prompt sample.
+ * Fraction of anchorCap reserved for tables before code anchors fill the rest.
+ * Tables never consume every slot on large contexts (process concepts need code anchors).
+ */
+const TABLE_BUDGET_RATIO = 0.5;
+
+function byDegreeThenName(a, b) {
+  const dd = (Number(b.degree) || 0) - (Number(a.degree) || 0);
+  if (dd !== 0) return dd;
+  return String(a.full_name || '').localeCompare(String(b.full_name || ''));
+}
+
+/**
+ * Build prompt anchor sample within cap:
+ * - tables ranked by L1 degree DESC (not alphabetically);
+ * - reserve ~half of cap for non-table anchors so tables cannot starve code;
+ * - backfill remaining slots with more tables by degree.
+ * Small contexts (tables ≤ budget): all tables kept + code fill — no regression.
  */
 function selectAnchorsForPrompt(anchors, tables, cap) {
+  const limit = Math.max(0, Math.floor(Number(cap) || 0));
+  if (limit === 0) return [];
+
   const byName = new Map();
-  for (const a of tables || []) byName.set(a.full_name, a);
+  for (const a of tables || []) {
+    if (a && a.full_name) byName.set(a.full_name, a);
+  }
   for (const a of anchors || []) {
-    if (!byName.has(a.full_name)) byName.set(a.full_name, a);
+    if (a && a.full_name && !byName.has(a.full_name)) byName.set(a.full_name, a);
   }
   const all = [...byName.values()];
-  const tablesList = all.filter((a) => a.type === 'table');
-  const classes = all.filter((a) => a.type === 'class' || a.type === 'interface');
-  const functions = all.filter((a) => a.type === 'function');
+
+  const tablesList = all.filter((a) => a.type === 'table').sort(byDegreeThenName);
+  const classes = all
+    .filter((a) => a.type === 'class' || a.type === 'interface')
+    .sort(byDegreeThenName);
+  const functions = all.filter((a) => a.type === 'function').sort(byDegreeThenName);
+  const docs = all.filter((a) => a.type === 'md_doc').sort(byDegreeThenName);
   // methods only if room — high degree, few
   const methods = all
     .filter((a) => a.type === 'method')
-    .sort((a, b) => (b.degree || 0) - (a.degree || 0))
+    .sort(byDegreeThenName)
     .slice(0, 6);
-  const docs = all.filter((a) => a.type === 'md_doc');
 
-  const ordered = [...tablesList, ...classes, ...functions, ...docs, ...methods];
-  return ordered.slice(0, cap);
+  const codeList = [...classes, ...functions, ...docs, ...methods];
+
+  // e.g. cap=32 → tableBudget = min(nTables, max(8, 16))
+  const tableBudget = Math.min(
+    tablesList.length,
+    Math.max(8, Math.round(limit * TABLE_BUDGET_RATIO))
+  );
+
+  const selected = [];
+  const seen = new Set();
+
+  for (const a of tablesList.slice(0, tableBudget)) {
+    if (selected.length >= limit) break;
+    selected.push(a);
+    seen.add(a.full_name);
+  }
+
+  for (const a of codeList) {
+    if (selected.length >= limit) break;
+    if (seen.has(a.full_name)) continue;
+    selected.push(a);
+    seen.add(a.full_name);
+  }
+
+  // Backfill when few code anchors (or leftover slots)
+  for (const a of tablesList) {
+    if (selected.length >= limit) break;
+    if (seen.has(a.full_name)) continue;
+    selected.push(a);
+    seen.add(a.full_name);
+  }
+
+  return selected.slice(0, limit);
 }
 
 /**
@@ -2054,5 +2110,7 @@ module.exports = {
   importSuggestFromLlmText,
   prepareSuggestContext,
   runValidateReport,
-  toKebabId
+  toKebabId,
+  selectAnchorsForPrompt,
+  TABLE_BUDGET_RATIO
 };

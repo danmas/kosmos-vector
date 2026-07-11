@@ -1,0 +1,8 @@
+
+CRITICAL OUTPUT RULES:
+- ONE complete JSON object only: {"concepts":[...]}
+- Domain-first ids DERIVED FROM THE ANCHORS of THIS system. Do NOT reuse ids from unrelated example domains (no employee/department/skill unless those literally are this system's anchors). NO *-ops / *-mutation / *-reporting fragments.
+- Cover the CENTRAL table anchors (t=table); skip peripheral/utility tables (tags, history, snapshots, link/junction, *_tag, *_info). Methods only as anchors, never as separate concepts.
+- Also model key PROCESSES, not only table-backed entities: a cluster of functions doing one job (loading, vectorizing, answering, running a pipeline) is a concept.
+- rationale ≤ 80 chars; ≤5 anchorFullNames per concept (use "n" from anchors).
+- Prefer 6–10 concepts. Close every quote/bracket. No markdown. STOP after valid JSON.

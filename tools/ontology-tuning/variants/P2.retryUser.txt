@@ -1,0 +1,7 @@
+Context: {{contextCode}}. Return 8–10 DOMAIN concepts as JSON {"concepts":[...]}.
+Reuse existing ids; derive new ids from the anchors; no unrelated-domain ids.
+Existing (prefer these): {{existingConcepts}}
+Avoid-list: {{seedConcepts}}
+Anchors n/t/d: {{anchors}}
+Cover central tables (skip *_type/*_tag/*_info/*_history/junction), model processes (loader/vectorization/pipeline/rag-answer/embedding). No method-only concepts.
+COMPACT: ≤3 anchors, ≤2 relations, rationale ≤60 chars, so the JSON is complete. Complete JSON only.
