@@ -287,17 +287,20 @@ module.exports = (dbService, embeddings) => {
         ? 409
         : err.code === 'EMPTY_LLM_RESPONSE'
           ? 400
-          : err.code === 'LLM_REQUIRED' || err.code === 'LLM_BAD_JSON'
-            ? err.code === 'LLM_BAD_JSON'
-              ? 502
-              : 503
-            : 500);
+          : err.code === 'ONTOLOGY_DEFAULTS_MISSING'
+            ? 500
+            : err.code === 'LLM_REQUIRED' || err.code === 'LLM_BAD_JSON'
+              ? err.code === 'LLM_BAD_JSON'
+                ? 502
+                : 503
+              : 500);
     if (
       err.userFacing ||
       err.code === 'LLM_REQUIRED' ||
       err.code === 'LLM_BAD_JSON' ||
       err.code === 'STEP4_REQUIRED' ||
-      err.code === 'EMPTY_LLM_RESPONSE'
+      err.code === 'EMPTY_LLM_RESPONSE' ||
+      err.code === 'ONTOLOGY_DEFAULTS_MISSING'
     ) {
       console.warn(`[${logTag}] ${err.code || status}: ${String(err.message).split('\n')[0]}`);
       return res.status(status).json({ error: err.message, code: err.code || undefined });

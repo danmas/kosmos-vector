@@ -193,9 +193,10 @@ module.exports = (dbService, logBuffer, embeddings = null) => {
       });
     } catch (error) {
       console.error('[API/CONFIG] Ошибка получения конфига:', error);
-      res.status(500).json({
+      res.status(error.status || 500).json({
         success: false,
-        error: error.message || 'Failed to get application configuration'
+        error: error.message || 'Failed to get application configuration',
+        code: error.code || undefined
       });
     }
   });
@@ -250,9 +251,10 @@ module.exports = (dbService, logBuffer, embeddings = null) => {
       });
     } catch (error) {
       console.error('[API/CONFIG] Ошибка сброса конфига:', error);
-      res.status(500).json({
+      res.status(error.status || 500).json({
         success: false,
-        error: error.message || 'Failed to reset application configuration'
+        error: error.message || 'Failed to reset application configuration',
+        code: error.code || undefined
       });
     }
   });

@@ -4,6 +4,20 @@
 
 ---
 
+## [2.12.1] - 2026-07-11
+
+### Изменено
+
+#### Ontology Builder — factory-промпты вне кода
+
+- **NEW** `config/ontology_builder.defaults.json` — заводские тексты промптов + knobs
+- `packages/core/ontologyBuilderDefaults.js` только читает файл (кэш на процесс); тел промптов в `.js` нет
+- Missing/broken factory-файл → `ONTOLOGY_DEFAULTS_MISSING` (fail-hard, без recovery из кода)
+- Docs: `docs/ONTOLOGY_BUILDER_TUNING.md`, `KB/README_APP_CONFIG_API.md`
+- OpenSpec: `externalize-builder-prompt-defaults`
+
+---
+
 ## [2.12.0] - 2026-07-11
 
 ### Добавлено / изменено

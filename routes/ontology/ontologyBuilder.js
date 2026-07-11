@@ -400,8 +400,8 @@ function heuristicConcepts(anchors, maxConcepts, seedSet, usedIds) {
  */
 /**
  * Runtime settings: ONLY from app config (System Settings → ontology_builder).
- * Factory text lives in ontologyBuilderDefaults and is merged via appConfigService.normalize
- * into GET/PATCH /api/config — never re-hardcode prompt bodies in the builder path.
+ * Factory defaults: config/ontology_builder.defaults.json via getDefaultOntologyBuilderConfig
+ * (merged in appConfigService.normalize). No prompt bodies in this module.
  */
 function getOntologyBuilderSettings() {
   try {
@@ -411,7 +411,8 @@ function getOntologyBuilderSettings() {
     }
     return { ...cfg.ontology_builder };
   } catch (e) {
-    // Last resort if config unreadable — still go through defaults module once
+    if (e && e.code === 'ONTOLOGY_DEFAULTS_MISSING') throw e;
+    // Last resort if config unreadable — load factory from external file (fail-hard if missing)
     console.error('[OntologyBuilder] App config unavailable:', e.message);
     return getDefaultOntologyBuilderConfig();
   }
