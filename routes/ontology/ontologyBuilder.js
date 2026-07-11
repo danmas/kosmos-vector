@@ -5,6 +5,11 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 const kbConfigService = require('../../packages/core/kbConfigService');
+const appConfigService = require('../../packages/core/appConfigService');
+const {
+  getDefaultOntologyBuilderConfig,
+  renderPromptTemplate
+} = require('../../packages/core/ontologyBuilderDefaults');
 const { callLLM } = require('../../packages/core/llmClient');
 const {
   resolveGroundingTarget,
@@ -244,12 +249,13 @@ function uniqueKebab(base, used) {
 }
 
 /**
- * Collect anchor items ranked by importance (L1 degree, type, chunks).
+ * Collect anchor items for ontology suggest.
+ * Priority: tables → class/interface → functions → methods (methods deprioritized for prompts).
  */
 async function collectAnchors(dbService, contextCode, limit = 80) {
   const q = async (sql, params) => (await dbService.pgClient.query(sql, params)).rows;
 
-  const byDegree = await q(
+  const byPriority = await q(
     `SELECT ai.full_name, ai.type, ai.h_name, ai.s_name,
             count(DISTINCT l.id)::int AS degree,
             count(DISTINCT cv.id) FILTER (WHERE cv.embedding IS NOT NULL)::int AS vectorized_chunks
@@ -261,12 +267,44 @@ async function collectAnchors(dbService, contextCode, limit = 80) {
        AND ai.type IN ('function','method','class','table','md_doc','interface')
      GROUP BY ai.full_name, ai.type, ai.h_name, ai.s_name
      HAVING count(DISTINCT cv.id) FILTER (WHERE cv.embedding IS NOT NULL) > 0
-     ORDER BY degree DESC, vectorized_chunks DESC, ai.full_name
+     ORDER BY
+       CASE ai.type
+         WHEN 'table' THEN 0
+         WHEN 'class' THEN 1
+         WHEN 'interface' THEN 2
+         WHEN 'function' THEN 3
+         WHEN 'md_doc' THEN 4
+         WHEN 'method' THEN 5
+         ELSE 6
+       END,
+       degree DESC,
+       vectorized_chunks DESC,
+       ai.full_name
      LIMIT $2`,
     [contextCode, limit]
   );
 
-  return byDegree;
+  return byPriority;
+}
+
+/**
+ * All tables for context (even low degree) — must be coverable in ontology.
+ */
+async function collectTableAnchors(dbService, contextCode) {
+  const q = async (sql, params) => (await dbService.pgClient.query(sql, params)).rows;
+  return q(
+    `SELECT ai.full_name, ai.type, ai.h_name, ai.s_name,
+            count(DISTINCT l.id)::int AS degree,
+            count(DISTINCT cv.id) FILTER (WHERE cv.embedding IS NOT NULL)::int AS vectorized_chunks
+     FROM kosmos.ai_item ai
+     LEFT JOIN kosmos.link l ON l.context_code = ai.context_code
+       AND (l.source = ai.full_name OR l.target = ai.full_name)
+     LEFT JOIN kosmos.chunk_vector cv ON cv.ai_item_id = ai.id
+     WHERE ai.context_code = $1 AND ai.type = 'table'
+     GROUP BY ai.full_name, ai.type, ai.h_name, ai.s_name
+     ORDER BY ai.full_name`,
+    [contextCode]
+  );
 }
 
 async function loadExistingConceptIds(dbService, contextCode) {
@@ -276,6 +314,44 @@ async function loadExistingConceptIds(dbService, contextCode) {
     [contextCode]
   )).rows;
   return new Set(rows.map((r) => r.s_name || String(r.full_name).replace(/^concept:/, '')));
+}
+
+/**
+ * Build seed avoid-list for the LLM prompt.
+ * user-only (default): only explicit UI/API seedConcepts — do NOT dump every concept in DB
+ *   (that forced models to invent employee-ops-service instead of reusing employee).
+ * all-existing: legacy — all concept ids in context.
+ */
+function buildPromptSeedList(userSeeds, existingIds, seedMode) {
+  const user = (userSeeds || []).map((s) => String(s).replace(/^concept:/, '').trim()).filter(Boolean);
+  if (seedMode === 'all-existing') {
+    return [...new Set([...user, ...existingIds])];
+  }
+  return user;
+}
+
+/**
+ * Merge anchors: tables always first, drop most methods from the prompt sample.
+ */
+function selectAnchorsForPrompt(anchors, tables, cap) {
+  const byName = new Map();
+  for (const a of tables || []) byName.set(a.full_name, a);
+  for (const a of anchors || []) {
+    if (!byName.has(a.full_name)) byName.set(a.full_name, a);
+  }
+  const all = [...byName.values()];
+  const tablesList = all.filter((a) => a.type === 'table');
+  const classes = all.filter((a) => a.type === 'class' || a.type === 'interface');
+  const functions = all.filter((a) => a.type === 'function');
+  // methods only if room — high degree, few
+  const methods = all
+    .filter((a) => a.type === 'method')
+    .sort((a, b) => (b.degree || 0) - (a.degree || 0))
+    .slice(0, 6);
+  const docs = all.filter((a) => a.type === 'md_doc');
+
+  const ordered = [...tablesList, ...classes, ...functions, ...docs, ...methods];
+  return ordered.slice(0, cap);
 }
 
 /**
@@ -320,58 +396,409 @@ function heuristicConcepts(anchors, maxConcepts, seedSet, usedIds) {
 }
 
 /**
- * LLM clustering of anchors into concepts.
+ * Load ontology_builder section from app config (with defaults).
  */
-async function llmProposeConcepts(anchors, maxConcepts, seedConcepts, contextCode) {
-  const sample = anchors.slice(0, 60).map((a) => ({
-    full_name: a.full_name,
-    type: a.type,
-    degree: a.degree,
-    name: a.h_name || a.s_name || a.full_name
+/**
+ * Runtime settings: ONLY from app config (System Settings → ontology_builder).
+ * Factory text lives in ontologyBuilderDefaults and is merged via appConfigService.normalize
+ * into GET/PATCH /api/config — never re-hardcode prompt bodies in the builder path.
+ */
+function getOntologyBuilderSettings() {
+  try {
+    const cfg = appConfigService.getConfig();
+    if (!cfg.ontology_builder || typeof cfg.ontology_builder !== 'object') {
+      throw new Error('ontology_builder missing from app config');
+    }
+    return { ...cfg.ontology_builder };
+  } catch (e) {
+    // Last resort if config unreadable — still go through defaults module once
+    console.error('[OntologyBuilder] App config unavailable:', e.message);
+    return getDefaultOntologyBuilderConfig();
+  }
+}
+
+/**
+ * Drop util-like anchors by name patterns from settings.
+ */
+function filterAnchorsByExcludePatterns(anchors, patterns) {
+  if (!Array.isArray(patterns) || patterns.length === 0) return anchors;
+  const regs = [];
+  for (const p of patterns) {
+    try {
+      regs.push(new RegExp(p));
+    } catch {
+      /* skip bad regex */
+    }
+  }
+  if (regs.length === 0) return anchors;
+  return anchors.filter((a) => {
+    const names = [a.full_name, a.h_name, a.s_name].filter(Boolean).map(String);
+    return !regs.some((re) => names.some((n) => re.test(n)));
+  });
+}
+
+/**
+ * Strip markdown fences and extract a JSON-looking substring.
+ */
+function stripLlmJsonWrapper(text) {
+  let t = String(text || '').trim();
+  const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) t = fence[1].trim();
+  // drop leading junk before first {
+  const i = t.indexOf('{');
+  if (i > 0) t = t.slice(i);
+  return t;
+}
+
+/**
+ * Best-effort salvage of a truncated concept object (unterminated string).
+ * Pulls id / name / anchors if already closed in the fragment.
+ */
+function salvageIncompleteConceptObject(fragment) {
+  if (!fragment || fragment.indexOf('{') === -1) return null;
+  const idM = fragment.match(/"id"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (!idM) return null;
+  const nameM = fragment.match(/"name"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  const anchors = [];
+  const anchorBlock = fragment.match(/"anchorFullNames"\s*:\s*\[([\s\S]*)/);
+  if (anchorBlock) {
+    const re = /"((?:[^"\\]|\\.)*)"/g;
+    let am;
+    while ((am = re.exec(anchorBlock[1])) !== null) {
+      anchors.push(am[1].replace(/\\"/g, '"'));
+      if (anchors.length >= 5) break;
+    }
+  }
+  return {
+    id: idM[1].replace(/\\"/g, '"'),
+    name: nameM ? nameM[1].replace(/\\"/g, '"') : idM[1],
+    rationale: 'recovered from truncated LLM JSON',
+    aspects: ['domain'],
+    anchorFullNames: anchors
+  };
+}
+
+/**
+ * Extract complete objects from a truncated `"concepts": [ {...}, {...` payload.
+ * Survives Unterminated string / cut mid-object (common when max_tokens hits).
+ * @returns {{ concepts: object[] }|null}
+ */
+function extractCompleteConceptsFromPartialJson(text) {
+  const t = stripLlmJsonWrapper(text);
+  const keyRe = /"concepts"\s*:\s*\[/;
+  const m = t.match(keyRe);
+  if (!m) return null;
+
+  let i = m.index + m[0].length;
+  const concepts = [];
+
+  while (i < t.length) {
+    while (i < t.length && /[\s,]/.test(t[i])) i++;
+    if (i >= t.length || t[i] === ']') break;
+    if (t[i] !== '{') break;
+
+    const start = i;
+    let depth = 0;
+    let inStr = false;
+    let esc = false;
+    let closed = false;
+
+    for (; i < t.length; i++) {
+      const c = t[i];
+      if (inStr) {
+        if (esc) {
+          esc = false;
+          continue;
+        }
+        if (c === '\\') {
+          esc = true;
+          continue;
+        }
+        if (c === '"') inStr = false;
+        continue;
+      }
+      if (c === '"') {
+        inStr = true;
+        continue;
+      }
+      if (c === '{') depth++;
+      else if (c === '}') {
+        depth--;
+        if (depth === 0) {
+          i++;
+          closed = true;
+          break;
+        }
+      }
+    }
+
+    if (!closed) {
+      // Last object truncated mid-stream — try salvage id/name
+      const salvaged = salvageIncompleteConceptObject(t.slice(start));
+      if (salvaged) {
+        console.warn(
+          `[OntologyBuilder] Salvaged incomplete concept id=${salvaged.id} from truncated JSON`
+        );
+        concepts.push(salvaged);
+      }
+      break;
+    }
+    try {
+      concepts.push(JSON.parse(t.slice(start, i)));
+    } catch {
+      const salvaged = salvageIncompleteConceptObject(t.slice(start, i));
+      if (salvaged) concepts.push(salvaged);
+      break;
+    }
+  }
+
+  return concepts.length > 0 ? { concepts } : null;
+}
+
+/**
+ * Parse LLM JSON; tolerate fences + truncated concepts arrays.
+ */
+function parseLlmConceptsResponse(text) {
+  const cleaned = stripLlmJsonWrapper(text);
+  const attempts = [cleaned];
+  // also try raw if cleaned differed
+  if (cleaned !== String(text || '').trim()) attempts.push(String(text || '').trim());
+
+  let lastErr = null;
+  for (const candidate of attempts) {
+    try {
+      const parsed = JSON.parse(candidate);
+      if (Array.isArray(parsed)) return { concepts: parsed };
+      if (parsed && Array.isArray(parsed.concepts)) return parsed;
+      if (parsed && typeof parsed === 'object') {
+        // single concept mistaken as root
+        if (parsed.id) return { concepts: [parsed] };
+      }
+      lastErr = new Error('JSON parsed but no concepts array');
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+
+  const recovered = extractCompleteConceptsFromPartialJson(text);
+  if (recovered) {
+    console.warn(
+      `[OntologyBuilder] LLM JSON truncated/invalid; recovered ${recovered.concepts.length} complete concept(s)`
+    );
+    return recovered;
+  }
+
+  const preview = String(text || '').slice(0, 240).replace(/\s+/g, ' ');
+  const err = new Error(
+    `Битый или обрезанный JSON от LLM: ${lastErr?.message || 'parse failed'}. ` +
+      `Начало ответа: «${preview}${String(text || '').length > 240 ? '…' : ''}». ` +
+      `Уменьшите maxConcepts / exclude patterns или смените модель.`
+  );
+  err.code = 'LLM_BAD_JSON';
+  throw err;
+}
+
+/**
+ * Compact anchor lines for the model (less prompt bloat → more room for complete JSON).
+ */
+function formatAnchorsCompact(anchors, limit) {
+  return anchors.slice(0, limit).map((a) => ({
+    n: a.full_name,
+    t: a.type,
+    d: a.degree
+  }));
+}
+
+/**
+ * LLM clustering of anchors into concepts (prompts/model from System Settings).
+ */
+async function llmProposeConcepts(anchors, maxConcepts, seedConcepts, contextCode, builderSettings, extra = {}) {
+  const settings = builderSettings || getOntologyBuilderSettings();
+  const tableAnchors = extra.tableAnchors || anchors.filter((a) => a.type === 'table');
+  const existingConcepts = extra.existingConcepts || [];
+  const anchorCap = Math.min(32, Math.max(16, maxConcepts * 3));
+  const selected = selectAnchorsForPrompt(anchors, tableAnchors, anchorCap);
+  const sample = formatAnchorsCompact(selected, anchorCap);
+
+  // Prompts ONLY from System Settings (ontology_builder) — no inline hardcode
+  const systemPrompt = String(settings.systemPrompt || '').trim();
+  const userTemplate = String(settings.userPromptTemplate || '').trim();
+  const outputRules = String(settings.outputRulesSuffix || '').trim();
+  const retrySystem = String(settings.retrySystemPrompt || systemPrompt).trim();
+  const retryUserTemplate = String(settings.retryUserTemplate || userTemplate).trim();
+
+  if (!systemPrompt || !userTemplate) {
+    const err = new Error(
+      'ontology_builder.systemPrompt / userPromptTemplate пусты. ' +
+        'Settings → Ontology Builder → «Подставить factory defaults» → Save.'
+    );
+    err.status = 400;
+    err.code = 'ONTOLOGY_PROMPTS_MISSING';
+    err.userFacing = true;
+    throw err;
+  }
+
+  const model =
+    settings.model && String(settings.model).trim() ? String(settings.model).trim() : null;
+  const temperature =
+    settings.temperature !== undefined && settings.temperature !== null
+      ? Number(settings.temperature)
+      : 0;
+
+  const outTokens = Math.min(8192, Math.max(2048, maxConcepts * 180 + 512));
+  const seedList = Array.isArray(seedConcepts) ? seedConcepts : [...(seedConcepts || [])];
+  const existingList = Array.isArray(existingConcepts) ? existingConcepts : [...existingConcepts];
+
+  async function runOnce(anchorSample, maxC, useRetryPrompts, maxTok) {
+    const sys = useRetryPrompts ? retrySystem : systemPrompt;
+    const template = useRetryPrompts ? retryUserTemplate : userTemplate;
+    const userContent =
+      renderPromptTemplate(template, {
+        maxConcepts: maxC,
+        contextCode,
+        seedConcepts: seedList,
+        existingConcepts: existingList.slice(0, 40),
+        anchors: anchorSample
+      }) + (outputRules ? `\n\n${outputRules}` : '');
+
+    const text = await callLLM(
+      [
+        { role: 'system', content: sys },
+        { role: 'user', content: userContent }
+      ],
+      model,
+      { jsonMode: true, temperature, max_tokens: maxTok }
+    );
+    console.log(`[OntologyBuilder] LLM raw length=${String(text).length}`);
+    return parseLlmConceptsResponse(text);
+  }
+
+  let parsed;
+  try {
+    parsed = await runOnce(sample, maxConcepts, false, outTokens);
+  } catch (e) {
+    if (e.code !== 'LLM_BAD_JSON') throw e;
+    console.warn('[OntologyBuilder] Bad JSON, retry #1 minimal prompt:', e.message);
+    try {
+      const smallSample = sample.slice(0, Math.min(18, sample.length));
+      parsed = await runOnce(smallSample, Math.min(maxConcepts, 8), true, 4096);
+    } catch (e2) {
+      if (e2.code !== 'LLM_BAD_JSON') throw e2;
+      console.warn('[OntologyBuilder] Bad JSON, retry #2 tiny payload:', e2.message);
+      const tiny = sample.slice(0, 12);
+      parsed = await runOnce(tiny, Math.min(maxConcepts, 6), true, 4096);
+    }
+  }
+
+  const list = Array.isArray(parsed.concepts) ? parsed.concepts : [];
+  for (const c of list) {
+    if (Array.isArray(c.anchorFullNames)) {
+      c.anchorFullNames = c.anchorFullNames.map((x) =>
+        x && typeof x === 'object' && x.n ? x.n : x
+      );
+    }
+  }
+  return list.slice(0, maxConcepts);
+}
+
+/**
+ * LLM failure → hard stop (no silent fallback). Motto: без ИИ жизни нет.
+ */
+function makeLlmRequiredError(stage, cause) {
+  const detail = cause?.message || String(cause || 'unknown');
+  const isBadJson =
+    cause?.code === 'LLM_BAD_JSON' ||
+    /JSON|Unterminated string|Unexpected token|parse/i.test(detail);
+
+  const err = new Error(
+    isBadJson
+      ? `LLM ответил, но JSON непригоден на этапе «${stage}»: ${detail}\n\n` +
+          `«Без ИИ жизни нет!» — операция остановлена (не подменяем эвристикой).\n` +
+          `Что попробовать: уменьшить maxConcepts (8–12), проверить модель, ` +
+          `исключить шумные anchors (exclude patterns), Retry suggest.`
+      : `LLM недоступен или вернул ошибку на этапе «${stage}»: ${detail}\n\n` +
+          `«Без ИИ жизни нет!» — операция остановлена. Проверьте kosmos-model / ` +
+          `KOSMOS_BASE_URL / модель (System Settings → Ontology Builder) и повторите.`
+  );
+  err.status = isBadJson ? 502 : 503;
+  err.code = isBadJson ? 'LLM_BAD_JSON' : 'LLM_REQUIRED';
+  err.userFacing = true;
+  err.cause = cause;
+  return err;
+}
+
+/**
+ * Optional second pass: enrich rationale/description from settings.descriptionPrompt.
+ * Failures stop the request (no silent skip).
+ */
+async function enrichConceptDescriptions(concepts, builderSettings, contextCode) {
+  if (!builderSettings?.enableDescriptionPass) return concepts;
+  const template =
+    (builderSettings.descriptionPrompt && String(builderSettings.descriptionPrompt).trim()) ||
+    getDefaultOntologyBuilderConfig().descriptionPrompt;
+  if (!template) return concepts;
+
+  const payload = concepts.map((c) => ({
+    id: c.id,
+    name: c.name,
+    rationale: c.rationale,
+    anchors: c.anchorFullNames || []
   }));
 
-  const prompt = {
-    task: 'Propose domain ontology concepts from vectorized code/db/doc items',
-    contextCode,
-    maxConcepts,
-    seedConceptsToAvoid: seedConcepts || [],
-    anchors: sample,
-    outputSchema: {
-      concepts: [
+  try {
+    const model =
+      builderSettings.model && String(builderSettings.model).trim()
+        ? String(builderSettings.model).trim()
+        : null;
+    const descSystem = String(builderSettings.descriptionSystemPrompt || '').trim();
+    if (!descSystem) {
+      throw new Error(
+        'ontology_builder.descriptionSystemPrompt пуст. Settings → Ontology Builder → factory defaults → Save.'
+      );
+    }
+    const text = await callLLM(
+      [
+        { role: 'system', content: descSystem },
         {
-          id: 'kebab-case-latin',
-          name: 'human name',
-          rationale: 'why this concept',
-          aspects: ['domain'],
-          anchorFullNames: ['subset of anchors.full_name']
+          role: 'user',
+          content: renderPromptTemplate(template, {
+            contextCode,
+            concepts: payload,
+            maxConcepts: concepts.length
+          })
         }
-      ]
-    },
-    rules: [
-      'id must be kebab-case [a-z0-9-]+',
-      'do not duplicate seedConcepts',
-      'prefer domain/API/table clusters over noise',
-      '1- maxConcepts concepts',
-      'return JSON only: { "concepts": [...] }'
-    ]
-  };
-
-  const text = await callLLM(
-    [
+      ],
+      model,
       {
-        role: 'system',
-        content:
-          'You are an ontology designer. Group code/database/document items into domain concepts. Reply with JSON only.'
-      },
-      { role: 'user', content: JSON.stringify(prompt) }
-    ],
-    null,
-    { jsonMode: true }
-  );
-
-  const parsed = JSON.parse(text);
-  const list = Array.isArray(parsed.concepts) ? parsed.concepts : [];
-  return list.slice(0, maxConcepts);
+        jsonMode: true,
+        temperature:
+          builderSettings.temperature !== undefined
+            ? Number(builderSettings.temperature)
+            : 0
+      }
+    );
+    let parsed;
+    try {
+      parsed = JSON.parse(stripLlmJsonWrapper(text));
+    } catch (pe) {
+      const err = new Error(`description pass: invalid JSON (${pe.message})`);
+      err.code = 'LLM_BAD_JSON';
+      throw err;
+    }
+    const map = parsed.descriptions || parsed;
+    if (!map || typeof map !== 'object') {
+      throw new Error('description pass: invalid JSON shape (expected descriptions map)');
+    }
+    return concepts.map((c) => {
+      const desc = map[c.id];
+      if (typeof desc === 'string' && desc.trim()) {
+        return { ...c, rationale: desc.trim(), description: desc.trim() };
+      }
+      return c;
+    });
+  } catch (e) {
+    throw makeLlmRequiredError('ontology description pass', e);
+  }
 }
 
 function roleForType(type) {
@@ -514,71 +941,222 @@ async function liftRelations(dbService, contextCode, concepts) {
 }
 
 /**
- * POST suggest — read-only draft.
+ * Shared setup for suggest / export-prompt / import-response.
  */
-async function suggestOntology(dbService, contextCode, options = {}) {
-  const maxConcepts = Math.min(30, Math.max(1, Number(options.maxConcepts) || 20));
-  const depth = options.depth === 'concepts' ? 'concepts' : 'concepts+grounding';
+async function prepareSuggestContext(dbService, contextCode, options = {}) {
+  const builderSettings = getOntologyBuilderSettings();
+  const defaultMax = Number(builderSettings.maxConcepts) || 10;
+  const maxConcepts = Math.min(
+    30,
+    Math.max(1, Number(options.maxConcepts) || defaultMax)
+  );
+  const defaultDepth =
+    builderSettings.depth === 'concepts' ? 'concepts' : 'concepts+grounding';
+  const depth =
+    options.depth === 'concepts' || options.depth === 'concepts+grounding'
+      ? options.depth
+      : defaultDepth;
   const aspectsFilter = Array.isArray(options.aspects) ? options.aspects : null;
   const seedConcepts = Array.isArray(options.seedConcepts) ? options.seedConcepts : [];
+  const seedMode =
+    options.seedMode === 'all-existing' || options.seedMode === 'user-only'
+      ? options.seedMode
+      : builderSettings.seedMode === 'all-existing'
+        ? 'all-existing'
+        : 'user-only';
 
   await assertVectorizedReality(dbService, contextCode);
 
   const existingIds = await loadExistingConceptIds(dbService, contextCode);
-  const seedSet = new Set([
-    ...seedConcepts.map((s) => String(s).replace(/^concept:/, '')),
-    ...existingIds
-  ]);
-  const usedIds = new Set(seedSet);
+  // Prompt avoid-list (small by default) — NOT the full concept dump
+  const promptSeedList = buildPromptSeedList(seedConcepts, existingIds, seedMode);
+  const promptSeedSet = new Set(promptSeedList);
+  // Batch uniqueness only — reuse of existing domain ids (employee, department…) is allowed
+  const usedIds = new Set();
 
-  const anchors = await collectAnchors(dbService, contextCode, 100);
+  const allAnchors = await collectAnchors(dbService, contextCode, 120);
+  const tableAnchors = await collectTableAnchors(dbService, contextCode);
+  const anchorsBeforeExclude = allAnchors.length;
+  let anchors = filterAnchorsByExcludePatterns(allAnchors, builderSettings.excludeNamePatterns);
+  // Always re-include tables (even if filtered)
+  {
+    const kept = new Set(anchors.map((a) => a.full_name));
+    for (const a of tableAnchors) {
+      if (!kept.has(a.full_name)) anchors.push(a);
+    }
+    for (const a of allAnchors) {
+      if (a.type === 'table' && !kept.has(a.full_name)) anchors.push(a);
+    }
+  }
   const anchorsByName = new Map(anchors.map((a) => [a.full_name, a]));
 
-  let proposed = [];
-  let source = 'heuristic';
-  try {
-    const llmList = await llmProposeConcepts(anchors, maxConcepts, [...seedSet], contextCode);
-    source = 'llm';
-    for (const raw of llmList) {
-      const baseId = toKebabId(raw.id || raw.name);
-      if (seedSet.has(baseId)) continue;
-      const id = uniqueKebab(baseId, usedIds);
-      proposed.push({
-        id,
-        name: raw.name || id,
-        rationale: raw.rationale || 'LLM proposal',
-        aspects: Array.isArray(raw.aspects) && raw.aspects.length ? raw.aspects : ['domain'],
-        relations: [],
-        anchorFullNames: Array.isArray(raw.anchorFullNames) ? raw.anchorFullNames : []
-      });
+  return {
+    builderSettings,
+    maxConcepts,
+    depth,
+    aspectsFilter,
+    seedConcepts,
+    seedMode,
+    promptSeedList,
+    promptSeedSet,
+    /** @deprecated use promptSeedSet — kept for older call sites */
+    seedSet: promptSeedSet,
+    existingIds,
+    usedIds,
+    anchors,
+    tableAnchors,
+    anchorsByName,
+    anchorsBeforeExclude,
+    contextCode
+  };
+}
+
+/**
+ * Build the same prompts that internal suggest would send to kosmos-model
+ * (for BYO external LLM chat).
+ */
+function buildSuggestPromptPackage(ctx) {
+  const {
+    builderSettings,
+    maxConcepts,
+    promptSeedList,
+    existingIds,
+    anchors,
+    tableAnchors,
+    contextCode
+  } = ctx;
+
+  const anchorCap = Math.min(32, Math.max(16, maxConcepts * 3));
+  const selected = selectAnchorsForPrompt(anchors, tableAnchors, anchorCap);
+  const sample = formatAnchorsCompact(selected, anchorCap);
+
+  const systemPrompt = String(builderSettings.systemPrompt || '').trim();
+  const userTemplate = String(builderSettings.userPromptTemplate || '').trim();
+  const outputRules = String(builderSettings.outputRulesSuffix || '').trim();
+  const byoInstruction = String(builderSettings.byoInstruction || '').trim();
+
+  const existingForPrompt = [...(existingIds || [])].sort().slice(0, 40);
+
+  const userPrompt =
+    renderPromptTemplate(userTemplate, {
+      maxConcepts,
+      contextCode,
+      seedConcepts: promptSeedList || [],
+      existingConcepts: existingForPrompt,
+      anchors: sample
+    }) + (outputRules ? `\n\n${outputRules}` : '');
+
+  const combinedForChat =
+    `### SYSTEM\n${systemPrompt}\n\n### USER\n${userPrompt}\n\n` +
+    `### INSTRUCTION (for you in external chat)\n` +
+    (byoInstruction || 'Paste ONLY the JSON object {"concepts":[...]} back into Ontology Builder.');
+
+  return {
+    systemPrompt,
+    userPrompt,
+    combinedForChat,
+    modelHint: builderSettings.model || null,
+    maxConcepts,
+    anchorsInPrompt: sample.length,
+    tablesInPrompt: sample.filter((a) => a.t === 'table').length,
+    seedMode: ctx.seedMode,
+    seedAvoidCount: (promptSeedList || []).length,
+    existingConceptsListed: existingForPrompt.length,
+    seedExcluded: (promptSeedList || []).length
+  };
+}
+
+/**
+ * Map raw LLM concept list → internal proposed list.
+ * Allows reusing existing domain ids (refine). Only avoids explicit promptSeedSet
+ * when options.strictSeedAvoid is true; default: allow reuse of existing ids.
+ */
+function mapLlmListToProposed(llmList, promptSeedSet, usedIds, options = {}) {
+  const strictAvoid = options.strictSeedAvoid === true;
+  const proposed = [];
+  for (const raw of llmList || []) {
+    let baseId = toKebabId(raw.id || raw.name);
+    // Reject obvious anti-patterns from old models
+    if (/(^|-)(ops|mutation|mutations|reporting|queries|core-service)(-|$)/i.test(baseId)) {
+      // strip noisy suffixes toward domain noun
+      baseId = baseId
+        .replace(/-?(ops-service|service-core|mutations?|reporting|queries|ops)$/i, '')
+        .replace(/^(ops|core)-/, '') || baseId;
+      baseId = toKebabId(baseId);
     }
-  } catch (e) {
-    console.warn('[OntologyBuilder] LLM suggest failed, using heuristic:', e.message);
-    proposed = heuristicConcepts(anchors, maxConcepts, seedSet, usedIds);
-    source = 'heuristic';
+    if (strictAvoid && promptSeedSet && promptSeedSet.has(baseId)) continue;
+    const id = uniqueKebab(baseId, usedIds);
+    let anchorNames = Array.isArray(raw.anchorFullNames) ? raw.anchorFullNames : [];
+    anchorNames = anchorNames.map((x) => (x && typeof x === 'object' && x.n ? x.n : x));
+    const rels = Array.isArray(raw.relations)
+      ? raw.relations
+          .filter((r) => r && ALLOWED_RELATIONS.includes(r.type) && r.target)
+          .map((r) => ({
+            type: r.type,
+            target: String(r.target).replace(/^concept:/, ''),
+            comment: r.comment || ''
+          }))
+      : [];
+    let aspects = Array.isArray(raw.aspects) && raw.aspects.length ? raw.aspects : ['domain'];
+    // Prefer single primary aspect
+    if (aspects.includes('domain') && aspects.includes('service') && aspects.length === 2) {
+      aspects = ['domain'];
+    }
+    proposed.push({
+      id,
+      name: raw.name || id,
+      rationale: raw.rationale || 'LLM proposal',
+      aspects,
+      relations: rels,
+      anchorFullNames: anchorNames
+    });
+  }
+  return proposed;
+}
+
+/**
+ * Grounding + L1 lift + sanitize → final draft payload (same shape as suggest).
+ */
+async function finalizeSuggestDraft(dbService, ctx, proposed, source, modelUsed, extraMeta = {}) {
+  const {
+    builderSettings,
+    maxConcepts,
+    depth,
+    aspectsFilter,
+    anchorsByName,
+    anchors,
+    anchorsBeforeExclude,
+    seedSet,
+    contextCode
+  } = ctx;
+
+  let list = proposed;
+  if (source === 'llm' && builderSettings.enableDescriptionPass) {
+    list = await enrichConceptDescriptions(list, builderSettings, contextCode);
   }
 
-  if (proposed.length === 0) {
-    proposed = heuristicConcepts(anchors, maxConcepts, seedSet, usedIds);
-    source = 'heuristic';
-  }
-
-  // Attach grounding
-  for (const c of proposed) {
+  for (const c of list) {
     if (aspectsFilter && c.aspects && !c.aspects.some((a) => aspectsFilter.includes(a))) {
       c._skip = true;
       continue;
     }
-    c.groundingCandidates = await buildGroundingCandidates(dbService, contextCode, c, anchorsByName, depth);
-    c.relations = Array.isArray(c.relations) ? c.relations.filter((r) => ALLOWED_RELATIONS.includes(r.type)) : [];
+    c.groundingCandidates = await buildGroundingCandidates(
+      dbService,
+      contextCode,
+      c,
+      anchorsByName,
+      depth
+    );
+    c.relations = Array.isArray(c.relations)
+      ? c.relations.filter((r) => ALLOWED_RELATIONS.includes(r.type))
+      : [];
     delete c.anchorFullNames;
     delete c._anchors;
   }
 
-  let concepts = proposed.filter((c) => !c._skip).slice(0, maxConcepts);
+  let concepts = list.filter((c) => !c._skip).slice(0, maxConcepts);
   await liftRelations(dbService, contextCode, concepts);
 
-  // Final sanitize relations
   for (const c of concepts) {
     c.relations = (c.relations || []).filter(
       (r) => ALLOWED_RELATIONS.includes(r.type) && concepts.some((x) => x.id === r.target)
@@ -591,13 +1169,148 @@ async function suggestOntology(dbService, contextCode, options = {}) {
     depth,
     maxConcepts,
     source,
+    model: modelUsed,
+    settingsApplied: {
+      maxConceptsDefault: builderSettings.maxConcepts,
+      depthDefault: builderSettings.depth,
+      enableDescriptionPass: !!builderSettings.enableDescriptionPass,
+      excludeNamePatterns: builderSettings.excludeNamePatterns || []
+    },
     suggestedAt: new Date().toISOString(),
     concepts,
     meta: {
       anchorsConsidered: anchors.length,
-      seedExcluded: seedSet.size
+      anchorsBeforeExclude,
+      seedMode: ctx.seedMode,
+      seedAvoidCount: (ctx.promptSeedList || []).length,
+      existingConcepts: ctx.existingIds ? ctx.existingIds.size : 0,
+      seedExcluded: (ctx.promptSeedList || []).length,
+      ...extraMeta
     }
   };
+}
+
+/**
+ * Export prompts for external LLM (no model call).
+ * POST /api/ontology/build/suggest/export-prompt
+ */
+async function exportSuggestPrompt(dbService, contextCode, options = {}) {
+  const ctx = await prepareSuggestContext(dbService, contextCode, options);
+  const pack = buildSuggestPromptPackage(ctx);
+  return {
+    contextCode,
+    ...pack,
+    howTo: [
+      '1. Скопируйте combinedForChat (или system + user) во внешний чат с вашей LLM.',
+      '2. Получите ответ — только JSON {"concepts":[...]} (можно в ```json блоке).',
+      '3. В Ontology Builder нажмите «Вставить ответ LLM» и вставьте ответ.',
+      '4. Импорт прогонит тот же grounding/relations, что и кнопка Suggest.'
+    ],
+    exportedAt: new Date().toISOString()
+  };
+}
+
+/**
+ * Import raw LLM text as if Suggest succeeded.
+ * POST /api/ontology/build/suggest/import
+ * body: { text: string, maxConcepts?, depth?, seedConcepts?, aspects? }
+ */
+async function importSuggestFromLlmText(dbService, contextCode, options = {}) {
+  const text = options.text || options.llmResponse || options.response || '';
+  if (!text || !String(text).trim()) {
+    const err = new Error('Пустой ответ LLM. Вставьте JSON {"concepts":[...]}');
+    err.status = 400;
+    err.code = 'EMPTY_LLM_RESPONSE';
+    err.userFacing = true;
+    throw err;
+  }
+
+  const ctx = await prepareSuggestContext(dbService, contextCode, options);
+  let parsed;
+  try {
+    parsed = parseLlmConceptsResponse(text);
+  } catch (e) {
+    throw makeLlmRequiredError('ontology suggest import', e);
+  }
+
+  const llmList = Array.isArray(parsed.concepts) ? parsed.concepts : [];
+  if (llmList.length === 0) {
+    throw makeLlmRequiredError(
+      'ontology suggest import',
+      new Error('В ответе нет concepts — нужен JSON {"concepts":[...]}')
+    );
+  }
+
+  const proposed = mapLlmListToProposed(llmList, ctx.promptSeedSet, ctx.usedIds, {
+    strictSeedAvoid: false
+  });
+  if (proposed.length === 0) {
+    throw makeLlmRequiredError(
+      'ontology suggest import',
+      new Error('Не удалось разобрать concepts из JSON (пустой список после нормализации ids).')
+    );
+  }
+
+  // External chat already produced full answer — skip second description pass unless asked
+  const ctxImport = {
+    ...ctx,
+    builderSettings: {
+      ...ctx.builderSettings,
+      enableDescriptionPass: options.runDescriptionPass === true
+    }
+  };
+
+  return finalizeSuggestDraft(dbService, ctxImport, proposed, 'external-llm', null, {
+    importedConceptsRaw: llmList.length,
+    importedConceptsAccepted: proposed.length
+  });
+}
+
+/**
+ * POST suggest — read-only draft (internal kosmos-model LLM).
+ */
+async function suggestOntology(dbService, contextCode, options = {}) {
+  const ctx = await prepareSuggestContext(dbService, contextCode, options);
+  const modelUsed = ctx.builderSettings.model || null;
+
+  let llmList;
+  try {
+    llmList = await llmProposeConcepts(
+      ctx.anchors,
+      ctx.maxConcepts,
+      ctx.promptSeedList,
+      contextCode,
+      ctx.builderSettings,
+      {
+        tableAnchors: ctx.tableAnchors,
+        existingConcepts: [...(ctx.existingIds || [])]
+      }
+    );
+  } catch (e) {
+    if (e.code === 'LLM_REQUIRED' || e.code === 'LLM_BAD_JSON') {
+      throw makeLlmRequiredError('ontology suggest', e);
+    }
+    throw makeLlmRequiredError('ontology suggest', e);
+  }
+
+  if (!Array.isArray(llmList) || llmList.length === 0) {
+    throw makeLlmRequiredError(
+      'ontology suggest',
+      new Error('LLM вернул пустой список concepts — черновик не создан')
+    );
+  }
+
+  const proposed = mapLlmListToProposed(llmList, ctx.promptSeedSet, ctx.usedIds, {
+    strictSeedAvoid: false
+  });
+  if (proposed.length === 0) {
+    throw makeLlmRequiredError(
+      'ontology suggest',
+      new Error('Не удалось нормализовать concepts из ответа LLM.')
+    );
+  }
+
+  return finalizeSuggestDraft(dbService, ctx, proposed, 'llm', modelUsed);
 }
 
 /**
@@ -1151,6 +1864,13 @@ module.exports = {
   parseOntoLoading,
   defaultConceptsDir,
   makeOntoLoadingNotConfiguredError,
+  makeLlmRequiredError,
+  getOntologyBuilderSettings,
+  parseLlmConceptsResponse,
+  extractCompleteConceptsFromPartialJson,
+  exportSuggestPrompt,
+  importSuggestFromLlmText,
+  prepareSuggestContext,
   runValidateReport,
   toKebabId
 };

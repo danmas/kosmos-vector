@@ -185,7 +185,11 @@ module.exports = (dbService, logBuffer, embeddings = null) => {
       const config = appConfigService.getConfig();
       res.json({
         success: true,
-        config: config
+        config: config,
+        // Factory ontology_builder prompts (for Reset / comparison in Settings UI)
+        factory: {
+          ontology_builder: appConfigService.getDefaultOntologyBuilderConfig()
+        }
       });
     } catch (error) {
       console.error('[API/CONFIG] Ошибка получения конфига:', error);

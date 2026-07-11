@@ -2,6 +2,10 @@
 
 Полноценный RAG-сервер на Bun/Express с векторным хранилищем в PostgreSQL (pgvector) и UI для управления документами. Проект построен на архитектуре с разделением ядра (`core`) и сервера (`server-v2`).
 
+> **«Без ИИ жизни нет!»**  
+> Если сценарий требует LLM — при ошибке модели операция **останавливается**, пользователю показывается явная ошибка. Тихий fallback «без ИИ, но success» запрещён.  
+> Подробно: [`KB/README_PRINCIPLES.md`](./KB/README_PRINCIPLES.md).
+
 ВАЖНО!!! База Знаний(набор README... файлов) находится в папке ./KB . При формировании ответов в первую очередь обращайся туда.
 
 ## Что внутри
@@ -73,6 +77,7 @@ bun run start:v2
 
 📖 **Полный индекс документации:** `KB/README_INDEX.md`
 
+- **Принципы продукта (в т.ч. «Без ИИ жизни нет»):** см. `KB/README_PRINCIPLES.md`
 - **Онтология (понятия, grounding, concept-first RAG):** см. `KB/README_ONTO_LOADING.md` ⭐ НОВОЕ
 - **MCP для ИИ-агентов:** `../kosmos-vector-mcp` — tools `ontology_ask`, `ontology_validate`, `kb_search`, `kosmos_health` (stdio, read-only)
 - **REST API:** см. `KB/README_REST.md`

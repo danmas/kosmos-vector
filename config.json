@@ -6,5 +6,28 @@
   "NATURAL_QUERY_SUGGEST_LIMIT": 5,
   "NATURAL_QUERY_SIMILARITY_THRESHOLD": 0.8,
   "NATURAL_QUERY_AUTO_USE_THRESHOLD": 0.95,
+  "ontology_builder": {
+    "model": null,
+    "maxConcepts": 10,
+    "depth": "concepts+grounding",
+    "temperature": 0,
+    "systemPrompt": "You are an ontology designer for a software knowledge base (code + SQL + docs).\n\nGoal: a SMALL domain map that helps humans and RAG answer \"what is this system?\" — not a catalog of CRUD methods.\n\nHard rules:\n1) DOMAIN FIRST: business nouns — Employee, Department, Skill, Project, Assignment, …\n   Prefer ids: employee, department, skill, project, assignment, hr-system (kebab-case).\n2) ONE concept per domain entity. Do NOT split into core / mutations / reporting / queries / ops-service.\n   Bad: employee-ops-service, employee-mutation, department-reporting.\n   Good: employee (table + service + key methods as anchors together).\n3) Tables: every \"t\":\"table\" anchor SHOULD appear under exactly one domain concept (stored_in via that table full_name in anchorFullNames).\n4) Services/classes: attach as anchors on the same domain concept (or one *Service concept that \"uses\" the domain concept) — not many service fragments.\n5) Methods are NEVER separate top-level concepts. Put methods only inside anchorFullNames of a domain/service concept.\n6) Utilities (format*, validate*, log*, toString): do not create concepts for them.\n7) aspects: use [\"domain\"] for entities; [\"service\"] only for a real application service module if needed — not both on every concept.\n8) id: kebab-case [a-z0-9-]+ ; name: short label (RU or EN).\n9) rationale: 1 short business sentence in Russian (≤80 chars).\n10) relations: part_of|uses|manages|produces|consumes|precedes|related_to; target = other concept id (no concept: prefix).\n    Prefer: service uses domain; employee part_of department; assignment uses employee/project; skill linked via employee-skills.\n11) Return JSON only: { \"concepts\": [ ... ] }. Prefer 5–10 concepts total, not 20 fragments.",
+    "userPromptTemplate": "Propose up to {{maxConcepts}} ontology concepts for context-code \"{{contextCode}}\".\n\nSeed policy:\n- Prefer reusing these CANONICAL domain ids when they fit the anchors (refine grounding, do not invent *-ops / *-mutation names instead):\n  employee, department, skill, project, assignment, employee-skills, hr-system\n- Only AVOID inventing duplicates of junk fragments if listed here (user avoid-list; may be empty):\n{{seedConcepts}}\n- Existing concepts already in DB (you MAY reuse/refine these ids; do not invent parallel \"ops\" clones):\n{{existingConcepts}}\n\nAnchors (vectorized reality — put exact \"n\" values into anchorFullNames):\n{{anchors}}\n\nPriority when choosing concepts:\n1) All tables (t=table) must be covered.\n2) Main classes/interfaces (*Service, Department, Employee, Skill…).\n3) Important SQL functions (schema.fn) as anchors under the right domain.\n4) Do NOT create a concept per method.\n\nOutput schema:\n{\n  \"concepts\": [\n    {\n      \"id\": \"kebab-case\",\n      \"name\": \"Human Name\",\n      \"rationale\": \"one short business sentence in Russian\",\n      \"aspects\": [\"domain\"],\n      \"anchorFullNames\": [\"exact n from anchors\"],\n      \"relations\": [{ \"type\": \"uses\", \"target\": \"other-id\", \"comment\": \"optional\" }]\n    }\n  ]\n}\n\nMax concepts: {{maxConcepts}}. Complete valid JSON only.",
+    "descriptionSystemPrompt": "You write concise Russian ontology concept descriptions. Reply with JSON only.",
+    "descriptionPrompt": "For each concept below, write a clear Russian description (2–4 sentences) of what it means in the system.\nDo not invent APIs or tables not listed in anchors.\nReturn JSON: { \"descriptions\": { \"<concept-id>\": \"text...\" } }.\n\nConcepts:\n{{concepts}}\n\nAnchors per concept are already attached in the payload.",
+    "outputRulesSuffix": "\nCRITICAL OUTPUT RULES:\n- ONE complete JSON object only: {\"concepts\":[...]}\n- Domain-first ids (employee, department, skill, project, assignment…). NO *-ops / *-mutation / *-reporting fragments.\n- Cover ALL table anchors (t=table). Methods only as anchors, never as separate concepts.\n- rationale ≤ 80 chars; ≤5 anchorFullNames per concept (use \"n\" from anchors).\n- Prefer 5–10 concepts. Close every quote/bracket. No markdown. STOP after valid JSON.",
+    "retrySystemPrompt": "You output only valid compact domain ontology JSON. Prefer employee/department/skill/project. Never invent *-mutation service fragments. Never truncate mid-string. Reply with {\"concepts\":[...]} only.",
+    "retryUserTemplate": "Context: {{contextCode}}. Up to {{maxConcepts}} DOMAIN concepts as JSON {\"concepts\":[...]}.\nCanonical ids to prefer: employee, department, skill, project, assignment.\nAvoid-list (optional): {{seedConcepts}}\nExisting (may reuse): {{existingConcepts}}\nAnchors n/t/d: {{anchors}}\nNo method-only concepts. Cover tables. Complete JSON only.",
+    "byoInstruction": "Paste ONLY the JSON object {\"concepts\":[...]} back into Ontology Builder → «Вставить ответ LLM».\nReuse canonical domain ids when possible; do not invent employee-ops-service style clones.",
+    "seedMode": "user-only",
+    "excludeNamePatterns": [
+      "^format[A-Z]",
+      "^validate[A-Z]",
+      "Validator$",
+      "^toString$",
+      "^log$"
+    ],
+    "enableDescriptionPass": false
+  },
   "___KOSMOS_BASE_URL": "http://usa:3002/v1"
 }

@@ -23,6 +23,7 @@
 2. **Онтология не строится автоматически из кода** (v0.1). Её пишут люди (черновик может помочь AI), затем загружают и валидируют.
 3. **Без grounding понятие — гипотеза** (`status: draft`). `verified` только при непустом Grounding и ревью.
 4. **Сначала нижний уровень, потом онтология.** Иначе grounding не к чему привязать.
+5. **«Без ИИ жизни нет!»** (product principle): Ontology Builder **suggest** и concept-first **ask** с генерацией ответа при падении LLM **останавливаются** (нет тихого heuristic-success). См. [`README_PRINCIPLES.md`](./README_PRINCIPLES.md).
 
 Спецификация формата: репозиторий `Ontology/` → [`ONTOLOGY_SPEC.md`](../../Ontology/ONTOLOGY_SPEC.md)  
 План и принципы: [`ONTOLOGY_PLAN.md`](../../Ontology/ONTOLOGY_PLAN.md)  

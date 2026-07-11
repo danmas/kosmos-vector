@@ -141,6 +141,28 @@ async function main() {
   ok(cfgErr.status === 400, 'HTTP 400');
   ok(String(cfgErr.message).includes('onto_loading'), 'message mentions onto_loading');
 
+  // 9. recover truncated LLM JSON (unterminated string mid-concepts)
+  const { parseLlmConceptsResponse } = (() => {
+    // re-require exports if present
+    const m = require('../routes/ontology/ontologyBuilder');
+    return m;
+  })();
+  if (typeof parseLlmConceptsResponse === 'function') {
+    const partial =
+      '{"concepts":[{"id":"employee","name":"Employee","rationale":"ok","aspects":["domain"],"anchorFullNames":["EmployeeService"]},{"id":"skill","name":"Skill","rationale":"cut mid str';
+    const recovered = parseLlmConceptsResponse(partial);
+    ok(recovered.concepts.length >= 1 && recovered.concepts[0].id === 'employee',
+      'parseLlmConceptsResponse recovers complete concepts from truncated JSON');
+    // single truncated object — salvage by id
+    const onlyPartial =
+      '{ "concepts": [ { "id": "skill-table", "name": "Таблица навыков", "rationale": "Таблица hr.skills хранит информацию о на';
+    const salvaged = parseLlmConceptsResponse(onlyPartial);
+    ok(salvaged.concepts.length === 1 && salvaged.concepts[0].id === 'skill-table',
+      'salvages incomplete first concept by id/name');
+  } else {
+    console.log('  skip: parseLlmConceptsResponse not exported');
+  }
+
   // cleanup
   fs.rmSync(tmp, { recursive: true, force: true });
 

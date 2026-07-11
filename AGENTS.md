@@ -19,6 +19,7 @@ This file contains coding guidelines, build commands, and development practices 
 
 Правила при изменении кода:
 
+- **«Без ИИ жизни нет!»** — сценарии с обязательным LLM при ошибке модели **останавливаются** и сообщают пользователю; запрещён тихий success без ИИ (эвристика вместо suggest, 200 + answerError и т.п.). Канон: `KB/README_PRINCIPLES.md`.
 - Изменил поведение — обнови соответствующий `KB/README_*.md` и строку в `README_INDEX.md`.
 - Затронул сущность, на которую ссылается понятие (grounding в `../Ontology/concepts/`), — проверь и поправь файл понятия; после правки понятий: Step1 (onto_loading) + повторная векторизация понятий.
 - Новая крупная возможность — запись в `CHANGELOG.md` и строка в корневом `README.md`.

@@ -21,6 +21,7 @@
 
 | Файл | Описание | Ключевые темы | Актуализация |
 |------|----------|---------------|--------------|
+| [README_PRINCIPLES.md](./README_PRINCIPLES.md) | **Принципы продукта** | «Без ИИ жизни нет!», отказ LLM = стоп, product rules | 2026-07-11 |
 | [README_TECH.md](./README_TECH.md) | Техническая архитектура проекта | Express, PostgreSQL, pgvector, LangChain, микросервисы эмбеддингов, схема БД, переменные окружения | |
 | [README_EMBEDDING.md](./README_EMBEDDING.md) | Система эмбеддингов и векторизации | EmbeddingsFactory, SimpleEmbeddings, OpenAIEmbeddings, процесс векторизации, поиск по векторам | |
 | [README_Fun.md](./README_Fun.md) | Общее описание RAG-подхода | Что такое RAG, установка, структура проекта, веб-интерфейс | |

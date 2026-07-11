@@ -204377,6 +204377,434 @@
             }
           ]
         }
+      },
+      {
+        "timestamp": "2026-07-11T09:26:14.267Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:26:14.380Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 9,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:26:16.682Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 9,
+        "totalItems": 9,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 8,
+            "totalTables": 0,
+            "totalFunctions": 0,
+            "totalAiItems": 23,
+            "totalChunks": 23,
+            "errors": 0,
+            "skipped": 0,
+            "skippedFiles": 8,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "hr_functions.sql",
+                "fileId": "eed0e850-af1d-42ce-9f55-63d6d49bda6f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "hr_schema.sql",
+                "fileId": "93d453a8-19be-4ffd-b502-1160a41d5ff0",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [
+              {
+                "filename": "employeeService.js",
+                "fileId": "a4eeb63c-9195-434a-b667-4cd84bcf1b0f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "validators.js",
+                "fileId": "aaa5c81e-0284-40d1-9ebf-a6fb468d755c",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "tsFiles": [
+              {
+                "filename": "departmentService.ts",
+                "fileId": "bcaa7ebf-abfe-451d-875c-137cc7ba67e2",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "formatters.ts",
+                "fileId": "d88cbd84-9e7c-4804-bc9d-4d229f503e69",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "phpFiles": [
+              {
+                "filename": "SkillService.php",
+                "fileId": "8578fb7b-1527-4ccc-97c8-ee8e294ef512",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              }
+            ],
+            "mdFiles": [],
+            "ddlFiles": [
+              {
+                "filename": "hr_schema.sql",
+                "fileId": "93d453a8-19be-4ffd-b502-1160a41d5ff0",
+                "isNew": false,
+                "tablesFound": 0,
+                "tablesProcessed": 0,
+                "indexesFound": 0,
+                "tables": [],
+                "indexes": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              }
+            ],
+            "ontology": [
+              {
+                "dirPath": "C:/ERV/projects-ex/kosmos-vector/tests/hr_test_project/ontology/concepts",
+                "contextCode": "FULL_TEST",
+                "filesFound": 23,
+                "conceptsLoaded": 23,
+                "linksCreated": 82,
+                "groundingResolved": 60,
+                "groundingUnresolved": 0,
+                "concepts": [
+                  {
+                    "fullName": "concept:department-management",
+                    "aiItemId": 10025,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:department-service",
+                    "aiItemId": 10026,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:department",
+                    "aiItemId": 10027,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:employee-management",
+                    "aiItemId": 10028,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:employee-service",
+                    "aiItemId": 10029,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:employee-skills",
+                    "aiItemId": 10030,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:employees",
+                    "aiItemId": 10031,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:fetch-employee-with-skills",
+                    "aiItemId": 10032,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:format-currency",
+                    "aiItemId": 10033,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:format-date",
+                    "aiItemId": 10034,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:format-employee-data",
+                    "aiItemId": 10035,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:format-skill-data",
+                    "aiItemId": 10036,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:get-department-stats",
+                    "aiItemId": 10037,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:hr",
+                    "aiItemId": 10038,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:loggable-trait",
+                    "aiItemId": 10039,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:skill-management",
+                    "aiItemId": 10040,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:skill-service",
+                    "aiItemId": 10041,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:skills",
+                    "aiItemId": 10042,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:validate-email",
+                    "aiItemId": 10043,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:validate-employee",
+                    "aiItemId": 10044,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:validate-name",
+                    "aiItemId": 10045,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:validate-skill-id",
+                    "aiItemId": 10046,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:validate-skill-level",
+                    "aiItemId": 10047,
+                    "links": 0,
+                    "groundingIssues": []
+                  }
+                ],
+                "errors": [],
+                "warnings": []
+              }
+            ],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-07-11T09:26:14.360Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"FULL_TEST\""
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.361Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\projects-ex\\kosmos-vector\\tests\\hr_test_project, C:\\ERV\\projects-ex\\kosmos-vector\\tests\\hr_test_project_php"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.361Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/*\""
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.361Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.361Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 0 файлов"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.363Z",
+              "level": "info",
+              "message": "[Step1] Режим: сканирование по glob-маскам"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.366Z",
+              "level": "info",
+              "message": "[Step1] Найдено 2 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.366Z",
+              "level": "info",
+              "message": "[Step1] Сканирование JS файлов включено"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.369Z",
+              "level": "info",
+              "message": "[Step1] Найдено 2 JS-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.370Z",
+              "level": "info",
+              "message": "[Step1] Сканирование TS файлов включено"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.374Z",
+              "level": "info",
+              "message": "[Step1] Найдено 2 TS-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.374Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.375Z",
+              "level": "info",
+              "message": "[Step1] Сканирование PHP файлов включено"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.378Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 PHP-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.378Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.378Z",
+              "level": "info",
+              "message": "[Step1] Загрузка онтологии включена: 1 директорий"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.379Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем включена"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.379Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 DDL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.380Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.426Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.427Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 9 (2 SQL + 2 JS + 2 TS + 1 PHP + 0 MD + 1 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:14.427Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-07-11T09:26:16.681Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста FULL_TEST"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:16.681Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 8 файлов, 0 таблиц, 23 AI Items, 0 ошибок"
+            }
+          ]
+        }
       }
     ],
     "2": [
@@ -204969,6 +205397,83 @@
             }
           ]
         }
+      },
+      {
+        "timestamp": "2026-07-11T09:26:18.881Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:26:18.945Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": {
+          "summary": {
+            "aiItemsNoSchema": 45,
+            "l0ChunksNoSchema": 45,
+            "l1ChunksAnalyzed": 0,
+            "missingDeps": 0,
+            "ambiguousDeps": 0,
+            "fixedDeps": 0,
+            "linksAnalyzed": 0,
+            "linksFixed": 0,
+            "linksMissing": 0,
+            "linksAmbiguous": 0
+          },
+          "details": {
+            "fixes": [],
+            "ambiguous": [],
+            "missing": [],
+            "errors": [],
+            "linkFixes": [],
+            "linkMissing": [],
+            "linkAmbiguous": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-07-11T09:26:18.931Z",
+              "level": "info",
+              "message": "[Step2] Запуск анализа и исправления зависимостей для контекста \"FULL_TEST\" (mode=incremental)"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:18.935Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 45 AiItem без схемы"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:18.938Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 45 L0 чанков без схемы"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:18.940Z",
+              "level": "info",
+              "message": "[Step2] Анализ таблицы link..."
+            },
+            {
+              "timestamp": "2026-07-11T09:26:18.945Z",
+              "level": "info",
+              "message": "[Step2] Шаг 2 завершён."
+            },
+            {
+              "timestamp": "2026-07-11T09:26:18.945Z",
+              "level": "info",
+              "message": "[Step2] [L1 чанки] Исправлено: 0, неоднозначных: 0, отсутствующих: 0"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:18.945Z",
+              "level": "info",
+              "message": "[Step2] [Таблица link] Исправлено: 0, неоднозначных: 0, отсутствующих: 0"
+            }
+          ]
+        }
       }
     ],
     "4": [
@@ -205048,6 +205553,46 @@
               "timestamp": "2026-07-11T08:02:14.576Z",
               "level": "info",
               "message": "[Step4] Шаг 4 завершён: векторизовано 0, пустых 0, ошибок батчей 0"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-07-11T09:26:22.306Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:26:23.643Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 23,
+        "totalItems": 23,
+        "error": null,
+        "report": {
+          "totalChunks": 23,
+          "vectorized": 23,
+          "skippedEmpty": 0,
+          "batchErrors": 0,
+          "logs": [
+            {
+              "timestamp": "2026-07-11T09:26:22.356Z",
+              "level": "info",
+              "message": "[Step4] Массовая векторизация: контекст FULL_TEST, level LIKE '0-%', force=false"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:22.359Z",
+              "level": "info",
+              "message": "[Step4] Чанков к векторизации: 23"
+            },
+            {
+              "timestamp": "2026-07-11T09:26:23.643Z",
+              "level": "info",
+              "message": "[Step4] Шаг 4 завершён: векторизовано 23, пустых 0, ошибок батчей 0"
             }
           ]
         }
@@ -243453,6 +243998,1230 @@
             }
           ]
         }
+      },
+      {
+        "timestamp": "2026-07-11T09:21:38.109Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:38.311Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 83,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:38.432Z",
+        "status": "running",
+        "progress": 12,
+        "itemsProcessed": 10,
+        "totalItems": 83,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:38.527Z",
+        "status": "running",
+        "progress": 24,
+        "itemsProcessed": 20,
+        "totalItems": 83,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:39.096Z",
+        "status": "running",
+        "progress": 36,
+        "itemsProcessed": 30,
+        "totalItems": 83,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:39.187Z",
+        "status": "running",
+        "progress": 48,
+        "itemsProcessed": 40,
+        "totalItems": 83,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:39.277Z",
+        "status": "running",
+        "progress": 60,
+        "itemsProcessed": 50,
+        "totalItems": 83,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:39.359Z",
+        "status": "running",
+        "progress": 72,
+        "itemsProcessed": 60,
+        "totalItems": 83,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:39.438Z",
+        "status": "running",
+        "progress": 84,
+        "itemsProcessed": 70,
+        "totalItems": 83,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:39.519Z",
+        "status": "running",
+        "progress": 96,
+        "itemsProcessed": 80,
+        "totalItems": 83,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:39.578Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 83,
+        "totalItems": 83,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 75,
+            "totalTables": 0,
+            "totalFunctions": 3,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 8,
+            "skippedFiles": 74,
+            "skippedEntities": 37,
+            "deletedEntities": 0,
+            "updatedEntities": 3,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_access_group.sql",
+                "fileId": "0f78934e-59f7-4d48-9d9e-2154cd324f70",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_address.sql",
+                "fileId": "8c7df3a7-4a9e-4957-ba80-4cabb7d9a83a",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_address_universal.sql",
+                "fileId": "1245991a-f6a1-4ce7-9a6d-6c07cf7d9288",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_amo.sql",
+                "fileId": "780dd1fb-94f1-4a34-bb5a-ae10438d1337",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_amo_api.sql",
+                "fileId": "519b7186-6f69-4a3a-ac9f-092e1c95b14d",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_anal.sql",
+                "fileId": "aac890a3-eb00-49d8-a7f7-0190c33fc743",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_api_funct_list.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_auct.sql",
+                "fileId": "12792984-8140-40d5-b773-ffb60e3ff4cf",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_auct_any.sql",
+                "fileId": "dcf3cbe3-ae8a-4905-8ad4-75f127ffafb6",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_auct_commission.sql",
+                "fileId": "a6dfd5b0-8386-4a77-9bc3-40e383814833",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_auct_ctrl.sql",
+                "fileId": "74f58d29-f57f-4abf-9a8e-35b1011fda5f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_auct_ext.sql",
+                "fileId": "11ec2efd-7928-486c-b4fe-4db61d45f0b1",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_auct_gr.sql",
+                "fileId": "bf630b48-3d53-4fce-93cd-540f86734ca2",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_auct_main.sql",
+                "fileId": "5b225761-a8c1-42c2-aa60-040af9a42d29",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_auct_main_lang.sql",
+                "fileId": "ee6f6db0-32a8-4f16-b3fa-25b962bab9d3",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_auct_param.sql",
+                "fileId": "fe65a4fa-8002-485f-8b99-b18a380f37f4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_auct_resale.sql",
+                "fileId": "e9b413b9-5ddd-4b3f-b6ea-3e740ead98fb",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_auct_sort.sql",
+                "fileId": "9e1461b3-2fd1-4e8a-8aaf-b1bd52b2709b",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_auth.sql",
+                "fileId": "46db3298-e729-4c62-849b-f7e6671793ed",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_balance.sql",
+                "fileId": "23dffbbe-1db0-4e89-a2a8-55777af5cc91",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_broker.sql",
+                "fileId": "f8121c52-4059-4998-873f-748d0c194073",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_car.sql",
+                "fileId": "c8a0badc-37ae-4998-b585-13e0251e8bad",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_chatpdf.sql",
+                "fileId": "7322f9f5-8500-4b04-8572-e7bbee513388",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_civil_code.sql",
+                "fileId": "3a4b9e06-caf4-40cd-9616-30557dd0ae3b",
+                "isNew": false,
+                "functionsFound": 40,
+                "functionsProcessed": 3,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 0,
+                  "updated": 3,
+                  "unchanged": 37,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "api_comm.sql",
+                "fileId": "a701dcbc-bd50-45c6-9fa8-a9672373ee40",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_comm_bit.sql",
+                "fileId": "9cabcfdf-6bdc-482f-9e90-0fd687e2524f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_ctrl.sql",
+                "fileId": "d15d209f-ad0b-47f5-9f27-926d5346c54d",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_dealer_code.sql",
+                "fileId": "dbed494a-e7b8-425d-8a1c-a57eb3aae64e",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_dict.sql",
+                "fileId": "302f9213-519a-459f-92ba-f66c901333dd",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_discount.sql",
+                "fileId": "bfe186ef-c1f5-4d80-999a-52635e585df2",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_doc.sql",
+                "fileId": "6a17d77b-a03b-4f71-b2d9-2c83c825fc74",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_favor.sql",
+                "fileId": "f4a71c18-72aa-43be-ac27-5e04b720cdfe",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_feedback.sql",
+                "fileId": "4126ee1d-aefa-4488-85ea-faa92959db12",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_invoice_pk.sql",
+                "fileId": "4c3cc0c5-a268-4733-a0d9-e2f1bfb65865",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_ip_access.sql",
+                "fileId": "51a05a0a-fc2f-40ce-9d01-cf7ea0ae7ead",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_ip_access_tests.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_labels.sql",
+                "fileId": "eb9e66a4-4368-4147-b111-12012ead6e42",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_leaseplan.sql",
+                "fileId": "ef49c5c2-2177-42f0-a50c-5931501fe107",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_login.sql",
+                "fileId": "49e3ef45-5fcd-4c81-a22c-e4ef94a1d6b0",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_lot.sql",
+                "fileId": "6dd257e8-fb07-4b05-a508-307a5709bf2a",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_notification.sql",
+                "fileId": "90f4c998-b7ac-468b-9d76-6bb2b1e80c30",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_notification_banner.sql",
+                "fileId": "f8dbb345-a150-4c4a-8518-2338cffebe7b",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_notification_banner_test.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_notif_message.sql",
+                "fileId": "ebcfa7f0-02c2-4651-ab73-b2911d3dbd10",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_obj.sql",
+                "fileId": "ead7eb47-1ee0-477c-b5f3-2bc62a4f9af0",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_organ.sql",
+                "fileId": "dbd1ec4b-3e46-4eab-974e-4150e644da68",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_pars.sql",
+                "fileId": "ea565c3c-49f7-4376-863a-1c21bee703d5",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_pickup_location.sql",
+                "fileId": "cb98cc40-82de-4be1-8ad2-94112f084ba6",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_pre_bid.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_prof.sql",
+                "fileId": "177bd857-0012-416b-8f33-ecd3153fab50",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_prof_expire.sql",
+                "fileId": "cbbee12a-7078-434a-b2b7-a9c387716bc4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_prof_lock.sql",
+                "fileId": "e44d639e-354f-4367-a9fd-3f6d8a3500e9",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_prof_param.sql",
+                "fileId": "eab440ad-0852-4e46-a76f-253a1e2c8662",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_prof_trig.sql",
+                "fileId": "e18a424a-b806-490f-9074-54d96168eb61",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_promo.sql",
+                "fileId": "3d51627e-ad66-45dd-ba4c-d71679648830",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_push_token.sql",
+                "fileId": "8ee5b1dd-5e78-48c9-ba49-99761def8618",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_queue.sql",
+                "fileId": "77c22fb7-1ed2-4ef6-b252-f2423686d989",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_supp.sql",
+                "fileId": "2bf30f88-1918-438c-b8ac-2003ede978fa",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_supp_lp.sql",
+                "fileId": "c1893b2f-5e06-44f7-9655-248ee3b85dad",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_survey.sql",
+                "fileId": "2bdfa101-f413-45e6-a7e0-051c078a78f5",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_tags.sql",
+                "fileId": "49128f6c-f8a4-4663-a781-e50de0dfbed6",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_tariffs.sql",
+                "fileId": "994e8061-2451-4c36-8100-bac17af103b7",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_trigs.sql",
+                "fileId": "cc49806f-abfe-4621-8ced-ee9ee4d464f4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_truck.sql",
+                "fileId": "32e6ba1d-9f86-407d-ad6e-950e24e43ef4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_trustrating.sql",
+                "fileId": "c9b8f3dc-1e72-4102-9ed6-0b22122ef122",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_tyre.sql",
+                "fileId": "89bc5b92-0598-46ea-8052-45b31f15975c",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_wcb.sql",
+                "fileId": "0d169bab-59c5-4a20-bf87-7697b81d8797",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_wcb_group.sql",
+                "fileId": "6399e2c6-48c0-4382-a2a5-f1ce567b99ed",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_wish_list.sql",
+                "fileId": "081654a1-3ab0-493c-93d9-cd8ade1aa024",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_inspect.sql",
+                "fileId": "7032df4f-5477-4a54-be0c-8b0eb6b39cb0",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_inspect_bil.sql",
+                "fileId": "3840bd1c-a37b-4887-a802-b6248ffeb5ea",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_logistic.sql",
+                "fileId": "e906bfb9-21b1-4344-a153-81ec7b6ca5b3",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_procedures.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_service.sql",
+                "fileId": "d933ecda-9cd7-432d-b405-dcda714f3a75",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_serv_autocode.sql",
+                "fileId": "8c063dc3-da9c-4d39-aac9-c32e423626b7",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_tests.sql",
+                "fileId": "e8a3b83c-41fd-41dd-bfa8-e7be98066ff4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_login_test.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_main_AI_oleg.sql",
+                "fileId": "0bfc4590-78bb-4b8e-8ba7-c0b58f2d9dec",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_lot_sr.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "api_role.sql",
+                "fileId": "863953fe-4933-4fc1-b37b-979fe0c76490",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_truck_sr.sql",
+                "fileId": "aa2b9386-cdb9-4d41-8846-9843235cedee",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_workflow.sql",
+                "fileId": "f0225f21-8f1f-45a8-9289-7116f4f8b31f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_workflow_old.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [],
+            "tsFiles": [],
+            "phpFiles": [],
+            "mdFiles": [],
+            "ddlFiles": [],
+            "ontology": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-07-11T09:21:38.218Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"CARL\""
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.218Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\CARLINK\\carlinkng\\db\\install\\sql\\"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.219Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/api*.sql\""
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.219Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.219Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 0 файлов"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.224Z",
+              "level": "info",
+              "message": "[Step1] Режим: сканирование по glob-маскам"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.308Z",
+              "level": "info",
+              "message": "[Step1] Найдено 83 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.309Z",
+              "level": "info",
+              "message": "[Step1] Загрузка JS файлов отключена (js_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.309Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TS файлов отключена (ts_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.309Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.310Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.310Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.310Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем отключена (ddl_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.311Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.378Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.379Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 83 (83 SQL + 0 JS + 0 TS + 0 PHP + 0 MD + 0 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:38.384Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-07-11T09:21:39.578Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста CARL"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:39.578Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 75 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
       }
     ],
     "2": [
@@ -260126,6 +261895,886 @@
             }
           ]
         }
+      },
+      {
+        "timestamp": "2026-07-11T09:21:42.619Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:43.148Z",
+        "status": "running",
+        "progress": 22,
+        "itemsProcessed": 10,
+        "totalItems": 45,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:44.531Z",
+        "status": "running",
+        "progress": 44,
+        "itemsProcessed": 20,
+        "totalItems": 45,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:44.679Z",
+        "status": "running",
+        "progress": 67,
+        "itemsProcessed": 30,
+        "totalItems": 45,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:45.341Z",
+        "status": "running",
+        "progress": 89,
+        "itemsProcessed": 40,
+        "totalItems": 45,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:45.471Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 45,
+        "totalItems": 45,
+        "error": null,
+        "report": {
+          "summary": {
+            "aiItemsNoSchema": 6,
+            "l0ChunksNoSchema": 6,
+            "l1ChunksAnalyzed": 45,
+            "missingDeps": 44,
+            "ambiguousDeps": 0,
+            "fixedDeps": 109,
+            "linksAnalyzed": 0,
+            "linksFixed": 0,
+            "linksMissing": 0,
+            "linksAmbiguous": 0
+          },
+          "details": {
+            "fixes": [
+              {
+                "from": "_createNewAuction",
+                "to": "carl_auct._createNewAuction",
+                "in": "carl_auct._createNewAuction"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_auct._createNewAuction"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_auct._createNewAuction"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct._createNewAuction"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_auct._createNewAuction"
+              },
+              {
+                "from": "profile",
+                "to": "carl_data.profile",
+                "in": "carl_auct._createNewAuction"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_auct._createNewAuction"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct._createNewAuction"
+              },
+              {
+                "from": "_getAuctListByFilterJ",
+                "to": "carl_auct._getAuctListByFilterJ",
+                "in": "carl_auct.getSelectListByFilterJ"
+              },
+              {
+                "from": "getAuctListByFilterJ",
+                "to": "carl_auct.getAuctListByFilterJ",
+                "in": "carl_auct.getSelectListByFilterJ"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.getSelectListByFilterJ"
+              },
+              {
+                "from": "getAuctListByFilterJ",
+                "to": "carl_auct.getAuctListByFilterJ",
+                "in": "carl_auct.getSelectListByFilterJ"
+              },
+              {
+                "from": "queue_auction",
+                "to": "carl_data.queue_auction",
+                "in": "carl_auct.getSelectListByFilterJ"
+              },
+              {
+                "from": "_getAuctListByFilterJ",
+                "to": "carl_auct._getAuctListByFilterJ",
+                "in": "carl_auct.getSelectListByFilter"
+              },
+              {
+                "from": "getAuctListByFilterJ",
+                "to": "carl_auct.getAuctListByFilterJ",
+                "in": "carl_auct.getSelectListByFilter"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.getSelectListByFilter"
+              },
+              {
+                "from": "getAuctListByFilterJ",
+                "to": "carl_auct.getAuctListByFilterJ",
+                "in": "carl_auct.getSelectListByFilter"
+              },
+              {
+                "from": "queue_auction",
+                "to": "carl_data.queue_auction",
+                "in": "carl_auct.getSelectListByFilter"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_auct._is_seller_of_auct"
+              },
+              {
+                "from": "_get_auct_seller_id",
+                "to": "carl_auct._get_auct_seller_id",
+                "in": "carl_auct._updateAuction"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct._updateAuction"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_auct.changeAuctOwner"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_auct.changeAuctOwner"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.changeAuctOwner"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_auct.changeAuctOwner"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.changeAuctOwner"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_auct.changeAuctOwner"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct._lockBid"
+              },
+              {
+                "from": "profile",
+                "to": "carl_data.profile",
+                "in": "carl_auct._lockBid"
+              },
+              {
+                "from": "_auctLock",
+                "to": "carl_auct._auctLock",
+                "in": "carl_auct._auctLock"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct._auctLock"
+              },
+              {
+                "from": "profile",
+                "to": "carl_data.profile",
+                "in": "carl_auct._auctLock"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.setAuctDtEnd"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.setAuctDtEnd"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct.getAuctLeader"
+              },
+              {
+                "from": "profile",
+                "to": "carl_data.profile",
+                "in": "carl_auct.getAuctLeader"
+              },
+              {
+                "from": "_get_prof_log_domain",
+                "to": "carl_prof._get_prof_log_domain",
+                "in": "carl_auct.getAuctFine"
+              },
+              {
+                "from": "object_type",
+                "to": "carl_data.object_type",
+                "in": "carl_auct.getAuctFine"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct._on_auto_failed"
+              },
+              {
+                "from": "auction_log",
+                "to": "carl_data.auction_log",
+                "in": "carl_auct._on_auto_failed"
+              },
+              {
+                "from": "profile",
+                "to": "carl_data.profile",
+                "in": "carl_auct._on_auto_failed"
+              },
+              {
+                "from": "queue_auction",
+                "to": "carl_data.queue_auction",
+                "in": "carl_auct._auctionTypeWhereFragment"
+              },
+              {
+                "from": "_is_reinst",
+                "to": "carl_auct._is_reinst",
+                "in": "carl_auct._is_reinst"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct._is_reinst"
+              },
+              {
+                "from": "_auctLock",
+                "to": "carl_auct._auctLock",
+                "in": "carl_auct.copyAuction"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_auct.copyAuction"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_auct.copyAuction"
+              },
+              {
+                "from": "_updateAuctObjAttrib",
+                "to": "carl_auct._updateAuctObjAttrib",
+                "in": "carl_auct.copyAuction"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.copyAuction"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_auct.copyAuction"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.copyAuction"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_auct.copyAuction"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.copyAuction"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.copyAuction"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_auct.copyAuction"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.getResaleDoc"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct.getResaleDoc"
+              },
+              {
+                "from": "car_generation",
+                "to": "carl_car.car_generation",
+                "in": "carl_car._getModificationList"
+              },
+              {
+                "from": "car_modification",
+                "to": "carl_car.car_modification",
+                "in": "carl_car._getModificationList"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_car.saveCarDraftAuction"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_car.saveCarDraftAuction"
+              },
+              {
+                "from": "_get_auct_id_object",
+                "to": "carl_auct._get_auct_id_object",
+                "in": "carl_car.saveCarDraftAuction"
+              },
+              {
+                "from": "saveCarDraftAuction",
+                "to": "carl_car.saveCarDraftAuction",
+                "in": "carl_car.saveCarDraftAuction"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_car.saveCarDraftAuction"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_car.saveCarDraftAuction"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.getcontestresultlist"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct.getcontestresultlist"
+              },
+              {
+                "from": "profile",
+                "to": "carl_data.profile",
+                "in": "carl_auct.getcontestresultlist"
+              },
+              {
+                "from": "user_profile",
+                "to": "carl_data.user_profile",
+                "in": "carl_auct.getcontestresultlist"
+              },
+              {
+                "from": "users",
+                "to": "carl_data.users",
+                "in": "carl_auct.getcontestresultlist"
+              },
+              {
+                "from": "_getAuctIdObject",
+                "to": "carl_auct._getAuctIdObject",
+                "in": "carl_lot._saveLotDraftAuction"
+              },
+              {
+                "from": "_getErrcode",
+                "to": "carl_comm._getErrcode",
+                "in": "carl_lot._saveLotDraftAuction"
+              },
+              {
+                "from": "_getMessage",
+                "to": "carl_comm._getMessage",
+                "in": "carl_lot._saveLotDraftAuction"
+              },
+              {
+                "from": "_get_auct_id_object",
+                "to": "carl_auct._get_auct_id_object",
+                "in": "carl_lot._saveLotDraftAuction"
+              },
+              {
+                "from": "_get_auct_seller_id",
+                "to": "carl_auct._get_auct_seller_id",
+                "in": "carl_lot._saveLotDraftAuction"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_lot._saveLotDraftAuction"
+              },
+              {
+                "from": "getAuctObjAttrib",
+                "to": "carl_auct.getAuctObjAttrib",
+                "in": "carl_lot._saveLotDraftAuction"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_lot._saveLotDraftAuction"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_lot._saveLotDraftAuction"
+              },
+              {
+                "from": "city",
+                "to": "carl_data.city",
+                "in": "carl_lot._saveLotDraftAuction"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_lot._saveLotDraftAuction"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_lot._saveLotDraftAuction"
+              },
+              {
+                "from": "obj_attrib_values",
+                "to": "carl_data.obj_attrib_values",
+                "in": "carl_lot._saveLotDraftAuction"
+              },
+              {
+                "from": "car_draft",
+                "to": "carl_data.car_draft",
+                "in": "carl_lot._saveLotDraftAuction"
+              },
+              {
+                "from": "__buildObjWhereFromComFiltr",
+                "to": "carl_obj.__buildObjWhereFromComFiltr",
+                "in": "carl_obj.__buildObjWhereFromComFiltr"
+              },
+              {
+                "from": "__buildObjWhereFromComFiltr_OLD",
+                "to": "carl_obj.__buildObjWhereFromComFiltr_OLD",
+                "in": "carl_obj.__buildObjWhereFromComFiltr_OLD"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_obj.getMenuTypeList"
+              },
+              {
+                "from": "object_type",
+                "to": "carl_data.object_type",
+                "in": "carl_obj.getMenuTypeList"
+              },
+              {
+                "from": "commission_details",
+                "to": "carl_data.commission_details",
+                "in": "carl_auct.check_commission_upd_trig"
+              },
+              {
+                "from": "_getAuctLeaderIdProf",
+                "to": "carl_auct._getAuctLeaderIdProf",
+                "in": "carl_auct.getAuctCommissionTariffJ"
+              },
+              {
+                "from": "_get_auct_seller_id",
+                "to": "carl_auct._get_auct_seller_id",
+                "in": "carl_auct.getAuctCommissionTariffJ"
+              },
+              {
+                "from": "_isCommDetailOutbid",
+                "to": "carl_auct._isCommDetailOutbid",
+                "in": "carl_auct.getAuctCommissionTariffJ"
+              },
+              {
+                "from": "getAuctCommission",
+                "to": "carl_auct.getAuctCommission",
+                "in": "carl_auct.getAuctCommissionTariffJ"
+              },
+              {
+                "from": "getObjTypeBitCode",
+                "to": "carl_obj.getObjTypeBitCode",
+                "in": "carl_auct.getAuctCommissionTariffJ"
+              },
+              {
+                "from": "auct_commission",
+                "to": "carl_data.auct_commission",
+                "in": "carl_auct.getAuctCommissionTariffJ"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.getAuctCommissionTariffJ"
+              },
+              {
+                "from": "broker",
+                "to": "carl_data.broker",
+                "in": "carl_auct.getAuctCommissionTariffJ"
+              },
+              {
+                "from": "object_type",
+                "to": "carl_data.object_type",
+                "in": "carl_auct._maxTts"
+              },
+              {
+                "from": "_getAuctLeaderIdProf",
+                "to": "carl_auct._getAuctLeaderIdProf",
+                "in": "carl_auct.getFakeDAteAuctCommissionTariffJ"
+              },
+              {
+                "from": "_get_auct_seller_id",
+                "to": "carl_auct._get_auct_seller_id",
+                "in": "carl_auct.getFakeDAteAuctCommissionTariffJ"
+              },
+              {
+                "from": "getAuctCommission",
+                "to": "carl_auct.getAuctCommission",
+                "in": "carl_auct.getFakeDAteAuctCommissionTariffJ"
+              },
+              {
+                "from": "getObjTypeBitCode",
+                "to": "carl_obj.getObjTypeBitCode",
+                "in": "carl_auct.getFakeDAteAuctCommissionTariffJ"
+              },
+              {
+                "from": "auct_commission",
+                "to": "carl_data.auct_commission",
+                "in": "carl_auct.getFakeDAteAuctCommissionTariffJ"
+              },
+              {
+                "from": "auction",
+                "to": "carl_data.auction",
+                "in": "carl_auct.getFakeDAteAuctCommissionTariffJ"
+              },
+              {
+                "from": "broker",
+                "to": "carl_data.broker",
+                "in": "carl_auct.getFakeDAteAuctCommissionTariffJ"
+              },
+              {
+                "from": "_get_id_profile",
+                "to": "carl_prof._get_id_profile",
+                "in": "carl_auct.getMaxBidProf"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct.getMaxBidProf"
+              },
+              {
+                "from": "_get_id_profile",
+                "to": "carl_prof._get_id_profile",
+                "in": "carl_auct.getMaxBidProf"
+              },
+              {
+                "from": "auction_bid",
+                "to": "carl_data.auction_bid",
+                "in": "carl_auct.getMaxBidProf"
+              }
+            ],
+            "ambiguous": [],
+            "missing": [
+              {
+                "dep": "ompanyReserve",
+                "in": "carl_auct._createNewAuction",
+                "file": "api_auct.sql"
+              },
+              {
+                "dep": "distinct",
+                "in": "carl_auct.getSelectListByFilterJ",
+                "file": "api_auct.sql"
+              },
+              {
+                "dep": "elseif",
+                "in": "carl_auct.getSelectListByFilterJ",
+                "file": "api_auct.sql"
+              },
+              {
+                "dep": "jsonb_pretty",
+                "in": "carl_auct.getSelectListByFilterJ",
+                "file": "api_auct.sql"
+              },
+              {
+                "dep": "flags",
+                "in": "carl_auct.getSelectListByFilterJ",
+                "file": "api_auct.sql"
+              },
+              {
+                "dep": "temp_main_funct",
+                "in": "carl_auct.getSelectListByFilterJ",
+                "file": "api_auct.sql"
+              },
+              {
+                "dep": "distinct",
+                "in": "carl_auct.getSelectListByFilter",
+                "file": "api_auct.sql"
+              },
+              {
+                "dep": "elseif",
+                "in": "carl_auct.getSelectListByFilter",
+                "file": "api_auct.sql"
+              },
+              {
+                "dep": "jsonb_pretty",
+                "in": "carl_auct.getSelectListByFilter",
+                "file": "api_auct.sql"
+              },
+              {
+                "dep": "flags",
+                "in": "carl_auct.getSelectListByFilter",
+                "file": "api_auct.sql"
+              },
+              {
+                "dep": "temp_main_funct",
+                "in": "carl_auct.getSelectListByFilter",
+                "file": "api_auct.sql"
+              },
+              {
+                "dep": "getprofsmartname2",
+                "in": "carl_auct.getAuctLeader",
+                "file": "api_auct_any.sql"
+              },
+              {
+                "dep": "dt_set",
+                "in": "carl_auct.getAuctLeader",
+                "file": "api_auct_any.sql"
+              },
+              {
+                "dep": "EXISTS",
+                "in": "carl_auct._on_auto_failed",
+                "file": "api_auct_any.sql"
+              },
+              {
+                "dep": "char",
+                "in": "carl_auct._on_auto_failed",
+                "file": "api_auct_any.sql"
+              },
+              {
+                "dep": "ompanyReserve",
+                "in": "carl_auct.copyAuction",
+                "file": "api_auct_resale.sql"
+              },
+              {
+                "dep": "exists",
+                "in": "carl_auct.getCivilCodeParticipantListJ",
+                "file": "api_civil_code.sql"
+              },
+              {
+                "dep": "clock_timestamp",
+                "in": "carl_auct.relistCivilCodeAuction",
+                "file": "api_civil_code.sql"
+              },
+              {
+                "dep": "date_trunc",
+                "in": "carl_auct.relistCivilCodeAuction",
+                "file": "api_civil_code.sql"
+              },
+              {
+                "dep": "exists",
+                "in": "carl_auct.relistCivilCodeAuction",
+                "file": "api_civil_code.sql"
+              },
+              {
+                "dep": "_new_dt_end",
+                "in": "carl_auct.relistCivilCodeAuction",
+                "file": "api_civil_code.sql"
+              },
+              {
+                "dep": "_new_dt_start",
+                "in": "carl_auct.relistCivilCodeAuction",
+                "file": "api_civil_code.sql"
+              },
+              {
+                "dep": "not",
+                "in": "carl_auct.getcontestresultlist",
+                "file": "api_doc.sql"
+              },
+              {
+                "dep": "over",
+                "in": "carl_auct.getcontestprotocoldata",
+                "file": "api_doc.sql"
+              },
+              {
+                "dep": "row_number",
+                "in": "carl_auct.getcontestprotocoldata",
+                "file": "api_doc.sql"
+              },
+              {
+                "dep": "getauctobjattrib",
+                "in": "carl_lot._saveLotDraftAuction",
+                "file": "api_lot.sql"
+              },
+              {
+                "dep": "updateauctobjattrib",
+                "in": "carl_lot._saveLotDraftAuction",
+                "file": "api_lot.sql"
+              },
+              {
+                "dep": "exists",
+                "in": "carl_obj.__buildObjWhereFromComFiltr",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_obj.__buildObjWhereFromComFiltr",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "temp_mark",
+                "in": "carl_obj.__buildObjWhereFromComFiltr",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "temp_model",
+                "in": "carl_obj.__buildObjWhereFromComFiltr",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_obj.__buildObjWhereFromComFiltr",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "temp_mark",
+                "in": "carl_obj.__buildObjWhereFromComFiltr",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "temp_model",
+                "in": "carl_obj.__buildObjWhereFromComFiltr",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "temp_mark",
+                "in": "carl_obj.__buildObjWhereFromComFiltr",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "temp_model",
+                "in": "carl_obj.__buildObjWhereFromComFiltr",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_obj.__buildObjWhereFromComFiltr_OLD",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "temp_mark",
+                "in": "carl_obj.__buildObjWhereFromComFiltr_OLD",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "temp_model",
+                "in": "carl_obj.__buildObjWhereFromComFiltr_OLD",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "json_array_elements",
+                "in": "carl_obj.__buildObjWhereFromComFiltr_OLD",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "temp_mark",
+                "in": "carl_obj.__buildObjWhereFromComFiltr_OLD",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "temp_model",
+                "in": "carl_obj.__buildObjWhereFromComFiltr_OLD",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "temp_mark",
+                "in": "carl_obj.__buildObjWhereFromComFiltr_OLD",
+                "file": "api_obj.sql"
+              },
+              {
+                "dep": "temp_model",
+                "in": "carl_obj.__buildObjWhereFromComFiltr_OLD",
+                "file": "api_obj.sql"
+              }
+            ],
+            "errors": [],
+            "linkFixes": [],
+            "linkMissing": [],
+            "linkAmbiguous": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-07-11T09:21:42.672Z",
+              "level": "info",
+              "message": "[Step2] Запуск анализа и исправления зависимостей для контекста \"CARL\" (mode=incremental)"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:42.678Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 6 AiItem без схемы"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:42.692Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 6 L0 чанков без схемы"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:45.453Z",
+              "level": "info",
+              "message": "[Step2] Анализ таблицы link..."
+            },
+            {
+              "timestamp": "2026-07-11T09:21:45.470Z",
+              "level": "info",
+              "message": "[Step2] Шаг 2 завершён."
+            },
+            {
+              "timestamp": "2026-07-11T09:21:45.471Z",
+              "level": "info",
+              "message": "[Step2] [L1 чанки] Исправлено: 109, неоднозначных: 0, отсутствующих: 44"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:45.471Z",
+              "level": "info",
+              "message": "[Step2] [Таблица link] Исправлено: 0, неоднозначных: 0, отсутствующих: 0"
+            }
+          ]
+        }
       }
     ],
     "4": [
@@ -260201,6 +262850,46 @@
               "timestamp": "2026-07-10T19:32:21.994Z",
               "level": "info",
               "message": "[Step4] Шаг 4 завершён: векторизовано 2080, пустых 0, ошибок батчей 0"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-07-11T09:21:48.659Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T09:21:51.623Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 3,
+        "totalItems": 3,
+        "error": null,
+        "report": {
+          "totalChunks": 3,
+          "vectorized": 3,
+          "skippedEmpty": 0,
+          "batchErrors": 0,
+          "logs": [
+            {
+              "timestamp": "2026-07-11T09:21:48.710Z",
+              "level": "info",
+              "message": "[Step4] Массовая векторизация: контекст CARL, level LIKE '0-%', force=false"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:48.722Z",
+              "level": "info",
+              "message": "[Step4] Чанков к векторизации: 3"
+            },
+            {
+              "timestamp": "2026-07-11T09:21:51.623Z",
+              "level": "info",
+              "message": "[Step4] Шаг 4 завершён: векторизовано 3, пустых 0, ошибок батчей 0"
             }
           ]
         }

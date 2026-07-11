@@ -246,6 +246,7 @@ module.exports = (dbService, embeddings) => {
       })) };
 
       // --- 5. Генерация ответа (опционально) ---
+      // Без ИИ жизни нет: если ответ запрошен — LLM error = hard stop, не soft answerError
       if (generateAnswer) {
         try {
           result.answer = await callLLM([
@@ -253,7 +254,14 @@ module.exports = (dbService, embeddings) => {
             { role: 'user', content: `Контекст:\n${contextText}\n\nВопрос: ${question}` }
           ]);
         } catch (e) {
-          result.answerError = `LLM недоступен: ${e.message}`;
+          const err = new Error(
+            `LLM недоступен: ${e.message}. «Без ИИ жизни нет!» — ответ не сформирован. ` +
+              `Проверьте kosmos-model / KOSMOS_BASE_URL / KOSMOS_MODEL.`
+          );
+          err.status = 503;
+          err.code = 'LLM_REQUIRED';
+          err.userFacing = true;
+          throw err;
         }
       } else {
         result.contextText = contextText;
@@ -261,13 +269,44 @@ module.exports = (dbService, embeddings) => {
 
       res.json(result);
     } catch (err) {
+      const status = err.status || 500;
+      if (err.userFacing || err.code === 'LLM_REQUIRED') {
+        console.warn(`[Ontology-Ask] ${err.code || status}: ${String(err.message).split('\n')[0]}`);
+        return res.status(status).json({ error: err.message, code: err.code || 'LLM_REQUIRED' });
+      }
       console.error('[Ontology-Ask] Ошибка:', err);
       res.status(500).json({ error: err.message });
     }
   });
 
   // === Ontology Builder (Step 6) ===
-  // POST /api/ontology/build/suggest — read-only draft from vectorized reality
+  const sendSuggestError = (res, err, logTag) => {
+    const status =
+      err.status ||
+      (err.code === 'STEP4_REQUIRED'
+        ? 409
+        : err.code === 'EMPTY_LLM_RESPONSE'
+          ? 400
+          : err.code === 'LLM_REQUIRED' || err.code === 'LLM_BAD_JSON'
+            ? err.code === 'LLM_BAD_JSON'
+              ? 502
+              : 503
+            : 500);
+    if (
+      err.userFacing ||
+      err.code === 'LLM_REQUIRED' ||
+      err.code === 'LLM_BAD_JSON' ||
+      err.code === 'STEP4_REQUIRED' ||
+      err.code === 'EMPTY_LLM_RESPONSE'
+    ) {
+      console.warn(`[${logTag}] ${err.code || status}: ${String(err.message).split('\n')[0]}`);
+      return res.status(status).json({ error: err.message, code: err.code || undefined });
+    }
+    console.error(`[${logTag}] Ошибка:`, err);
+    return res.status(status).json({ error: err.message, code: err.code || undefined });
+  };
+
+  // POST /api/ontology/build/suggest — read-only draft from vectorized reality (internal LLM)
   router.post('/build/suggest', async (req, res) => {
     const contextCode = req.query['context-code'] || req.query.contextCode;
     if (!contextCode) return res.status(400).json({ error: 'Обязателен параметр context-code' });
@@ -275,9 +314,39 @@ module.exports = (dbService, embeddings) => {
       const draft = await ontologyBuilder.suggestOntology(dbService, contextCode, req.body || {});
       res.json(draft);
     } catch (err) {
-      console.error('[Ontology-Build-Suggest] Ошибка:', err);
-      const status = err.status || (err.code === 'STEP4_REQUIRED' ? 409 : 500);
-      res.status(status).json({ error: err.message, code: err.code || undefined });
+      sendSuggestError(res, err, 'Ontology-Build-Suggest');
+    }
+  });
+
+  // POST /api/ontology/build/suggest/export-prompt — same prompts as suggest, no LLM call
+  router.post('/build/suggest/export-prompt', async (req, res) => {
+    const contextCode = req.query['context-code'] || req.query.contextCode;
+    if (!contextCode) return res.status(400).json({ error: 'Обязателен параметр context-code' });
+    try {
+      const pack = await ontologyBuilder.exportSuggestPrompt(
+        dbService,
+        contextCode,
+        req.body || {}
+      );
+      res.json(pack);
+    } catch (err) {
+      sendSuggestError(res, err, 'Ontology-Build-ExportPrompt');
+    }
+  });
+
+  // POST /api/ontology/build/suggest/import — paste external LLM JSON as if Suggest ran
+  router.post('/build/suggest/import', async (req, res) => {
+    const contextCode = req.query['context-code'] || req.query.contextCode;
+    if (!contextCode) return res.status(400).json({ error: 'Обязателен параметр context-code' });
+    try {
+      const draft = await ontologyBuilder.importSuggestFromLlmText(
+        dbService,
+        contextCode,
+        req.body || {}
+      );
+      res.json(draft);
+    } catch (err) {
+      sendSuggestError(res, err, 'Ontology-Build-Import');
     }
   });
 
