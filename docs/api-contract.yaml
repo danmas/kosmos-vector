@@ -458,3 +458,15 @@ paths:
     $ref: "openapi/paths/files.yaml#/~1api~1file-content"
   /api/files:
     $ref: "openapi/paths/files.yaml#/~1api~1files"
+  /api/ontology/validate:
+    $ref: "openapi/paths/ontology.yaml#/~1api~1ontology~1validate"
+  /api/ontology/ask:
+    $ref: "openapi/paths/ontology.yaml#/~1api~1ontology~1ask"
+  /api/ontology/build/suggest:
+    $ref: "openapi/paths/ontology.yaml#/~1api~1ontology~1build~1suggest"
+  /api/ontology/build/materialize:
+    $ref: "openapi/paths/ontology.yaml#/~1api~1ontology~1build~1materialize"
+  /api/ontology/build/apply:
+    $ref: "openapi/paths/ontology.yaml#/~1api~1ontology~1build~1apply"
+  /api/ontology/build/status:
+    $ref: "openapi/paths/ontology.yaml#/~1api~1ontology~1build~1status"

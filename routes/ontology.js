@@ -7,6 +7,8 @@ const fs = require('fs');
 const path = require('path');
 const { parseConceptFile, validateOntology } = require('./loaders/ontoLoader');
 const { callLLM } = require('../packages/core/llmClient');
+const ontologyBuilder = require('./ontology/ontologyBuilder');
+const pipelineStateManager = require('./pipelineState');
 
 const GROUNDING_CODES = ['onto_implemented_in', 'onto_stored_in', 'onto_documented_in', 'onto_configured_in'];
 const RELATION_CODES = [
@@ -260,6 +262,127 @@ module.exports = (dbService, embeddings) => {
       res.json(result);
     } catch (err) {
       console.error('[Ontology-Ask] Ошибка:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // === Ontology Builder (Step 6) ===
+  // POST /api/ontology/build/suggest — read-only draft from vectorized reality
+  router.post('/build/suggest', async (req, res) => {
+    const contextCode = req.query['context-code'] || req.query.contextCode;
+    if (!contextCode) return res.status(400).json({ error: 'Обязателен параметр context-code' });
+    try {
+      const draft = await ontologyBuilder.suggestOntology(dbService, contextCode, req.body || {});
+      res.json(draft);
+    } catch (err) {
+      console.error('[Ontology-Build-Suggest] Ошибка:', err);
+      const status = err.status || (err.code === 'STEP4_REQUIRED' ? 409 : 500);
+      res.status(status).json({ error: err.message, code: err.code || undefined });
+    }
+  });
+
+  // POST /api/ontology/build/materialize — write concepts/*.md
+  router.post('/build/materialize', async (req, res) => {
+    const contextCode = req.query['context-code'] || req.query.contextCode;
+    if (!contextCode) return res.status(400).json({ error: 'Обязателен параметр context-code' });
+    const { concepts, overwrite, dryRun, dirs, outDir } = req.body || {};
+    if (!Array.isArray(concepts) || concepts.length === 0) {
+      return res.status(400).json({ error: 'Обязательно поле concepts: ConceptCandidate[]' });
+    }
+    try {
+      const result = await ontologyBuilder.materializeConcepts(contextCode, concepts, {
+        overwrite: !!overwrite,
+        dryRun: !!dryRun,
+        dirs,
+        outDir
+      });
+      if (result.conflicts?.length && result.written.length === 0 && !dryRun) {
+        return res.status(409).json({
+          error: 'Конфликт id: файлы уже существуют',
+          conflicts: result.conflicts,
+          ...result
+        });
+      }
+      res.json(result);
+    } catch (err) {
+      const status = err.status || 500;
+      // Config / expected conflicts: user-facing, no stack spam
+      if (
+        err.userFacing ||
+        err.code === 'ONTO_LOADING_NOT_CONFIGURED' ||
+        err.code === 'CONCEPT_FILES_EXIST' ||
+        err.code === 'MATERIALIZE_CONFLICT' ||
+        status === 409
+      ) {
+        console.warn(
+          `[Ontology-Build-Materialize] ${err.code || status}: ${String(err.message).split('\n')[0]}`
+        );
+        return res.status(status).json({
+          error: err.message,
+          code: err.code,
+          conflicts: err.conflicts,
+          outDir: err.outDir,
+          hint: err.hint || undefined
+        });
+      }
+      console.error('[Ontology-Build-Materialize] Ошибка:', err);
+      res.status(status).json({
+        error: err.message,
+        conflicts: err.conflicts,
+        code: err.code
+      });
+    }
+  });
+
+  // POST /api/ontology/build/apply — materialize → onto_loading → vectorize concept:* → validate
+  router.post('/build/apply', async (req, res) => {
+    const contextCode = req.query['context-code'] || req.query.contextCode;
+    if (!contextCode) return res.status(400).json({ error: 'Обязателен параметр context-code' });
+    try {
+      const result = await ontologyBuilder.applyOntologyBuild(
+        dbService,
+        embeddings,
+        contextCode,
+        req.body || {},
+        pipelineStateManager
+      );
+      if (!result.success) {
+        return res.status(422).json(result);
+      }
+      res.json(result);
+    } catch (err) {
+      const status = err.status || err.applyResult?.httpStatus || 500;
+      if (
+        err.userFacing ||
+        err.code === 'ONTO_LOADING_NOT_CONFIGURED' ||
+        err.code === 'CONCEPT_FILES_EXIST' ||
+        err.code === 'MATERIALIZE_CONFLICT' ||
+        status === 409
+      ) {
+        console.warn(`[Ontology-Build-Apply] ${err.code || status}: ${String(err.message).split('\n')[0]}`);
+        return res.status(status).json({
+          error: err.message,
+          code: err.code,
+          conflicts: err.conflicts,
+          hint: err.hint || undefined,
+          success: false,
+          ...(err.applyResult || {})
+        });
+      }
+      console.error('[Ontology-Build-Apply] Ошибка:', err);
+      res.status(status).json(err.applyResult || { error: err.message, code: err.code });
+    }
+  });
+
+  // GET /api/ontology/build/status — snapshot for Step 6 card
+  router.get('/build/status', async (req, res) => {
+    const contextCode = req.query['context-code'] || req.query.contextCode;
+    if (!contextCode) return res.status(400).json({ error: 'Обязателен параметр context-code' });
+    try {
+      const status = await ontologyBuilder.getBuilderStatus(dbService, contextCode);
+      res.json(status);
+    } catch (err) {
+      console.error('[Ontology-Build-Status] Ошибка:', err);
       res.status(500).json({ error: err.message });
     }
   });

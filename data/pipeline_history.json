@@ -139331,6 +139331,3052 @@
             }
           ]
         }
+      },
+      {
+        "timestamp": "2026-07-11T05:29:59.552Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:00.026Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:00.174Z",
+        "status": "running",
+        "progress": 5,
+        "itemsProcessed": 10,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:00.274Z",
+        "status": "running",
+        "progress": 10,
+        "itemsProcessed": 20,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:00.370Z",
+        "status": "running",
+        "progress": 15,
+        "itemsProcessed": 30,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:00.460Z",
+        "status": "running",
+        "progress": 20,
+        "itemsProcessed": 40,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:00.577Z",
+        "status": "running",
+        "progress": 25,
+        "itemsProcessed": 50,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:00.976Z",
+        "status": "running",
+        "progress": 30,
+        "itemsProcessed": 60,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:01.053Z",
+        "status": "running",
+        "progress": 34,
+        "itemsProcessed": 70,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:01.715Z",
+        "status": "running",
+        "progress": 39,
+        "itemsProcessed": 80,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:01.805Z",
+        "status": "running",
+        "progress": 44,
+        "itemsProcessed": 90,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:01.881Z",
+        "status": "running",
+        "progress": 49,
+        "itemsProcessed": 100,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:04.104Z",
+        "status": "running",
+        "progress": 54,
+        "itemsProcessed": 110,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:04.209Z",
+        "status": "running",
+        "progress": 59,
+        "itemsProcessed": 120,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:05.584Z",
+        "status": "running",
+        "progress": 64,
+        "itemsProcessed": 130,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:05.651Z",
+        "status": "running",
+        "progress": 69,
+        "itemsProcessed": 140,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:05.735Z",
+        "status": "running",
+        "progress": 74,
+        "itemsProcessed": 150,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:05.817Z",
+        "status": "running",
+        "progress": 79,
+        "itemsProcessed": 160,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:05.984Z",
+        "status": "running",
+        "progress": 84,
+        "itemsProcessed": 170,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:06.056Z",
+        "status": "running",
+        "progress": 89,
+        "itemsProcessed": 180,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:08.309Z",
+        "status": "running",
+        "progress": 94,
+        "itemsProcessed": 190,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:09.315Z",
+        "status": "running",
+        "progress": 99,
+        "itemsProcessed": 200,
+        "totalItems": 203,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T05:30:09.515Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 203,
+        "totalItems": 203,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 171,
+            "totalTables": 15,
+            "totalFunctions": 25,
+            "totalAiItems": 30,
+            "totalChunks": 25,
+            "errors": 0,
+            "skipped": 16,
+            "skippedFiles": 158,
+            "skippedEntities": 239,
+            "deletedEntities": 13,
+            "updatedEntities": 17,
+            "createdEntities": 13
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "api_amo_api.sql",
+                "fileId": "b6b8816b-d53b-40ba-b0cd-b5a4628321c8",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_auct.sql",
+                "fileId": "278d0c73-15d4-43dd-9be0-8c0d64368608",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api_auct_sort.sql",
+                "fileId": "86678d79-2443-4120-89e5-f889d6725093",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "fix_find_similar_documents.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "current_DB_schema.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "add_item_type_table.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "add_rag_filter_indexes.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "create_graph_snapshots_table.sql",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [
+              {
+                "filename": "rollup.config.js",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "server.js",
+                "fileId": "5735e6f6-9385-49af-9765-b84a68d1b955",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "check_db_objects.js",
+                "fileId": "ea310e9b-f3f7-40ba-ae01-f3f0e118769d",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "find_all_file_vectors_refs.js",
+                "fileId": "0a4fd7fa-d477-4b5e-b2eb-898548acbfbf",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "fix_find_similar_documents.js",
+                "fileId": "968bf348-5769-4887-9ae0-de8cb011871e",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "fix_indexes.js",
+                "fileId": "b71ca5b3-599f-4e10-9936-a671abb5b62f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "parse_and_upload_ddl.js",
+                "fileId": "9688dc50-e859-4aa2-90f2-9c779c269ff3",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "parse_and_upload_js.js",
+                "fileId": "195b4b53-7ccd-4070-b9c9-9fdbd507c482",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "parse_and_upload_sql.js",
+                "fileId": "e40d99b6-4dce-4db0-812b-b3b55f3e23dd",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "parse_and_upload_ts.js",
+                "fileId": "753949f0-e6a4-4900-b451-3d1bad88d618",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "test-1.js",
+                "fileId": "c95b0139-56de-4b70-bf7a-cde0075a4b32",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "test_dashboard_stats.js",
+                "fileId": "37dda92d-0ca6-4f48-9632-925d76ff8ae5",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "test_file.js",
+                "fileId": "ba9a6b64-760d-4514-9f83-f7c7af080136",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "DEMONSTRATION_CORRECT_USAGE.js",
+                "fileId": "66901dfd-b23d-49c9-9465-659b6b6883aa",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "ecosystem.config.js",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "example-usage-rag.js",
+                "fileId": "c7d16388-1fb0-40f7-8d6f-ed84884708c2",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "example-usage.js",
+                "fileId": "6517b8c3-26d6-46dc-bc80-faeba3431342",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "appConfigService.js",
+                "fileId": "16b32945-7428-4f98-9c14-d56e1b322eea",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "ContextBuilder.js",
+                "fileId": "02eb89ea-dc24-4e76-8061-6b3c2ae08936",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "DbService.js",
+                "fileId": "31ba94ec-1abe-451e-a984-600c438a4cf5",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "EmbeddingsFactory.js",
+                "fileId": "f2a99583-0c26-4da2-9484-a558cb14e2f8",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "entityProcessor.js",
+                "fileId": "f44868ae-d39b-4ae9-b4f8-52a5daa470d1",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "fileChangeDetector.js",
+                "fileId": "ec1e0878-2cca-493c-aa45-0130f37ae6e8",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "fileMatchUtils.js",
+                "fileId": "6d12a6da-62ba-42ed-812c-eb230128c1d4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "hashUtils.js",
+                "fileId": "7a999047-b2c3-4aab-80c2-4f9592568e32",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "index.js",
+                "fileId": "f576f0d0-38d6-48cb-8ab3-522ee1b29048",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "kbConfigService.js",
+                "fileId": "c68b45f2-9f65-4ba5-98f1-017cdb8f2739",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "llmClient.js",
+                "fileId": "61a29907-60a6-48d5-afaf-ecd2ff96aefe",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "logger.js",
+                "fileId": "5964017d-b68a-4ae2-931b-929ba509d7f2",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "naturalQueryPrompts.js",
+                "fileId": "4ec1c8bc-0646-4568-8cf9-699a2ba01963",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "pipelineConfigService.js",
+                "fileId": "594ad709-890e-441b-924f-4f12193f4a8d",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "PostgresVectorStore.js",
+                "fileId": "b2555b58-61d1-4902-9cb2-170cc734e3af",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "promptsConfigService.js",
+                "fileId": "2faf5673-9a4b-4f57-ae99-317d7bf559ee",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "promptsService.js",
+                "fileId": "632eed0f-0674-4aa6-8ef8-849c9f8220b3",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "RAGRetriever.js",
+                "fileId": "5aaa7047-2d60-45aa-a562-8c0fc62731b7",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "scriptSandbox.js",
+                "fileId": "ec071a15-be33-4128-b490-bb7b871c2e1b",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "SimpleChatModel.js",
+                "fileId": "b593a55c-e1c5-491a-aae5-39bfde76a333",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "SimpleEmbeddings.js",
+                "fileId": "2dde8ee4-5708-4570-b027-b96c347192f0",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "textSplitters.js",
+                "fileId": "da5d2a13-8f93-48b6-b7e4-698bfcf38082",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "vectorOperations.js",
+                "fileId": "620c8c43-ac50-487a-97f5-0ddac238fb4d",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "Database.js",
+                "fileId": "d0ccd188-c122-49b9-adba-7f31004ce401",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "index.js",
+                "fileId": "f576f0d0-38d6-48cb-8ab3-522ee1b29048",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "Migrator.js",
+                "fileId": "018031cc-c63b-4c97-b8a7-6c0d2e955655",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "AiItemsRepository.js",
+                "fileId": "d2bc08b2-d3b5-470a-bbe5-bf9b30943831",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "FilesRepository.js",
+                "fileId": "591fd68c-c516-4536-8715-26f7df9cdc25",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "VectorRepository.js",
+                "fileId": "2bd7f301-fb08-482a-b111-86f11bd72728",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "agentScript.js",
+                "fileId": "d3104012-6ee1-404f-b32d-ee163e0cbdd9",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "ai.js",
+                "fileId": "76f8bd94-9efb-4e08-823b-df88732b2c07",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "api.js",
+                "fileId": "39bd2fe7-84b7-4bf3-8ed6-926913ab9cbf",
+                "isNew": false,
+                "functionsFound": 8,
+                "functionsProcessed": 3,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 3,
+                  "updated": 0,
+                  "unchanged": 5,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "chat.js",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "files.js",
+                "fileId": "a5e080b2-8b2f-4122-849f-da1b906ffaef",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "graphSnapshots.js",
+                "fileId": "dfccf71e-7e85-4391-8c98-ed2c7a2a70f7",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "columnExtractor.js",
+                "fileId": "002e2d75-8a28-4b95-93ec-e27acf279716",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "ddlSchemaLoader.js",
+                "fileId": "28349b36-8048-47ab-865b-a76a79aa3139",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "jsFunctionLoader.js",
+                "fileId": "84488f07-6497-4e56-a28d-d5fca040487b",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "mdLoader.js",
+                "fileId": "b28f1daa-7c51-450d-ab6d-800ec580f18b",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "ontoLoader.js",
+                "fileId": "84eb4649-14b8-440d-8361-0f8c8500faea",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "phpFunctionLoader.js",
+                "fileId": "732a2ced-4d28-478e-b697-00794800703a",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "rebuildSqlLinks.js",
+                "fileId": "12860667-426f-4208-a59b-e247f972b748",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "sqlFunctionLoader.js",
+                "fileId": "df5a51af-074a-4385-86fd-3f89560c8788",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "tableSchemaLoader.js",
+                "fileId": "e744e225-b6d5-4b18-badd-a86dcf085a74",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "tsFunctionLoader.js",
+                "fileId": "2b7f764f-c7df-492f-9065-72eb476f656d",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "tsParseUtils.js",
+                "fileId": "f4a5c256-06fb-4b42-809b-a6652f205c7d",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "tsxLoader.js",
+                "fileId": "a79aede2-9dc9-4498-8190-c573e4292ac5",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "ontology.js",
+                "fileId": "f6788a30-150e-4931-a556-a50d5424355b",
+                "isNew": false,
+                "functionsFound": 2,
+                "functionsProcessed": 2,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 0,
+                  "updated": 2,
+                  "unchanged": 0,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "step1Runner.js",
+                "fileId": "dfc9d56f-daf9-420b-b5da-3e29b8f7e7ee",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "step2Runner.js",
+                "fileId": "5f63f8a9-6968-47b6-98e4-700e40325fa8",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "step4Vectorize.js",
+                "fileId": "1cfdb6ce-83eb-4252-ad44-546af75a68fb",
+                "isNew": true,
+                "functionsFound": 1,
+                "functionsProcessed": 1,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 1,
+                  "updated": 0,
+                  "unchanged": 0,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "stepLogger.js",
+                "fileId": "a769d371-11a7-42d6-a246-c6c26ca3a291",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "pipelineHistory.js",
+                "fileId": "ded16482-1c69-4331-b802-9aeec0682681",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "pipelineState.js",
+                "fileId": "26bb2a57-d581-4a12-bd8d-af02e3c941f8",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "prompts.js",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "promptsConfig.js",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "rag.js",
+                "fileId": "de2d4172-b5ef-43d6-b7f5-d7730738ecf4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "split-openapi-contract.js",
+                "fileId": "d2f77234-5343-4bb1-be9e-ac96a6ee4e61",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "server.js",
+                "fileId": "5735e6f6-9385-49af-9765-b84a68d1b955",
+                "isNew": false,
+                "functionsFound": 6,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 0,
+                  "updated": 0,
+                  "unchanged": 6,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "temp_cleanup.js",
+                "fileId": "f3f3ff0e-06ef-41b5-80c5-557b57753c61",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "tsFiles": [
+              {
+                "filename": "constants.ts",
+                "fileId": "feefc672-d26b-4155-a82a-e7b3eb5408b4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "useGraphLayout.ts",
+                "fileId": "ed484799-c3d7-4ff8-b377-21c2fd6b1f17",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "index.ts",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "CallTreeLayout.ts",
+                "fileId": "ee4cee3b-0ca1-46ff-a61d-caf9f75677f2",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "ClusteredLayout.ts",
+                "fileId": "f2827a0f-191e-4fa7-9e41-9ac323a4e03f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "LayeredLayout.ts",
+                "fileId": "201623c2-0f17-4bbe-8ecb-3c8c2d80e75c",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "ProjectTreeLayout.ts",
+                "fileId": "d707eb09-fdd8-4b7b-a813-45e0c02c387b",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "types.ts",
+                "fileId": "eff0f8bd-9cf2-413f-8ea0-23d2a89ced9c",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "utils.ts",
+                "fileId": "18ceebc0-eff2-4171-9e6b-2191edd63837",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "index.ts",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "constants.ts",
+                "fileId": "feefc672-d26b-4155-a82a-e7b3eb5408b4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "useAiItems.ts",
+                "fileId": "07d4a9be-7fac-451d-8b65-c7aa2753a0af",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "useAppConfig.ts",
+                "fileId": "a92cc12e-f660-49fe-a53e-f38856baec0a",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "usePromptsConfig.ts",
+                "fileId": "02eaaa10-19da-4b0a-af69-bde05c353d14",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "index.ts",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "apiClient.ts",
+                "fileId": "414dd94d-e8b0-4026-ad72-ab0d41273f64",
+                "isNew": false,
+                "functionsFound": 87,
+                "functionsProcessed": 10,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 2,
+                  "updated": 8,
+                  "unchanged": 77,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "contractValidator.ts",
+                "fileId": "99d02b7f-ae05-4268-87e4-5d9ec6206353",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "geminiService.ts",
+                "fileId": "c76233fd-5eee-440d-bb27-ad646a854b49",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "logicAnalyzerService.ts",
+                "fileId": "a620f8e3-dd75-42ee-9fd3-8ccb3cf72454",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "uiLogger.ts",
+                "fileId": "63d3af24-4128-4601-be34-905046293fcc",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "types.ts",
+                "fileId": "eff0f8bd-9cf2-413f-8ea0-23d2a89ced9c",
+                "isNew": false,
+                "functionsFound": 108,
+                "functionsProcessed": 6,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 5,
+                  "updated": 1,
+                  "unchanged": 102,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "vite.config.ts",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "check_and_correct_sql.ts",
+                "fileId": "972fea51-930d-48ff-ba83-cb601cfcfed6",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "parse_and_upload_tables.ts",
+                "fileId": "eacefc02-094b-48e4-a9cc-b7df0c9cada4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "test_file.ts",
+                "fileId": "71be2822-310f-426a-a7d4-118feb32f703",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "pg-mcp.ts",
+                "fileId": "30184991-cf3e-409f-a739-de9c5c252dfa",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "test_pg_mcp.ts",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              }
+            ],
+            "phpFiles": [],
+            "mdFiles": [
+              {
+                "filename": "API-CONTRACT.md",
+                "fileId": "bf2143b0-818e-4f18-81b7-de6306c5a053",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "BACKEND_IMPLEMENTATION_v2.5.1.md",
+                "fileId": "35bc81e3-4b61-4fd5-87ed-905fd7d8ce13",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_Contract_changes.md",
+                "fileId": "20bf3a2f-1d2c-4a14-8ad8-9281ca75a70b",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_Contract_changes_v2.5.1.md",
+                "fileId": "35913730-d6ac-4794-acf4-19c0769dea31",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "FILE_SELECTION_GUIDE.md",
+                "fileId": "e0f1235a-fe33-4318-8871-7c90f10c065c",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_Dashboard.md",
+                "fileId": "16842ad8-c9f8-42ad-aa45-1bfa8e3f359c",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_Data_Inspector.md",
+                "fileId": "573dba2a-ef57-4d1f-add0-7ba22c8474c7",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_FILTERS.md",
+                "fileId": "f721c881-8b12-4cae-827b-d5bc2c7b4091",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_Graph.md",
+                "fileId": "53fd3c8c-66f7-40b6-866d-6ab537bba727",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_Graph_View.md",
+                "fileId": "ed9ff189-e3e9-4b4b-bd44-a404980b811a",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_INDEX.md",
+                "fileId": "db104ac7-5be9-46d1-b285-d73af9eb7a84",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_Knowledge_Base.md",
+                "fileId": "8d21690a-c4dc-43bd-b38c-4714fb349593",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_NaturalQuery.md",
+                "fileId": "ba8bba71-81ad-4693-af8f-2aad5b0ad398",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_Processing.md",
+                "fileId": "df8f206e-e233-48ef-8ba6-b71f4e5c4f21",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_RAG_Client.md",
+                "fileId": "aae0a930-cda1-4071-bdd3-c9cf58b0c27c",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_UI_Sections.md",
+                "fileId": "dd626efd-d44a-490f-ac5d-c73866fd9490",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README.md",
+                "fileId": "b78caefe-75c6-4caa-869b-7610ca284ff4",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README.md",
+                "fileId": "b78caefe-75c6-4caa-869b-7610ca284ff4",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "READMY_MY.md",
+                "fileId": "49103d95-bfba-4fca-8823-2932ba35e425",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "AGENTS.md",
+                "fileId": "d758ae59-5e3d-4b8c-bb6a-9b5ccd600786",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "API_CONTRACT_ISSUES.md",
+                "fileId": "08598a8f-87dc-4c9a-b781-dfc573b22dc0",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "CHANGELOG.md",
+                "fileId": "82fd4736-de37-4d3e-be97-addc3b7f22f7",
+                "isNew": false,
+                "sectionsFound": 14,
+                "sectionsProcessed": 1,
+                "sections": [],
+                "errors": [],
+                "entityReport": {
+                  "created": 1,
+                  "updated": 0,
+                  "unchanged": 13,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "langchain-pg_README_REST.md",
+                "fileId": "762b0267-9ec7-4652-8208-5721105f0f97",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_agent-script.md",
+                "fileId": "47c9704a-f5e7-45a9-b6db-9de6a6b9c1ae",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_AI_ITEM_COMPLETE.md",
+                "fileId": "9e4fce40-ebeb-4a73-b168-b5d608c47b2f",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_APP_CONFIG_API.md",
+                "fileId": "b32e8ad6-2dd0-43c2-aaee-bb44556f587f",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_clear_DB.md",
+                "fileId": "6939cf61-6851-44da-9b71-f2259d33cd60",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_DB-VECTOR.md",
+                "fileId": "f2eca829-1233-472d-97cb-a4685eb2939e",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_EMBEDDING.md",
+                "fileId": "a106dc4f-c08b-4c99-9cd8-74d675a33cf0",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_FULL_TEST.md",
+                "fileId": "a85edbc0-872f-402a-9201-39fcd7ea99c0",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_Fun.md",
+                "fileId": "e24f747a-1809-4de9-ba24-57ea9c8b8967",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_INDEX.md",
+                "fileId": "db104ac7-5be9-46d1-b285-d73af9eb7a84",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_IS_VECTORIZED.md",
+                "fileId": "a8f1855c-3beb-4f04-88a7-6fe49d404ead",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_links.md",
+                "fileId": "cfc910a5-3b43-4170-95b0-c6a8540cef3d",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_LOADING_FILES.md",
+                "fileId": "34fa3226-81a5-4337-a55d-7d3335e97d85",
+                "isNew": false,
+                "sectionsFound": 21,
+                "sectionsProcessed": 2,
+                "sections": [],
+                "errors": [],
+                "entityReport": {
+                  "created": 1,
+                  "updated": 1,
+                  "unchanged": 19,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "README_MD_LOADING.md",
+                "fileId": "28ed428b-fc4a-4b65-b534-639ddc58ea33",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_PROMPTS_CONFIG_API.md",
+                "fileId": "540bfede-97b3-41d5-b96a-60b727110d56",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_rebuild-sql-links.md",
+                "fileId": "5c69097a-87db-4a5a-9117-640a8348c43f",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README.md",
+                "fileId": "b78caefe-75c6-4caa-869b-7610ca284ff4",
+                "isNew": false,
+                "sectionsFound": 18,
+                "sectionsProcessed": 2,
+                "sections": [],
+                "errors": [],
+                "entityReport": {
+                  "created": 0,
+                  "updated": 2,
+                  "unchanged": 16,
+                  "deleted": 0
+                }
+              },
+              {
+                "filename": "README_about.md",
+                "fileId": "dd36ec16-9688-4ca1-b4de-e9764e355676",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              },
+              {
+                "filename": "README_about_NEW.md",
+                "fileId": "8a41831a-1521-48bd-8d4f-83b5b3b5800b",
+                "isNew": false,
+                "sectionsFound": 0,
+                "sectionsProcessed": 0,
+                "sections": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              }
+            ],
+            "ddlFiles": [],
+            "ontology": [
+              {
+                "dirPath": "C:\\ERV\\projects-ex\\Ontology\\concepts",
+                "contextCode": "KOSMOS-VECTOR",
+                "filesFound": 10,
+                "conceptsLoaded": 10,
+                "linksCreated": 84,
+                "groundingResolved": 47,
+                "groundingUnresolved": 3,
+                "concepts": [
+                  {
+                    "fullName": "concept:ai-item",
+                    "aiItemId": 9678,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:chunk",
+                    "aiItemId": 9679,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:context",
+                    "aiItemId": 9996,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:embedding",
+                    "aiItemId": 9680,
+                    "links": 0,
+                    "groundingIssues": [
+                      "file:env.template"
+                    ]
+                  },
+                  {
+                    "fullName": "concept:kb-config",
+                    "aiItemId": 9998,
+                    "links": 0,
+                    "groundingIssues": [
+                      "file:kb-configs"
+                    ]
+                  },
+                  {
+                    "fullName": "concept:link-graph",
+                    "aiItemId": 9999,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:loader",
+                    "aiItemId": 10000,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:pipeline",
+                    "aiItemId": 10001,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:rag-answer",
+                    "aiItemId": 10002,
+                    "links": 0,
+                    "groundingIssues": []
+                  },
+                  {
+                    "fullName": "concept:vectorization",
+                    "aiItemId": 9681,
+                    "links": 0,
+                    "groundingIssues": [
+                      "file:kb-configs"
+                    ]
+                  }
+                ],
+                "errors": [],
+                "warnings": [
+                  "embedding.md: grounding 'file:env.template' не резолвится в ai_item (ссылка на файл без символа — хранится как есть)",
+                  "kb-config.md: grounding 'file:kb-configs' не резолвится в ai_item (ссылка на файл без символа — хранится как есть)",
+                  "vectorization.md: grounding 'file:kb-configs' не резолвится в ai_item (ссылка на файл без символа — хранится как есть)"
+                ]
+              }
+            ],
+            "tables": [
+              {
+                "fullName": "kosmos.agent_script",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9980,
+                "chunkId": "b6f815e7-f34c-4c8f-9b21-428017906fbe",
+                "schemaLines": 10,
+                "errors": []
+              },
+              {
+                "fullName": "kosmos.ai_comment",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9981,
+                "chunkId": "2eafb384-167a-4f88-8cc1-c87562573b47",
+                "schemaLines": 6,
+                "errors": []
+              },
+              {
+                "fullName": "kosmos.ai_item",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9982,
+                "chunkId": "c048526f-c5fc-452b-adb8-5d6b4244d041",
+                "schemaLines": 11,
+                "errors": []
+              },
+              {
+                "fullName": "kosmos.ai_item_tag",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9983,
+                "chunkId": "0e5dc4ee-dbdf-4578-a78c-0db136b4db0e",
+                "schemaLines": 4,
+                "errors": []
+              },
+              {
+                "fullName": "kosmos.chunk_vector",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9984,
+                "chunkId": "b31fc3da-64af-46ba-8b5a-18d2d78d7033",
+                "schemaLines": 15,
+                "errors": []
+              },
+              {
+                "fullName": "kosmos.chunks_info",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9985,
+                "chunkId": "a7c61c50-d5af-46af-97dd-ba52efd6ec22",
+                "schemaLines": 4,
+                "errors": []
+              },
+              {
+                "fullName": "kosmos.dev_task_session",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9986,
+                "chunkId": "fae0b4c9-313f-4b87-80e1-b39e2b786f05",
+                "schemaLines": 9,
+                "errors": []
+              },
+              {
+                "fullName": "kosmos.file_info",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9987,
+                "chunkId": "237b2db2-79a0-43ca-8429-464730a34afa",
+                "schemaLines": 6,
+                "errors": []
+              },
+              {
+                "fullName": "kosmos.files",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9988,
+                "chunkId": "9617893c-75f6-42a4-a0ec-88185df74f85",
+                "schemaLines": 8,
+                "errors": []
+              },
+              {
+                "fullName": "kosmos.graph_snapshot",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9989,
+                "chunkId": "06bb17b0-ea97-43c9-9a3e-7718987a22fd",
+                "schemaLines": 5,
+                "errors": []
+              },
+              {
+                "fullName": "kosmos.item_type",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9839,
+                "chunkId": "8d045914-10fd-4f33-84e8-aad8cfef92e8",
+                "schemaLines": 8,
+                "errors": []
+              },
+              {
+                "fullName": "kosmos.link",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9990,
+                "chunkId": "d28fc100-0e98-4270-b479-8fa773893558",
+                "schemaLines": 10,
+                "errors": []
+              },
+              {
+                "fullName": "kosmos.link_type",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9991,
+                "chunkId": "b0b9634c-4a37-43b8-9eb4-77acb3a9aad5",
+                "schemaLines": 7,
+                "errors": []
+              },
+              {
+                "fullName": "kosmos.prompt_config_history",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9992,
+                "chunkId": "5bb01e6d-f6e0-4138-bb20-222de3df1dd8",
+                "schemaLines": 5,
+                "errors": []
+              },
+              {
+                "fullName": "kosmos.tag",
+                "fileId": "981e6c3f-2b44-41e0-a956-ffc6cb6808c5",
+                "isNew": false,
+                "aiItemId": 9993,
+                "chunkId": "f2387f6c-10d4-497c-b052-b7d1a69a327e",
+                "schemaLines": 7,
+                "errors": []
+              }
+            ],
+            "errors": [],
+            "tsxFiles": [
+              {
+                "filename": "App.tsx",
+                "fileId": "f91ec8a5-b41b-488f-9209-108bdaedbeca",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "ChatInterface.tsx",
+                "fileId": "9ddb9e48-28da-4af7-9256-e7ca07227645",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "Dashboard.tsx",
+                "fileId": "68f9e709-1660-4837-b68e-7f424d59f9e4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "FileExplorer.tsx",
+                "fileId": "a92154a1-d2f6-4f8b-8440-cf06fe076553",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "FileViewerDialog.tsx",
+                "fileId": "e25695ca-87c7-4952-a459-cb2585acd624",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "FilterDialog.tsx",
+                "fileId": "ae5ae60d-bcb7-4749-9184-93aab7f258a3",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "LayoutSwitcher.tsx",
+                "fileId": "bb415c2a-c2fa-41b0-a00b-8b6103bf0ac9",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "TreeControls.tsx",
+                "fileId": "b42b8848-d888-4fab-b50e-aa979fe0d669",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "Inspector.tsx",
+                "fileId": "23e9f0f7-15db-448a-9caf-1a8f746b50b9",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "KnowledgeGraph.tsx",
+                "fileId": "76fa283e-9e18-4d6f-9f33-8cf40809980e",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "LogicArchitectDialog.tsx",
+                "fileId": "025ffcfe-3dda-4912-bac7-d8b267f7512d",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "LogicVisualizer.tsx",
+                "fileId": "f78e8343-d8ec-4e4a-a858-2a1a0a8f07cf",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "LogViewer.tsx",
+                "fileId": "978e032c-0aba-421f-bbbc-ee636db0f182",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "NaturalQueryDialog.tsx",
+                "fileId": "1831dd9b-eefc-4fda-bea3-5225934e119d",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "PipelineView.tsx",
+                "fileId": "23cf3290-f3e2-45bf-9e78-7517aa0d6426",
+                "isNew": false,
+                "functionsFound": 2,
+                "functionsProcessed": 2,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 0,
+                  "updated": 2,
+                  "unchanged": 0,
+                  "deleted": 6
+                }
+              },
+              {
+                "filename": "PromptsEditorDialog.tsx",
+                "fileId": "77cd281f-dfc8-4c8d-883a-720a27b9c594",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "RAGTestDialog.tsx",
+                "fileId": "8452f879-5037-4b0c-a24e-a13b0d43b64a",
+                "isNew": false,
+                "functionsFound": 2,
+                "functionsProcessed": 1,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": {
+                  "created": 0,
+                  "updated": 1,
+                  "unchanged": 1,
+                  "deleted": 7
+                }
+              },
+              {
+                "filename": "ServerLogsDialog.tsx",
+                "fileId": "25eeb624-4bfc-45d5-874e-67272e4898f7",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "AppConfigTab.tsx",
+                "fileId": "517a6120-51f7-4fbd-952b-41deb43218fa",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "PromptsConfigTab.tsx",
+                "fileId": "53c29614-bb40-42c2-a570-b7788bd203cf",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "TypesConfigTab.tsx",
+                "fileId": "dff3e3d7-2429-4683-b22a-f5854ef29b62",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "SettingsDialog.tsx",
+                "fileId": "d2d5a448-e8c8-4621-89a4-9cca70f40dad",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "Sidebar.tsx",
+                "fileId": "02631ec1-eafb-41af-81bc-4487f1c8d21a",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "L0SourceView.tsx",
+                "fileId": "162b5dab-a069-4296-bcec-9174881ea80f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "L1ConnectivityView.tsx",
+                "fileId": "c3e58635-bbac-4307-89dc-d6baea943e7d",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "L2SemanticsView.tsx",
+                "fileId": "629201d2-1273-4976-860b-de425ee11512",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "TagsDialog.tsx",
+                "fileId": "463eb43f-fa67-4b24-ac45-d7aed702fa8b",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "history.tsx",
+                "fileId": "a8323360-bcde-4ddf-a465-1828ec7afb75",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "index.tsx",
+                "fileId": null,
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": false,
+                "skipReason": null,
+                "entityReport": null
+              },
+              {
+                "filename": "AiItemContext.tsx",
+                "fileId": "592869aa-ad33-46ea-9add-dfabf6f3cbc8",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "DataCacheContext.tsx",
+                "fileId": "47d43fca-30ee-4cee-838e-4fc382226a08",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "GraphFilterContext.tsx",
+                "fileId": "88bf02cd-d549-45fb-85d8-2f0c6fc72b48",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "example.tsx",
+                "fileId": "f53e79aa-7165-43e8-9e0e-43640f6428af",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "PipelineMonitor.tsx",
+                "fileId": "dbc838eb-bf63-42f6-a1cb-61b8d096bec4",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ]
+          },
+          "logs": [
+            {
+              "timestamp": "2026-07-11T05:29:59.693Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"KOSMOS-VECTOR\""
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.694Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\projects-ex\\kosmos-vector-UI, C:\\ERV\\projects-ex\\kosmos-vector"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.694Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/*.{sql,js,ts,tsx,md}\""
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.695Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/.cursor/**,**/.qoder/**,**/.vscode/**,**/data/**,**/tmp/**,**/tests/**,**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**,**/docs/**\""
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.695Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 0 файлов"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.710Z",
+              "level": "info",
+              "message": "[Step1] Режим: сканирование по glob-маскам"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.769Z",
+              "level": "info",
+              "message": "[Step1] Найдено 8 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.769Z",
+              "level": "info",
+              "message": "[Step1] Сканирование JS файлов включено"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.823Z",
+              "level": "info",
+              "message": "[Step1] Найдено 77 JS-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.823Z",
+              "level": "info",
+              "message": "[Step1] Сканирование TS файлов включено"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.878Z",
+              "level": "info",
+              "message": "[Step1] Найдено 27 TS-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.879Z",
+              "level": "info",
+              "message": "[Step1] Сканирование TSX файлов включено"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.946Z",
+              "level": "info",
+              "message": "[Step1] Найдено 34 TSX-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.947Z",
+              "level": "info",
+              "message": "[Step1] Загрузка PHP файлов отключена (php_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.947Z",
+              "level": "info",
+              "message": "[Step1] Сканирование MD файлов включено"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.988Z",
+              "level": "info",
+              "message": "[Step1] Найдено 41 MD-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.988Z",
+              "level": "info",
+              "message": "[Step1] Загрузка онтологии включена: 1 директорий"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.988Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем включена"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.989Z",
+              "level": "warn",
+              "message": "[Step1] DDL файл не найден: ./KB/current_DB_schema.sql"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.990Z",
+              "level": "warn",
+              "message": "[Step1] DDL файл не найден: ./migrations/schema.sql"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.991Z",
+              "level": "info",
+              "message": "[Step1] Найдено 0 DDL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.993Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц из схем: kosmos"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.995Z",
+              "level": "info",
+              "message": "[Step1] Включаемые паттерны: %"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.996Z",
+              "level": "info",
+              "message": "[Step1] Исключаемые паттерны: pg_%"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.997Z",
+              "level": "info",
+              "message": "[Step1] Исключаемые имена: (нет)"
+            },
+            {
+              "timestamp": "2026-07-11T05:29:59.998Z",
+              "level": "info",
+              "message": "[Step1] Получение таблиц из схемы \"kosmos\"..."
+            },
+            {
+              "timestamp": "2026-07-11T05:30:00.024Z",
+              "level": "info",
+              "message": "[Step1]   Найдено 15 таблиц в схеме \"kosmos\""
+            },
+            {
+              "timestamp": "2026-07-11T05:30:00.025Z",
+              "level": "info",
+              "message": "[Step1] Всего найдено 15 таблиц для загрузки"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:00.106Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-07-11T05:30:00.107Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 203 (8 SQL + 77 JS + 27 TS + 0 PHP + 41 MD + 0 DDL + 15 таблиц)"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:00.107Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.138Z",
+              "level": "warn",
+              "message": "[Step1] [Onto] embedding.md: grounding 'file:env.template' не резолвится в ai_item (ссылка на файл без символа — хранится как есть)"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.138Z",
+              "level": "warn",
+              "message": "[Step1] [Onto] kb-config.md: grounding 'file:kb-configs' не резолвится в ai_item (ссылка на файл без символа — хранится как есть)"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.138Z",
+              "level": "warn",
+              "message": "[Step1] [Onto] vectorization.md: grounding 'file:kb-configs' не резолвится в ai_item (ссылка на файл без символа — хранится как есть)"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.138Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.agent_script-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.235Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.235Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.ai_comment-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.309Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.360Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.ai_item-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.438Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.438Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.ai_item_tag-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.513Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.513Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.chunk_vector-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.595Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.596Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.chunks_info-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.677Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.678Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.dev_task_session-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.777Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.777Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.file_info-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.858Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.858Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.files-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.944Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:08.944Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.graph_snapshot-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:09.202Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:09.202Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.item_type-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:09.252Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:09.252Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.link-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:09.314Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:09.362Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.link_type-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:09.415Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:09.416Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.prompt_config_history-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:09.469Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:09.470Z",
+              "level": "info",
+              "message": "[Step1] ----kosmos.tag-----"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:09.513Z",
+              "level": "info",
+              "message": "[Step1] ---------------------"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:09.514Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста KOSMOS-VECTOR"
+            },
+            {
+              "timestamp": "2026-07-11T05:30:09.514Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 171 файлов, 15 таблиц, 30 AI Items, 0 ошибок"
+            }
+          ]
+        }
       }
     ],
     "2": [
@@ -175588,6 +178634,68 @@
             }
           ]
         }
+      },
+      {
+        "timestamp": "2026-07-11T05:31:14.555Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": {
+          "totalChunks": 0,
+          "vectorized": 0,
+          "skippedEmpty": 0,
+          "batchErrors": 0,
+          "logs": [
+            {
+              "timestamp": "2026-07-10T19:34:11.975Z",
+              "level": "info",
+              "message": "[Step4] Массовая векторизация: контекст KOSMOS-VECTOR, level LIKE '0-%', force=false"
+            },
+            {
+              "timestamp": "2026-07-10T19:34:12.006Z",
+              "level": "info",
+              "message": "[Step4] Чанков к векторизации: 0"
+            },
+            {
+              "timestamp": "2026-07-10T19:34:12.006Z",
+              "level": "info",
+              "message": "[Step4] Шаг 4 завершён: векторизовано 0, пустых 0, ошибок батчей 0"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-07-11T05:31:21.236Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 52,
+        "totalItems": 52,
+        "error": null,
+        "report": {
+          "totalChunks": 52,
+          "vectorized": 52,
+          "skippedEmpty": 0,
+          "batchErrors": 0,
+          "logs": [
+            {
+              "timestamp": "2026-07-11T05:31:14.608Z",
+              "level": "info",
+              "message": "[Step4] Массовая векторизация: контекст KOSMOS-VECTOR, level LIKE '0-%', force=false"
+            },
+            {
+              "timestamp": "2026-07-11T05:31:14.642Z",
+              "level": "info",
+              "message": "[Step4] Чанков к векторизации: 52"
+            },
+            {
+              "timestamp": "2026-07-11T05:31:21.236Z",
+              "level": "info",
+              "message": "[Step4] Шаг 4 завершён: векторизовано 52, пустых 0, ошибок батчей 0"
+            }
+          ]
+        }
       }
     ]
   },
@@ -200702,6 +203810,1244 @@
               "timestamp": "2026-03-04T10:29:14.630Z",
               "level": "info",
               "message": "[Step1] Отчёт: 7 файлов, 6 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-07-11T07:45:04.881Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T07:45:04.977Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 8,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T07:45:05.723Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 8,
+        "totalItems": 8,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 8,
+            "totalTables": 0,
+            "totalFunctions": 6,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 0,
+            "skippedFiles": 7,
+            "skippedEntities": 5,
+            "deletedEntities": 0,
+            "updatedEntities": 6,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "hr_functions.sql",
+                "fileId": "eed0e850-af1d-42ce-9f55-63d6d49bda6f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "hr_schema.sql",
+                "fileId": "93d453a8-19be-4ffd-b502-1160a41d5ff0",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [
+              {
+                "filename": "employeeService.js",
+                "fileId": "a4eeb63c-9195-434a-b667-4cd84bcf1b0f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "validators.js",
+                "fileId": "aaa5c81e-0284-40d1-9ebf-a6fb468d755c",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "tsFiles": [
+              {
+                "filename": "departmentService.ts",
+                "fileId": "bcaa7ebf-abfe-451d-875c-137cc7ba67e2",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "formatters.ts",
+                "fileId": "d88cbd84-9e7c-4804-bc9d-4d229f503e69",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "phpFiles": [
+              {
+                "filename": "SkillService.php",
+                "fileId": "8578fb7b-1527-4ccc-97c8-ee8e294ef512",
+                "isNew": false,
+                "functionsFound": 11,
+                "functionsProcessed": 6,
+                "functions": [],
+                "errors": [],
+                "entityReport": {
+                  "created": 0,
+                  "updated": 6,
+                  "unchanged": 5,
+                  "deleted": 0
+                }
+              }
+            ],
+            "mdFiles": [],
+            "ddlFiles": [
+              {
+                "filename": "hr_schema.sql",
+                "fileId": "93d453a8-19be-4ffd-b502-1160a41d5ff0",
+                "isNew": false,
+                "tablesFound": 0,
+                "tablesProcessed": 0,
+                "indexesFound": 0,
+                "tables": [],
+                "indexes": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              }
+            ],
+            "ontology": [],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-07-11T07:45:04.960Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"FULL_TEST\""
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.961Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\projects-ex\\kosmos-vector\\tests\\hr_test_project, C:\\ERV\\projects-ex\\kosmos-vector\\tests\\hr_test_project_php"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.961Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/*\""
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.961Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.962Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 0 файлов"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.963Z",
+              "level": "info",
+              "message": "[Step1] Режим: сканирование по glob-маскам"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.966Z",
+              "level": "info",
+              "message": "[Step1] Найдено 2 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.967Z",
+              "level": "info",
+              "message": "[Step1] Сканирование JS файлов включено"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.968Z",
+              "level": "info",
+              "message": "[Step1] Найдено 2 JS-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.969Z",
+              "level": "info",
+              "message": "[Step1] Сканирование TS файлов включено"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.970Z",
+              "level": "info",
+              "message": "[Step1] Найдено 2 TS-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.971Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.971Z",
+              "level": "info",
+              "message": "[Step1] Сканирование PHP файлов включено"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.973Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 PHP-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.973Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.974Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем включена"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.975Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 DDL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:04.976Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:05.029Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-07-11T07:45:05.030Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 8 (2 SQL + 2 JS + 2 TS + 1 PHP + 0 MD + 1 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:05.030Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-07-11T07:45:05.722Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста FULL_TEST"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:05.723Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 8 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-07-11T08:02:08.639Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T08:02:08.743Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 9,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T08:02:08.827Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 9,
+        "totalItems": 9,
+        "error": null,
+        "report": {
+          "summary": {
+            "totalFiles": 8,
+            "totalTables": 0,
+            "totalFunctions": 0,
+            "totalAiItems": 0,
+            "totalChunks": 0,
+            "errors": 0,
+            "skipped": 0,
+            "skippedFiles": 8,
+            "skippedEntities": 0,
+            "deletedEntities": 0,
+            "updatedEntities": 0,
+            "createdEntities": 0
+          },
+          "details": {
+            "sqlFiles": [
+              {
+                "filename": "hr_functions.sql",
+                "fileId": "eed0e850-af1d-42ce-9f55-63d6d49bda6f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "hr_schema.sql",
+                "fileId": "93d453a8-19be-4ffd-b502-1160a41d5ff0",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "jsFiles": [
+              {
+                "filename": "employeeService.js",
+                "fileId": "a4eeb63c-9195-434a-b667-4cd84bcf1b0f",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "validators.js",
+                "fileId": "aaa5c81e-0284-40d1-9ebf-a6fb468d755c",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "tsFiles": [
+              {
+                "filename": "departmentService.ts",
+                "fileId": "bcaa7ebf-abfe-451d-875c-137cc7ba67e2",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              },
+              {
+                "filename": "formatters.ts",
+                "fileId": "d88cbd84-9e7c-4804-bc9d-4d229f503e69",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime",
+                "entityReport": null
+              }
+            ],
+            "phpFiles": [
+              {
+                "filename": "SkillService.php",
+                "fileId": "8578fb7b-1527-4ccc-97c8-ee8e294ef512",
+                "isNew": false,
+                "functionsFound": 0,
+                "functionsProcessed": 0,
+                "functions": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              }
+            ],
+            "mdFiles": [],
+            "ddlFiles": [
+              {
+                "filename": "hr_schema.sql",
+                "fileId": "93d453a8-19be-4ffd-b502-1160a41d5ff0",
+                "isNew": false,
+                "tablesFound": 0,
+                "tablesProcessed": 0,
+                "indexesFound": 0,
+                "tables": [],
+                "indexes": [],
+                "errors": [],
+                "skipped": true,
+                "skipReason": "skipped_mtime"
+              }
+            ],
+            "ontology": [
+              {
+                "dirPath": "C:/ERV/projects-ex/kosmos-vector/tests/hr_test_project/ontology/concepts",
+                "contextCode": "FULL_TEST",
+                "filesFound": 0,
+                "conceptsLoaded": 0,
+                "linksCreated": 0,
+                "groundingResolved": 0,
+                "groundingUnresolved": 0,
+                "concepts": [],
+                "errors": [],
+                "warnings": []
+              }
+            ],
+            "tables": [],
+            "errors": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-07-11T08:02:08.724Z",
+              "level": "info",
+              "message": "[Step1] Запуск для контекста \"FULL_TEST\""
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.724Z",
+              "level": "info",
+              "message": "[Step1] rootPaths: C:\\ERV\\projects-ex\\kosmos-vector\\tests\\hr_test_project, C:\\ERV\\projects-ex\\kosmos-vector\\tests\\hr_test_project_php"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.724Z",
+              "level": "info",
+              "message": "[Step1] includeMask: \"**/*\""
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.724Z",
+              "level": "info",
+              "message": "[Step1] ignorePatterns: \"**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**\""
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.724Z",
+              "level": "info",
+              "message": "[Step1] fileSelection: 0 файлов"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.726Z",
+              "level": "info",
+              "message": "[Step1] Режим: сканирование по glob-маскам"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.728Z",
+              "level": "info",
+              "message": "[Step1] Найдено 2 SQL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.729Z",
+              "level": "info",
+              "message": "[Step1] Сканирование JS файлов включено"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.734Z",
+              "level": "info",
+              "message": "[Step1] Найдено 2 JS-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.734Z",
+              "level": "info",
+              "message": "[Step1] Сканирование TS файлов включено"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.737Z",
+              "level": "info",
+              "message": "[Step1] Найдено 2 TS-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.737Z",
+              "level": "info",
+              "message": "[Step1] Загрузка TSX файлов отключена (tsx_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.737Z",
+              "level": "info",
+              "message": "[Step1] Сканирование PHP файлов включено"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.740Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 PHP-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.740Z",
+              "level": "info",
+              "message": "[Step1] Загрузка MD файлов отключена (md_loading.enabled = false или не настроено)"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.741Z",
+              "level": "info",
+              "message": "[Step1] Загрузка онтологии включена: 1 директорий"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.741Z",
+              "level": "info",
+              "message": "[Step1] Загрузка DDL схем включена"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.741Z",
+              "level": "info",
+              "message": "[Step1] Найдено 1 DDL-файлов для обработки"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.742Z",
+              "level": "info",
+              "message": "[Step1] Загрузка таблиц отключена в конфигурации"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.795Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.795Z",
+              "level": "info",
+              "message": "[Step1] Всего задач: 9 (2 SQL + 2 JS + 2 TS + 1 PHP + 0 MD + 1 DDL + 0 таблиц)"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.795Z",
+              "level": "info",
+              "message": "[Step1] ====================="
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.826Z",
+              "level": "info",
+              "message": "[Step1] Шаг 1 завершён для контекста FULL_TEST"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:08.826Z",
+              "level": "info",
+              "message": "[Step1] Отчёт: 8 файлов, 0 таблиц, 0 AI Items, 0 ошибок"
+            }
+          ]
+        }
+      }
+    ],
+    "2": [
+      {
+        "timestamp": "2026-07-11T07:45:08.272Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T07:45:08.441Z",
+        "status": "running",
+        "progress": 26,
+        "itemsProcessed": 10,
+        "totalItems": 38,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T07:45:08.568Z",
+        "status": "running",
+        "progress": 53,
+        "itemsProcessed": 20,
+        "totalItems": 38,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T07:45:08.709Z",
+        "status": "running",
+        "progress": 79,
+        "itemsProcessed": 30,
+        "totalItems": 38,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T07:45:08.863Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 38,
+        "totalItems": 38,
+        "error": null,
+        "report": {
+          "summary": {
+            "aiItemsNoSchema": 22,
+            "l0ChunksNoSchema": 22,
+            "l1ChunksAnalyzed": 38,
+            "missingDeps": 53,
+            "ambiguousDeps": 10,
+            "fixedDeps": 11,
+            "linksAnalyzed": 0,
+            "linksFixed": 0,
+            "linksMissing": 0,
+            "linksAmbiguous": 0
+          },
+          "details": {
+            "fixes": [
+              {
+                "from": "constructor",
+                "to": "EmployeeService.constructor",
+                "in": "EmployeeService.constructor"
+              },
+              {
+                "from": "constructor",
+                "to": "EmployeeService.constructor",
+                "in": "EmployeeService"
+              },
+              {
+                "from": "getAll",
+                "to": "DepartmentService.getAll",
+                "in": "DepartmentService.getAll"
+              },
+              {
+                "from": "constructor",
+                "to": "EmployeeService.constructor",
+                "in": "DepartmentService"
+              },
+              {
+                "from": "getAll",
+                "to": "DepartmentService.getAll",
+                "in": "DepartmentService"
+              },
+              {
+                "from": "addSkillToEmployee",
+                "to": "SkillService.addSkillToEmployee",
+                "in": "SkillService.addSkillToEmployee"
+              },
+              {
+                "from": "log",
+                "to": "LoggableTrait.log",
+                "in": "LoggableTrait"
+              },
+              {
+                "from": "log",
+                "to": "LoggableTrait.log",
+                "in": "LoggableTrait.log"
+              },
+              {
+                "from": "addSkillToEmployee",
+                "to": "SkillService.addSkillToEmployee",
+                "in": "SkillService"
+              },
+              {
+                "from": "getAllSkills",
+                "to": "SkillService.getAllSkills",
+                "in": "SkillService"
+              },
+              {
+                "from": "getAllSkills",
+                "to": "SkillService.getAllSkills",
+                "in": "SkillService.getAllSkills"
+              }
+            ],
+            "ambiguous": [
+              {
+                "dep": "update",
+                "candidates": [
+                  "EmployeeService.update",
+                  "DepartmentService.update"
+                ],
+                "in": "EmployeeService.update"
+              },
+              {
+                "dep": "getById",
+                "candidates": [
+                  "EmployeeService.getById",
+                  "DepartmentService.getById",
+                  "SkillService.getById"
+                ],
+                "in": "EmployeeService"
+              },
+              {
+                "dep": "update",
+                "candidates": [
+                  "DepartmentService.update",
+                  "EmployeeService.update"
+                ],
+                "in": "EmployeeService"
+              },
+              {
+                "dep": "getById",
+                "candidates": [
+                  "EmployeeService.getById",
+                  "DepartmentService.getById",
+                  "SkillService.getById"
+                ],
+                "in": "EmployeeService.getById"
+              },
+              {
+                "dep": "getById",
+                "candidates": [
+                  "DepartmentService.getById",
+                  "EmployeeService.getById",
+                  "SkillService.getById"
+                ],
+                "in": "DepartmentService"
+              },
+              {
+                "dep": "update",
+                "candidates": [
+                  "DepartmentService.update",
+                  "EmployeeService.update"
+                ],
+                "in": "DepartmentService"
+              },
+              {
+                "dep": "getById",
+                "candidates": [
+                  "DepartmentService.getById",
+                  "EmployeeService.getById",
+                  "SkillService.getById"
+                ],
+                "in": "DepartmentService.getById"
+              },
+              {
+                "dep": "update",
+                "candidates": [
+                  "DepartmentService.update",
+                  "EmployeeService.update"
+                ],
+                "in": "DepartmentService.update"
+              },
+              {
+                "dep": "getById",
+                "candidates": [
+                  "EmployeeService.getById",
+                  "DepartmentService.getById",
+                  "SkillService.getById"
+                ],
+                "in": "SkillService"
+              },
+              {
+                "dep": "getById",
+                "candidates": [
+                  "EmployeeService.getById",
+                  "DepartmentService.getById",
+                  "SkillService.getById"
+                ],
+                "in": "SkillService.getById"
+              }
+            ],
+            "missing": [
+              {
+                "dep": "if",
+                "in": "EmployeeService.update",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "isValidId",
+                "in": "EmployeeService.update",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "if",
+                "in": "EmployeeService",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "isValidId",
+                "in": "EmployeeService",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "validateEmployee",
+                "in": "EmployeeService",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "if",
+                "in": "validateEmployee",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "validateEmail",
+                "in": "validateEmployee",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "validateEmployee",
+                "in": "validateEmployee",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "validateName",
+                "in": "validateEmployee",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "formatEmployeeData",
+                "in": "formatEmployeeData",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "if",
+                "in": "formatEmployeeData",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "EmployeeService",
+                "in": "fetchEmployeeWithSkills",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "fetchEmployeeWithSkills",
+                "in": "fetchEmployeeWithSkills",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "if",
+                "in": "EmployeeService.getById",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "isValidId",
+                "in": "EmployeeService.getById",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "validateEmployee",
+                "in": "EmployeeService.create",
+                "file": "employeeService.js"
+              },
+              {
+                "dep": "Date",
+                "in": "DepartmentService",
+                "file": "departmentService.ts"
+              },
+              {
+                "dep": "if",
+                "in": "DepartmentService",
+                "file": "departmentService.ts"
+              },
+              {
+                "dep": "getDepartmentStats",
+                "in": "getDepartmentStats",
+                "file": "departmentService.ts"
+              },
+              {
+                "dep": "Date",
+                "in": "DepartmentService.create",
+                "file": "departmentService.ts"
+              },
+              {
+                "dep": "if",
+                "in": "DepartmentService.update",
+                "file": "departmentService.ts"
+              },
+              {
+                "dep": "if",
+                "in": "validateEmail",
+                "file": "validators.js"
+              },
+              {
+                "dep": "validateEmail",
+                "in": "validateEmail",
+                "file": "validators.js"
+              },
+              {
+                "dep": "if",
+                "in": "validateName",
+                "file": "validators.js"
+              },
+              {
+                "dep": "validateName",
+                "in": "validateName",
+                "file": "validators.js"
+              },
+              {
+                "dep": "if",
+                "in": "formatName",
+                "file": "formatters.ts"
+              },
+              {
+                "dep": "formatCurrency",
+                "in": "formatCurrency",
+                "file": "formatters.ts"
+              },
+              {
+                "dep": "if",
+                "in": "formatCurrency",
+                "file": "formatters.ts"
+              },
+              {
+                "dep": "isNaN",
+                "in": "formatCurrency",
+                "file": "formatters.ts"
+              },
+              {
+                "dep": "String",
+                "in": "formatDate",
+                "file": "formatters.ts"
+              },
+              {
+                "dep": "formatDate",
+                "in": "formatDate",
+                "file": "formatters.ts"
+              },
+              {
+                "dep": "if",
+                "in": "formatDate",
+                "file": "formatters.ts"
+              },
+              {
+                "dep": "isNaN",
+                "in": "formatDate",
+                "file": "formatters.ts"
+              },
+              {
+                "dep": "$this->log",
+                "in": "SkillService.addSkillToEmployee",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "if",
+                "in": "SkillService.addSkillToEmployee",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "validateSkillId",
+                "in": "SkillService.addSkillToEmployee",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "validateSkillLevel",
+                "in": "SkillService.addSkillToEmployee",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "error_log",
+                "in": "LoggableTrait",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "error_log",
+                "in": "LoggableTrait.log",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "validateSkillId",
+                "in": "validateSkillId",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "validateSkillLevel",
+                "in": "validateSkillLevel",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "formatSkillData",
+                "in": "formatSkillData",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "sprintf",
+                "in": "formatSkillData",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "$this->log",
+                "in": "SkillService",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "SkillValidator",
+                "in": "SkillService",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "if",
+                "in": "SkillService",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "validateSkillId",
+                "in": "SkillService",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "validateSkillLevel",
+                "in": "SkillService",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "SkillValidator",
+                "in": "SkillService.__construct",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "$this->log",
+                "in": "SkillService.getById",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "if",
+                "in": "SkillService.getById",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "validateSkillId",
+                "in": "SkillService.getById",
+                "file": "SkillService.php"
+              },
+              {
+                "dep": "$this->log",
+                "in": "SkillService.getAllSkills",
+                "file": "SkillService.php"
+              }
+            ],
+            "errors": [],
+            "linkFixes": [],
+            "linkMissing": [],
+            "linkAmbiguous": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-07-11T07:45:08.324Z",
+              "level": "info",
+              "message": "[Step2] Запуск анализа и исправления зависимостей для контекста \"FULL_TEST\" (mode=incremental)"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:08.327Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 22 AiItem без схемы"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:08.329Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 22 L0 чанков без схемы"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:08.856Z",
+              "level": "info",
+              "message": "[Step2] Анализ таблицы link..."
+            },
+            {
+              "timestamp": "2026-07-11T07:45:08.861Z",
+              "level": "info",
+              "message": "[Step2] Шаг 2 завершён."
+            },
+            {
+              "timestamp": "2026-07-11T07:45:08.862Z",
+              "level": "info",
+              "message": "[Step2] [L1 чанки] Исправлено: 11, неоднозначных: 10, отсутствующих: 53"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:08.862Z",
+              "level": "info",
+              "message": "[Step2] [Таблица link] Исправлено: 0, неоднозначных: 0, отсутствующих: 0"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-07-11T08:02:11.540Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T08:02:11.613Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": {
+          "summary": {
+            "aiItemsNoSchema": 22,
+            "l0ChunksNoSchema": 22,
+            "l1ChunksAnalyzed": 0,
+            "missingDeps": 0,
+            "ambiguousDeps": 0,
+            "fixedDeps": 0,
+            "linksAnalyzed": 0,
+            "linksFixed": 0,
+            "linksMissing": 0,
+            "linksAmbiguous": 0
+          },
+          "details": {
+            "fixes": [],
+            "ambiguous": [],
+            "missing": [],
+            "errors": [],
+            "linkFixes": [],
+            "linkMissing": [],
+            "linkAmbiguous": []
+          },
+          "logs": [
+            {
+              "timestamp": "2026-07-11T08:02:11.594Z",
+              "level": "info",
+              "message": "[Step2] Запуск анализа и исправления зависимостей для контекста \"FULL_TEST\" (mode=incremental)"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:11.597Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 22 AiItem без схемы"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:11.600Z",
+              "level": "warn",
+              "message": "[Step2] Найдено 22 L0 чанков без схемы"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:11.605Z",
+              "level": "info",
+              "message": "[Step2] Анализ таблицы link..."
+            },
+            {
+              "timestamp": "2026-07-11T08:02:11.612Z",
+              "level": "info",
+              "message": "[Step2] Шаг 2 завершён."
+            },
+            {
+              "timestamp": "2026-07-11T08:02:11.612Z",
+              "level": "info",
+              "message": "[Step2] [L1 чанки] Исправлено: 0, неоднозначных: 0, отсутствующих: 0"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:11.613Z",
+              "level": "info",
+              "message": "[Step2] [Таблица link] Исправлено: 0, неоднозначных: 0, отсутствующих: 0"
+            }
+          ]
+        }
+      }
+    ],
+    "4": [
+      {
+        "timestamp": "2026-07-11T07:45:15.489Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T07:45:18.600Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 43,
+        "totalItems": 43,
+        "error": null,
+        "report": {
+          "totalChunks": 43,
+          "vectorized": 43,
+          "skippedEmpty": 0,
+          "batchErrors": 0,
+          "logs": [
+            {
+              "timestamp": "2026-07-11T07:45:15.537Z",
+              "level": "info",
+              "message": "[Step4] Массовая векторизация: контекст FULL_TEST, level LIKE '0-%', force=false"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:15.541Z",
+              "level": "info",
+              "message": "[Step4] Чанков к векторизации: 43"
+            },
+            {
+              "timestamp": "2026-07-11T07:45:18.600Z",
+              "level": "info",
+              "message": "[Step4] Шаг 4 завершён: векторизовано 43, пустых 0, ошибок батчей 0"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-07-11T08:02:14.517Z",
+        "status": "running",
+        "progress": 0,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": null
+      },
+      {
+        "timestamp": "2026-07-11T08:02:14.576Z",
+        "status": "completed",
+        "progress": 100,
+        "itemsProcessed": 0,
+        "totalItems": 0,
+        "error": null,
+        "report": {
+          "totalChunks": 0,
+          "vectorized": 0,
+          "skippedEmpty": 0,
+          "batchErrors": 0,
+          "logs": [
+            {
+              "timestamp": "2026-07-11T08:02:14.572Z",
+              "level": "info",
+              "message": "[Step4] Массовая векторизация: контекст FULL_TEST, level LIKE '0-%', force=false"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:14.575Z",
+              "level": "info",
+              "message": "[Step4] Чанков к векторизации: 0"
+            },
+            {
+              "timestamp": "2026-07-11T08:02:14.576Z",
+              "level": "info",
+              "message": "[Step4] Шаг 4 завершён: векторизовано 0, пустых 0, ошибок батчей 0"
             }
           ]
         }

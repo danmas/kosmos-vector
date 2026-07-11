@@ -73,6 +73,8 @@ bun run start:v2
 
 📖 **Полный индекс документации:** `KB/README_INDEX.md`
 
+- **Онтология (понятия, grounding, concept-first RAG):** см. `KB/README_ONTO_LOADING.md` ⭐ НОВОЕ
+- **MCP для ИИ-агентов:** `../kosmos-vector-mcp` — tools `ontology_ask`, `ontology_validate`, `kb_search`, `kosmos_health` (stdio, read-only)
 - **REST API:** см. `KB/README_REST.md`
 - **App Config API (управление настройками):** см. `KB/README_APP_CONFIG_API.md` ⭐ НОВОЕ
 - **Prompts Config API (управление промптами с историей):** см. `KB/README_PROMPTS_CONFIG_API.md` ⭐ НОВОЕ в 2.9.0
@@ -87,6 +89,7 @@ bun run start:v2
 
 ## Ключевые возможности
 
+- **Онтологический уровень знаний** ⭐ — понятия домена (MD-файлы, git — источник истины) с типизированными отношениями и grounding-привязкой к реальному коду/таблицам/документам; валидация консистентности и протухания (`/api/ontology/validate`); concept-first retrieval (`/api/ontology/ask`, стратегия «Ontology» в RAG Test) — ответ строится от понятий вниз к коду. См. `KB/README_ONTO_LOADING.md`, спецификация: `../Ontology/ONTOLOGY_SPEC.md`
 - Векторизация TXT/MD/SQL/JS/TS/PHP/Java с настраиваемыми параметрами
 - **Специализированные загрузчики кода** для SQL, JavaScript, TypeScript, PHP
 - Извлечение сущностей: классы, функции, методы, интерфейсы, traits
@@ -118,3 +121,8 @@ Invoke-RestMethod -Method GET http://localhost:3005/files
 # Задать вопрос (минимально)
 Invoke-RestMethod -Method POST http://localhost:3005/ask -ContentType 'application/json' -Body (@{ question = 'Что такое нейронные сети?' } | ConvertTo-Json)
 ```
+
+## Ontology Builder (2.11.0)
+
+Полуавтоматический черновик онтологии (Step 6 pipeline): `POST /api/ontology/build/suggest|materialize|apply`.
+Подробности: [KB/README_ONTO_LOADING.md](./KB/README_ONTO_LOADING.md) §5.2.

@@ -71,6 +71,19 @@ class PipelineStateManager {
         completedAt: null,
         error: null,
         report: null
+      },
+      {
+        id: 6,
+        name: 'ontology_builder',
+        label: 'Ontology Builder',
+        status: 'pending',
+        progress: 0,
+        itemsProcessed: 0,
+        totalItems: 0,
+        startedAt: null,
+        completedAt: null,
+        error: null,
+        report: null
       }
     ];
   }

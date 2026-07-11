@@ -3,12 +3,12 @@
   "includeMask": "**/*",
   "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
   "fileSelection": [],
-  "lastUpdated": "2026-01-20T09:17:49.101Z",
+  "lastUpdated": "2026-07-11T08:35:04.350Z",
   "metadata": {
     "projectName": "HR Test Project (Multi-root)",
     "description": "Full system test for HR management system with multi-root support",
     "tags": [],
-    "custom_settings": "js_loading:\n  enabled: true\nts_loading:\n  enabled: true\nphp_loading:\n  enabled: true\nfunctions_loading:\n  enabled: true\nddl_loading:\n  enabled: true\n  files:\n    - ./schema/hr_schema.sql\ntable_loading:\n  enabled: false"
+    "custom_settings": "js_loading:\n  enabled: true\nts_loading:\n  enabled: true\nphp_loading:\n  enabled: true\nfunctions_loading:\n  enabled: true\nddl_loading:\n  enabled: true\n  files:\n    - ./schema/hr_schema.sql\ntable_loading:\n  enabled: false\nonto_loading:\n  enabled: true\n  dirs:\n    - C:/ERV/projects-ex/kosmos-vector/tests/hr_test_project/ontology/concepts\n"
   },
   "pipelineConfig": {
     "parsing": {},

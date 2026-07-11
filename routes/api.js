@@ -1393,17 +1393,38 @@ ${JSON.stringify({
   });
 
   // === 6. Статус всех шагов pipeline ===
-  router.get('/pipeline/steps/status', (req, res) => {
+  router.get('/pipeline/steps/status', async (req, res) => {
     try {
       // TODO: pipelineStateManager.getStepsStatus() может потребовать поддержку contextCode
       // для изоляции состояния pipeline по контекстам
       const steps = pipelineStateManager.getStepsStatus();
 
+      // Enrich Step 6 (Ontology Builder) with live concept/gate snapshot when context known
+      const contextCode = req.contextCode || req.query['context-code'] || req.query.contextCode;
+      if (contextCode) {
+        try {
+          const { getBuilderStatus } = require('./ontology/ontologyBuilder');
+          const builderStatus = await getBuilderStatus(dbService, contextCode);
+          const step6 = steps.find((s) => s.id === 6);
+          if (step6) {
+            step6.builderStatus = builderStatus;
+            if (builderStatus.gated) {
+              step6.gateReason = builderStatus.gateReason;
+              // Keep prior completed report if any; surface gate as pending hint
+              if (step6.status === 'pending' || step6.status === 'failed') {
+                step6.error = step6.error || builderStatus.gateReason;
+              }
+            }
+          }
+        } catch (enrichErr) {
+          console.warn('[API/PIPELINE/STEPS/STATUS] Step6 enrich:', enrichErr.message);
+        }
+      }
+
       res.json({
         success: true,
         steps: steps
       });
-      // context-code валидирован через middleware, доступен как req.contextCode
     } catch (error) {
       console.error('[API/PIPELINE/STEPS/STATUS] Ошибка:', error);
       res.status(500).json({

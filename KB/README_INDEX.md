@@ -55,13 +55,14 @@
 |------|----------|---------------|--------------|
 | [README_LOADING_FILES.md](./README_LOADING_FILES.md) | **Общая логика загрузки файлов** | Двухшаговый pipeline (Step1/Step2), kb-config, loaders, AI Items, L0/L1 чанки, TSX | 2026-02-11 |
 | [README_MD_LOADING.md](./README_MD_LOADING.md) | Загрузка Markdown файлов | md_doc, H1/H2 структура, иерархические связи, md_includes, md_follows | |
-| [README_ONTO_LOADING.md](./README_ONTO_LOADING.md) | Загрузка онтологии (понятия домена) | concept, onto_* link types, grounding, валидация, onto_loading в kb-config | 2026-07-10 |
+| [README_ONTO_LOADING.md](./README_ONTO_LOADING.md) | **Онтология: загрузка, построение (Step 6), работа с проектами** | workflow A–H, concept, onto_* , grounding, validate/ask, onto_loading, чеклист нового context-code | 2026-07-11 |
 
 ### Подробнее: README_LOADING_FILES.md
 
 Документ описывает архитектуру загрузки файлов:
-- **Step 1** (`step1Runner.js`): Парсинг файлов, создание AI Items и L0-чанков
+- **Step 1** (`step1Runner.js`): Парсинг файлов, создание AI Items и L0-чанков (+ `onto_loading`)
 - **Step 2** (`step2Runner.js`): Исправление зависимостей, создание L1-чанков
+- **Step 4** (`step4Vectorize.js`): массовая векторизация L0 (в т.ч. concept)
 - **Специализированные loaders:**
   - `sqlFunctionLoader.js` - PL/pgSQL функции
   - `jsFunctionLoader.js` - JavaScript
@@ -69,6 +70,7 @@
   - `tsxLoader.js` - TSX (React компоненты)
   - `phpFunctionLoader.js` - PHP
   - `mdLoader.js` - Markdown
+  - `ontoLoader.js` - **онтология** (понятия MD → concept + onto_* links)
   - `ddlSchemaLoader.js` - DDL схемы
   - `tableSchemaLoader.js` - Таблицы из БД
   - `columnExtractor.js` - Извлечение колонок из SQL функций
@@ -119,14 +121,16 @@
 ### Работа с файлами и pipeline
 1. [README_LOADING_FILES.md](./README_LOADING_FILES.md) - общая логика
 2. [README_MD_LOADING.md](./README_MD_LOADING.md) - Markdown
-3. [README_FULL_TEST.md](./README_FULL_TEST.md) - примеры тестирования
+3. [README_ONTO_LOADING.md](./README_ONTO_LOADING.md) - **онтология для рабочих проектов** (workflow, чеклист)
+4. [README_FULL_TEST.md](./README_FULL_TEST.md) - примеры тестирования
 
 ### AI Items и связи
 1. [README_AI_ITEM_COMPLETE.md](./README_AI_ITEM_COMPLETE.md) - структура
 2. [README_links.md](./README_links.md) - граф зависимостей
-3. [README_TAGS.md](./README_TAGS.md) - тегирование
-4. [README_TYPES.md](./README_TYPES.md) - фильтр по типам
-5. [README_UI_COMMENTS.md](./README_UI_COMMENTS.md) - комментарии
+3. [README_ONTO_LOADING.md](./README_ONTO_LOADING.md) - понятия, grounding, concept-first
+4. [README_TAGS.md](./README_TAGS.md) - тегирование
+5. [README_TYPES.md](./README_TYPES.md) - фильтр по типам
+6. [README_UI_COMMENTS.md](./README_UI_COMMENTS.md) - комментарии
 
 ### Конфигурация
 1. [README_APP_CONFIG_API.md](./README_APP_CONFIG_API.md) - глобальные настройки

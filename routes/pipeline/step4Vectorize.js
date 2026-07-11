@@ -13,22 +13,46 @@ const { createStepLogger } = require('./stepLogger');
  * @param {object} embeddings - экземпляр из EmbeddingsFactory
  * @param {PipelineStateManager} pipelineState
  * @param {PipelineHistoryManager} pipelineHistory
- * @param {object} options - { batchSize=50, allLevels=false, force=false }
+ * @param {object} options - { batchSize=50, allLevels=false, force=false, fullNamePrefix, types }
+ *   fullNamePrefix: e.g. 'concept:' — only chunks of matching ai_item.full_name
+ *   types: e.g. ['concept'] — only those ai_item.type values
  */
 async function runStep4(contextCode, sessionId, dbService, embeddings, pipelineState, pipelineHistory = null, options = {}) {
   const logger = createStepLogger('[Step4]', sessionId);
   const batchSize = Math.max(1, Math.min(200, options.batchSize || 50));
   const levelPattern = options.allLevels ? '%' : '0-%';
   const embeddingFilter = options.force ? '' : 'AND cv.embedding IS NULL';
+  const fullNamePrefix = options.fullNamePrefix || null;
+  const types = Array.isArray(options.types) && options.types.length > 0 ? options.types : null;
 
-  logger.log(`Массовая векторизация: контекст ${contextCode}, level LIKE '${levelPattern}', force=${!!options.force}`);
+  logger.log(
+    `Массовая векторизация: контекст ${contextCode}, level LIKE '${levelPattern}', force=${!!options.force}` +
+    (fullNamePrefix ? `, fullNamePrefix=${fullNamePrefix}` : '') +
+    (types ? `, types=${types.join(',')}` : '')
+  );
+
+  const params = [contextCode, levelPattern];
+  let extraJoin = '';
+  let extraWhere = '';
+  if (fullNamePrefix || types) {
+    extraJoin = ' JOIN kosmos.ai_item ai ON ai.id = cv.ai_item_id ';
+    if (fullNamePrefix) {
+      params.push(fullNamePrefix + '%');
+      extraWhere += ` AND ai.full_name LIKE $${params.length}`;
+    }
+    if (types) {
+      params.push(types);
+      extraWhere += ` AND ai.type = ANY($${params.length})`;
+    }
+  }
 
   const idRows = (await dbService.pgClient.query(
     `SELECT cv.id
      FROM kosmos.chunk_vector cv JOIN kosmos.files f ON f.id = cv.file_id
-     WHERE f.context_code = $1 ${embeddingFilter} AND cv.level LIKE $2
+     ${extraJoin}
+     WHERE f.context_code = $1 ${embeddingFilter} AND cv.level LIKE $2 ${extraWhere}
      ORDER BY cv.created_at`,
-    [contextCode, levelPattern]
+    params
   )).rows;
   const ids = idRows.map(r => r.id);
 
