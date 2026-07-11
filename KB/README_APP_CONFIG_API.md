@@ -166,29 +166,10 @@ curl -X PATCH http://localhost:3200/api/config \
 curl -X POST http://localhost:3200/api/config/reset
 ```
 
-## Ontology Builder factory defaults
-
-- **Runtime:** `config.json` → секция `ontology_builder` (GET/PATCH `/api/config`).
-- **Factory (seed / Reset-to-factory):** внешний файл
-  `config/ontology_builder.defaults.json` — единственный источник текста промптов
-  (system/user/description/retry/byo/outputRules) и knobs по умолчанию.
-- **Loader:** `packages/core/ontologyBuilderDefaults.js` →
-  `getDefaultOntologyBuilderConfig()` читает файл один раз и **кэширует** на процесс.
-  **Правка `ontology_builder.defaults.json` без рестарта процесса не подхватывается.**
-  Reload-endpoint не предусмотрен.
-- **GET /api/config** возвращает `factory.ontology_builder` (= factory file) для UI
-  «Подставить factory defaults» / Reset & Save.
-- **POST /api/config/reset** восстанавливает весь app config, включая
-  `ontology_builder` из factory-файла.
-- **Fail-hard:** если файл отсутствует или JSON битый → код
-  `ONTOLOGY_DEFAULTS_MISSING`; suggest/export не работают; текст промптов из кода
-  **не** восстанавливается.
-
 ## Важные замечания
 
 1. **Не требует `context-code`** - конфигурация глобальная для всего приложения
-2. **`config.json`** читается динамически (без рестарта). **Factory-файл**
-   `config/ontology_builder.defaults.json` — с кэшем на процесс (нужен рестарт).
+2. **Нет автоматической перезагрузки** - изменения сохраняются в `config.json`, но не требуют перезапуска сервера (конфиг читается динамически в `llmClient.js`)
 3. **Открытый endpoint** - нет авторизации/аутентификации
 4. **Без истории изменений** - не сохраняются бэкапы или история изменений конфига
 
