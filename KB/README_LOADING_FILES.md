@@ -7,7 +7,7 @@
 - **Шаг 1** (`step1Runner.js`) — сканирование, парсинг и загрузка файлов в БД
 - **Шаг 2** (`step2Runner.js`) — проверка и авто-исправление L1 зависимостей
 
-Поддерживаемые типы файлов: SQL (функции PL/pgSQL), JavaScript, TypeScript, **TSX (React)**, PHP, Markdown, DDL схемы, а также прямая загрузка схем таблиц из БД.
+Поддерживаемые типы файлов: SQL (функции PL/pgSQL), JavaScript, TypeScript, **TSX (React)**, PHP, Markdown, DDL схемы, прямая загрузка схем таблиц из БД, а также **онтология** (`onto_loading` → понятия MD, см. [README_ONTO_LOADING.md](./README_ONTO_LOADING.md)).
 
 ---
 
@@ -70,10 +70,17 @@ ddl_loading:
 # Загрузка таблиц из БД
 table_loading:
   enabled: true
+  source: self                        # self | client (client — через pg-mcp)
   schema: "kosmos"                    # Схема (или несколько через запятую)
   include_patterns: ["user%", "order%"]  # SQL LIKE паттерны для включения
   exclude_patterns: ["temp%", "log%"]    # SQL LIKE паттерны для исключения
   exclude_names: ["migrations", "seeds"] # Точные имена для исключения
+
+# Онтология (понятия домена) — полный howto: README_ONTO_LOADING.md
+onto_loading:
+  enabled: true
+  dirs:
+    - "C:\\path\\to\\Ontology\\concepts"   # абс. путь или rel. к первому rootPath
 ```
 
 ### Режимы сканирования файлов
@@ -592,9 +599,9 @@ GET /api/pipeline/step/{id}/history?context-code=MY_CONTEXT
 - [README_AI_ITEM_COMPLETE.md](README_AI_ITEM_COMPLETE.md) — AI Items
 - [README_links.md](README_links.md) — система связей L1
 - [README_DB-VECTOR.md](README_DB-VECTOR.md) — структура БД
-- [README_ONTO_LOADING.md](README_ONTO_LOADING.md) — онтологический уровень
+- [README_ONTO_LOADING.md](README_ONTO_LOADING.md) — **онтология: построение для рабочих проектов**, загрузка, validate/ask
 - [README_REST.md](README_REST.md) — API endpoints
 
 ---
 
-**Последнее обновление:** 10 июля 2026
+**Последнее обновление:** 11 июля 2026

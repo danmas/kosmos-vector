@@ -1,0 +1,13 @@
+{
+  "rootPath": "C:\\ERV\\projects-ex\\kosmos-vector\\docs",
+  "includeMask": "**/*.{sql,js,ts,tsx,py,java,go}",
+  "ignorePatterns": "**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/.git/**",
+  "fileSelection": [],
+  "lastUpdated": "2026-07-11T07:56:01.986Z",
+  "metadata": {
+    "projectName": "New Project",
+    "description": "RAG knowledge base",
+    "tags": [],
+    "custom_settings": "onto_loading:\n  enabled: true\n  dirs:\n    - C:\\Users\\roman\\AppData\\Local\\Temp\\onto-builder-XrOw52\\concepts\n"
+  }
+}

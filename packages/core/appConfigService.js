@@ -2,6 +2,9 @@
 // Сервис для управления глобальной конфигурацией приложения (config.json)
 const fs = require('fs');
 const path = require('path');
+const {
+  getDefaultOntologyBuilderConfig
+} = require('./ontologyBuilderDefaults');
 
 const CONFIG_FILE = path.join(process.cwd(), 'config.json');
 
@@ -16,7 +19,8 @@ function getDefaultConfig() {
     LOG_LEVEL: "info",
     NATURAL_QUERY_SUGGEST_LIMIT: 5,
     NATURAL_QUERY_SIMILARITY_THRESHOLD: 0.8,
-    NATURAL_QUERY_AUTO_USE_THRESHOLD: 0.95
+    NATURAL_QUERY_AUTO_USE_THRESHOLD: 0.95,
+    ontology_builder: getDefaultOntologyBuilderConfig()
   };
 }
 
@@ -85,10 +89,111 @@ function validateConfig(config) {
     }
   }
 
+  // Ontology Builder nested settings
+  if (config.ontology_builder !== undefined) {
+    if (config.ontology_builder === null || typeof config.ontology_builder !== 'object' || Array.isArray(config.ontology_builder)) {
+      errors.push('ontology_builder must be an object');
+    } else {
+      const ob = config.ontology_builder;
+      if (ob.model !== undefined && ob.model !== null && typeof ob.model !== 'string') {
+        errors.push('ontology_builder.model must be a string or null');
+      }
+      if (ob.maxConcepts !== undefined) {
+        const n = Number(ob.maxConcepts);
+        if (isNaN(n) || n < 1 || n > 30) {
+          errors.push('ontology_builder.maxConcepts must be a number between 1 and 30');
+        }
+      }
+      if (ob.depth !== undefined && !['concepts', 'concepts+grounding'].includes(ob.depth)) {
+        errors.push('ontology_builder.depth must be "concepts" or "concepts+grounding"');
+      }
+      if (ob.temperature !== undefined) {
+        const t = Number(ob.temperature);
+        if (isNaN(t) || t < 0 || t > 2) {
+          errors.push('ontology_builder.temperature must be a number between 0 and 2');
+        }
+      }
+      for (const field of [
+        'systemPrompt',
+        'userPromptTemplate',
+        'descriptionSystemPrompt',
+        'descriptionPrompt',
+        'outputRulesSuffix',
+        'retrySystemPrompt',
+        'retryUserTemplate',
+        'byoInstruction'
+      ]) {
+        if (ob[field] !== undefined && typeof ob[field] !== 'string') {
+          errors.push(`ontology_builder.${field} must be a string`);
+        }
+      }
+      if (ob.excludeNamePatterns !== undefined) {
+        if (!Array.isArray(ob.excludeNamePatterns) || ob.excludeNamePatterns.some((p) => typeof p !== 'string')) {
+          errors.push('ontology_builder.excludeNamePatterns must be an array of strings');
+        }
+      }
+      if (ob.enableDescriptionPass !== undefined && typeof ob.enableDescriptionPass !== 'boolean') {
+        errors.push('ontology_builder.enableDescriptionPass must be a boolean');
+      }
+      if (ob.seedMode !== undefined && !['user-only', 'all-existing'].includes(ob.seedMode)) {
+        errors.push('ontology_builder.seedMode must be "user-only" or "all-existing"');
+      }
+    }
+  }
+
   return {
     valid: errors.length === 0,
     errors: errors
   };
+}
+
+/**
+ * Merge ontology_builder with factory defaults.
+ * Empty prompt strings MUST NOT hide defaults — UI must show the real text used at runtime.
+ * @param {object|null|undefined} raw
+ * @returns {object}
+ */
+function normalizeOntologyBuilder(raw) {
+  const defaults = getDefaultOntologyBuilderConfig();
+  const src = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  const merged = { ...defaults, ...src };
+
+  for (const key of [
+    'systemPrompt',
+    'userPromptTemplate',
+    'descriptionSystemPrompt',
+    'descriptionPrompt',
+    'outputRulesSuffix',
+    'retrySystemPrompt',
+    'retryUserTemplate',
+    'byoInstruction'
+  ]) {
+    if (!merged[key] || !String(merged[key]).trim()) {
+      merged[key] = defaults[key];
+    }
+  }
+  if (merged.model !== undefined && merged.model !== null && !String(merged.model).trim()) {
+    merged.model = null;
+  }
+  if (!Array.isArray(merged.excludeNamePatterns)) {
+    merged.excludeNamePatterns = [...(defaults.excludeNamePatterns || [])];
+  }
+  if (merged.maxConcepts === undefined || merged.maxConcepts === null) {
+    merged.maxConcepts = defaults.maxConcepts;
+  }
+  if (!merged.depth) {
+    merged.depth = defaults.depth;
+  }
+  if (merged.temperature === undefined || merged.temperature === null || isNaN(Number(merged.temperature))) {
+    merged.temperature = defaults.temperature;
+  }
+  if (typeof merged.enableDescriptionPass !== 'boolean') {
+    merged.enableDescriptionPass = defaults.enableDescriptionPass;
+  }
+  if (merged.seedMode !== 'user-only' && merged.seedMode !== 'all-existing') {
+    merged.seedMode = defaults.seedMode || 'user-only';
+  }
+  return merged;
 }
 
 /**
@@ -106,11 +211,17 @@ function getConfig() {
   try {
     const data = fs.readFileSync(CONFIG_FILE, 'utf-8');
     const config = JSON.parse(data);
+    const defaults = getDefaultConfig();
 
-    // Гарантируем наличие всех полей (на случай старых версий)
+    // Гарантируем наличие всех полей (на случай старых версий) + deep merge ontology_builder
     const fullConfig = {
-      ...getDefaultConfig(),
-      ...config
+      ...defaults,
+      ...config,
+      ontology_builder: normalizeOntologyBuilder(
+        config.ontology_builder && typeof config.ontology_builder === 'object'
+          ? config.ontology_builder
+          : {}
+      )
     };
 
     return fullConfig;
@@ -140,16 +251,27 @@ function saveConfig(updates) {
   }
 
   const currentConfig = getConfig(); // гарантирует существование файла
+  const defaults = getDefaultConfig();
 
   const newConfig = {
     ...currentConfig,
     ...updates
   };
 
+  // Deep-merge nested ontology_builder so partial PATCH does not wipe prompts
+  if (updates.ontology_builder && typeof updates.ontology_builder === 'object') {
+    newConfig.ontology_builder = normalizeOntologyBuilder({
+      ...defaults.ontology_builder,
+      ...(currentConfig.ontology_builder || {}),
+      ...updates.ontology_builder
+    });
+  }
+
   try {
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(newConfig, null, 2), 'utf-8');
     console.log('[AppConfig] Конфиг обновлён');
-    return newConfig;
+    // Return normalized view (prompts never blank in API response)
+    return getConfig();
   } catch (error) {
     console.error('[AppConfig] Ошибка записи конфига:', error);
     throw new Error('Failed to save application configuration');
@@ -178,5 +300,7 @@ module.exports = {
   saveConfig,
   resetConfig,
   validateConfig,
-  getDefaultConfig
+  getDefaultConfig,
+  getDefaultOntologyBuilderConfig,
+  normalizeOntologyBuilder
 };

@@ -4,6 +4,46 @@
 
 ---
 
+## [2.11.0] - 2026-07-11
+
+### Добавлено
+
+#### Ontology Builder (Step 6) — полуавтомат черновика онтологии
+
+- **POST /api/ontology/build/suggest** — read-only черновик понятий из векторизованной реальности
+- **POST /api/ontology/build/materialize** — запись `concepts/*.md` (`status: draft`)
+- **POST /api/ontology/build/apply** — materialize → onto_loading → vectorize `concept:*` → validate
+- **GET /api/ontology/build/status** — снимок для карточки pipeline
+- Step 6 `ontology_builder` в `pipelineConfigService.getDefaultStepDefinitions` (+ merge в существующие kb-config)
+- UI (`kosmos-vector-UI`): `OntologyBuilderDialog`, карточка Step 6 в PipelineView, apiClient methods
+- Docs: `KB/README_ONTO_LOADING.md` §5.2, OpenAPI `docs/openapi/paths/ontology.yaml`
+
+---
+
+## [2.10.0] - 2026-07-10
+
+### ✨ Добавлено
+
+#### Онтологический уровень знаний (concept-first RAG) ⭐
+
+Верхний уровень Базы Знаний: понятия домена с типизированными отношениями и grounding-привязкой к нижнему уровню (код, таблицы, документы). Источник истины — MD-файлы понятий в git (спецификация: `../Ontology/ONTOLOGY_SPEC.md`), PostgreSQL — индекс.
+
+- **Onto-loader:** `routes/loaders/ontoLoader.js` + секция `onto_loading` в kb-config; понятия → `ai_item type='concept'`, отношения/grounding → `link` (17 новых `link_type` с префиксом `onto_`, миграция `tmp/add_onto_link_types.sql`)
+- **GET /api/ontology/validate** — консистентность: битый grounding, протухание (needs_rebuild), coverage, файловая валидация
+- **POST /api/ontology/ask** — concept-first retrieval: вопрос → понятия (по эмбеддингам) → grounding → чанки → ответ LLM с цепочкой «понятие → отношение → код»
+- **UI:** стратегия «Ontology» в RAG Test (kosmos-vector-UI) с панелью понятий и цепочки
+- Документация: `KB/README_ONTO_LOADING.md`
+
+#### Step 4 pipeline: массовая векторизация
+- **POST /api/pipeline/step/4/run** (`routes/pipeline/step4Vectorize.js`) — эмбеддинги всех невекторизованных L0-чанков контекста, батчами, с прогрессом и защитой от превышения контекста модели
+- `table_loading.source: self | client` — загрузка таблиц из собственной БД сервера или клиентской (pg-mcp)
+
+### 🐛 Исправлено
+- `tsParseUtils.findBlockEnd`: апостроф/кавычка в комментарии ломали подсчёт скобок (файлы целиком выпадали из векторизации); default-параметр `(options = {})` обрезал тело функции до сигнатуры; добавлена поддержка regex-литералов
+- PipelineView (UI): карточки шагов приведены к реальным шагам (1, 2, 4), запуск по `step.id` вместо порядкового номера, «Run Simulation» заменён реальным запуском `/api/pipeline/start`
+
+---
+
 ## [2.9.0] - 2026-02-08
 
 ### ✨ Добавлено

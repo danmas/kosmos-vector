@@ -2,6 +2,28 @@
 
 This file contains coding guidelines, build commands, and development practices for agentic coding agents working in this repository.
 
+## Как быстро понять систему (протокол для ИИ-агентов)
+
+Порядок получения Понимания системы — от сильного к слабому:
+
+0. **MCP kosmos-vector (предпочтительно).** Если подключён MCP-сервер `../kosmos-vector-mcp` — используй tools вместо прямых HTTP-вызовов и слепого чтения файлов:
+   - `ontology_ask` — «как устроено / как связано» (concept-first);
+   - `ontology_validate` — консистентность grounding / coverage;
+   - `kb_search` — точечный поиск функции/фрагмента кода;
+   - `kosmos_health` — доступность backend и сводка.
+   Конфиг: `KOSMOS_BASE_URL`, `KOSMOS_CONTEXT_CODE` (см. `../kosmos-vector-mcp/README.md`).
+1. **Онтология (верхний уровень знаний).** Понятия домена с отношениями и привязкой (grounding) к коду/таблицам/документам лежат в `../Ontology/concepts/*.md` (формат: `../Ontology/ONTOLOGY_SPEC.md`). Начни с них — это курируемая карта системы, а не пересказ кода.
+2. **Спроси систему о ней самой.** Если сервер запущен (порт — PORT в `.env`): `POST /api/ontology/ask?context-code=KOSMOS-VECTOR`, body `{"question": "...", "generateAnswer": false}` — вернёт релевантные понятия, цепочку «понятие → отношение → код» и grounded-контекст. Это точнее самостоятельного поиска по файлам. (Эквивалент MCP: `ontology_ask`.)
+3. **KB — оглавление в `KB/README_INDEX.md`.** Тематические README покрывают архитектуру, БД, загрузчики, API.
+4. **Актуальность не гарантирована — проверяй.** `GET /api/ontology/validate?context-code=KOSMOS-VECTOR` показывает протухший grounding и битые ссылки; данные в БД могут отставать от кода (`needs_rebuild`). (Эквивалент MCP: `ontology_validate`.)
+
+Правила при изменении кода:
+
+- **«Без ИИ жизни нет!»** — сценарии с обязательным LLM при ошибке модели **останавливаются** и сообщают пользователю; запрещён тихий success без ИИ (эвристика вместо suggest, 200 + answerError и т.п.). Канон: `KB/README_PRINCIPLES.md`.
+- Изменил поведение — обнови соответствующий `KB/README_*.md` и строку в `README_INDEX.md`.
+- Затронул сущность, на которую ссылается понятие (grounding в `../Ontology/concepts/`), — проверь и поправь файл понятия; после правки понятий: Step1 (onto_loading) + повторная векторизация понятий.
+- Новая крупная возможность — запись в `CHANGELOG.md` и строка в корневом `README.md`.
+
 ## Project Overview
 
 AIAN Vector is a LangChain RAG server built with Bun/Express, PostgreSQL with pgvector, and a web UI. The project uses a modular architecture with:

@@ -92,6 +92,29 @@ function getDefaultStepDefinitions() {
         type: 'object',
         properties: {}
       }
+    },
+    {
+      id: 6,
+      name: 'ontology_builder',
+      label: 'Ontology Builder',
+      description:
+        'Interactive builder: suggest draft concepts from vectorized reality → review → materialize MD → onto_loading → re-vectorize concept:* → validate. Requires successful Step 4. Not a batch runner.',
+      configurationSchema: {
+        type: 'object',
+        properties: {
+          maxConcepts: {
+            type: 'number',
+            description: 'Max concept candidates (10-30)',
+            default: 20
+          },
+          depth: {
+            type: 'string',
+            description: 'Suggestion depth',
+            default: 'concepts+grounding',
+            enum: ['concepts', 'concepts+grounding']
+          }
+        }
+      }
     }
   ];
 }
@@ -109,8 +132,32 @@ function getDefaultPipelineConfig() {
       embeddingModel: 'Google Gemini (text-embedding-004)',
       chunkStrategy: 'Semantic (Ailtem / Function-based)'
     },
-    indexing: {}
+    indexing: {},
+    ontology_builder: {
+      maxConcepts: 20,
+      depth: 'concepts+grounding'
+    }
   };
+}
+
+/**
+ * Merge stored step definitions with defaults so new steps (e.g. Step 6)
+ * appear even when kb-config has an older pipelineDefinitions list.
+ * @param {Array} stored
+ * @returns {Array}
+ */
+function mergeStepDefinitions(stored) {
+  const defaults = getDefaultStepDefinitions();
+  if (!Array.isArray(stored) || stored.length === 0) return defaults;
+
+  const byId = new Map();
+  for (const s of defaults) byId.set(s.id, { ...s });
+  for (const s of stored) {
+    if (s && typeof s.id === 'number') {
+      byId.set(s.id, { ...byId.get(s.id), ...s });
+    }
+  }
+  return [...byId.values()].sort((a, b) => a.id - b.id);
 }
 
 /**
@@ -131,19 +178,15 @@ async function getPipelineDefinitions(contextCode) {
   const filePath = getConfigFilePath(contextCode);
 
   if (!fs.existsSync(filePath)) {
-    // Возвращаем дефолтные определения, если файла нет
     return getDefaultStepDefinitions();
   }
 
   try {
     const data = fs.readFileSync(filePath, 'utf-8');
     const config = JSON.parse(data);
-    
-    // Возвращаем pipelineDefinitions из файла, или дефолтные если их нет
-    return config.pipelineDefinitions || getDefaultStepDefinitions();
+    return mergeStepDefinitions(config.pipelineDefinitions);
   } catch (error) {
     console.error(`[PipelineConfig] Ошибка чтения pipelineDefinitions ${filePath}:`, error);
-    // В случае ошибки возвращаем дефолтные определения
     return getDefaultStepDefinitions();
   }
 }
@@ -217,6 +260,7 @@ module.exports = {
   getDefaultStepDefinitions,
   getDefaultPipelineConfig,
   getDefaultPipelineDefinitions,
+  mergeStepDefinitions,
   getConfigFilePath,
   CONFIG_DIR
 };

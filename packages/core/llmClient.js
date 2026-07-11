@@ -59,6 +59,17 @@ function getKOSMOS_MODEL() {
  */
 async function callLLM(messages, model = null, options = {}) {
   const { jsonMode = false } = options;
+  const temperature =
+    options.temperature !== undefined && options.temperature !== null
+      ? Number(options.temperature)
+      : 0.0;
+  // Default output budget: ontology/RAG JSON often needs more than gateway defaults
+  const maxTokens =
+    options.max_tokens !== undefined && options.max_tokens !== null
+      ? Number(options.max_tokens)
+      : options.maxTokens !== undefined && options.maxTokens !== null
+        ? Number(options.maxTokens)
+        : null;
   
   // Читаем конфиг каждый раз
   const config = getConfig();
@@ -77,18 +88,24 @@ async function callLLM(messages, model = null, options = {}) {
     console.log('Headers:', headers);
     console.log('Messages:', messages);
     console.log('Model:', actualModel);
-    console.log('Temperature:', 0.0);
+    console.log('Temperature:', temperature);
     console.log('JSON Mode:', jsonMode);
+    if (maxTokens != null && !isNaN(maxTokens)) {
+      console.log('Max tokens:', maxTokens);
+    }
     
     const requestBody = {
       model: actualModel,
       messages,
-      temperature: 0.0 // Настройте температуру под задачи (0.1 - код, 0.7 - креатив)
+      temperature: isNaN(temperature) ? 0.0 : temperature
     };
     
     // Добавляем response_format для JSON mode
     if (jsonMode) {
       requestBody.response_format = { type: 'json_object' };
+    }
+    if (maxTokens != null && !isNaN(maxTokens) && maxTokens > 0) {
+      requestBody.max_tokens = Math.floor(maxTokens);
     }
     
     const res = await fetch(`${config.KOSMOS_BASE_URL}/chat/completions`, {
@@ -105,11 +122,21 @@ async function callLLM(messages, model = null, options = {}) {
     const json = await res.json();
     
     // Парсинг ответа (стандарт OpenAI)
-    const response = json.choices?.[0]?.message?.content || "";
+    const choice = json.choices?.[0];
+    const response = choice?.message?.content || "";
+    const finishReason = choice?.finish_reason || choice?.finishReason || null;
+    if (finishReason) {
+      console.log(`   finish_reason: ${finishReason}`);
+    }
     
     if (!response) {
-      throw new Error("Пустой ответ от модели (структура JSON может отличаться)");
+      throw new Error(
+        `Пустой ответ от модели` +
+          (finishReason ? ` (finish_reason=${finishReason})` : ' (структура JSON может отличаться)')
+      );
     }
+    // Attach for callers that want it (non-enumerable-ish via property on String not possible; use wrapper)
+    // Callers read finish_reason from logs; for truncation detection we re-check length + reason in builder.
 
     // Логируем детальный ответ от LLM
     const responseLength = response.length;
@@ -141,6 +168,11 @@ async function callLLM(messages, model = null, options = {}) {
     }
     console.log(`   ${'─'.repeat(60)}`);
 
+    if (finishReason === 'length') {
+      console.warn(
+        '⚠️ LLM finish_reason=length — ответ мог быть обрезан (увеличьте max_tokens или сократите запрос)'
+      );
+    }
     return response;
 
   } catch (e) {
