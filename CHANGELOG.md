@@ -4,6 +4,22 @@
 
 ---
 
+## [2.12.0] - 2026-07-11
+
+### Добавлено / изменено
+
+#### Ontology Builder settings, BYO LLM, clear, fail-fast
+
+- **Settings → Ontology Builder**: model, prompts (system/user/outputRules/retry/BYO/description), seedMode, exclude patterns
+- Промпты runtime **только из config** (`ontology_builder`); factory — seed
+- **BYO LLM**: `POST /api/ontology/build/suggest/export-prompt`, `.../import`
+- **Очистка онтологии**: `POST /api/ontology/clear` (concepts + onto-links + MD)
+- seedMode `user-only`, domain-first anchors, JSON salvage/retry, max_tokens
+- Принцип **«Без ИИ жизни нет!»** (LLM fail → stop): `KB/README_PRINCIPLES.md`
+- UI: шаги 1–3, BYO panel, clear ontology; OpenSpec `add-ontology-builder-settings`
+
+---
+
 ## [2.11.0] - 2026-07-11
 
 ### Добавлено
