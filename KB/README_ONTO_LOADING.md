@@ -24,7 +24,6 @@
 3. **Без grounding понятие — гипотеза** (`status: draft`). `verified` только при непустом Grounding и ревью.
 4. **Сначала нижний уровень, потом онтология.** Иначе grounding не к чему привязать.
 5. **«Без ИИ жизни нет!»** (product principle): Ontology Builder **suggest** и concept-first **ask** с генерацией ответа при падении LLM **останавливаются** (нет тихого heuristic-success). См. [`README_PRINCIPLES.md`](./README_PRINCIPLES.md).
-6. **Очистка с нуля:** `POST /api/ontology/clear?context-code=…` body `{ "confirm": true, "deleteDb": true, "deleteFiles": true }` — concepts + onto-links + MD в `onto_loading.dirs` (код/таблицы не трогает). UI: Ontology Builder → «Очистить онтологию…».
 
 Спецификация формата: репозиторий `Ontology/` → [`ONTOLOGY_SPEC.md`](../../Ontology/ONTOLOGY_SPEC.md)  
 План и принципы: [`ONTOLOGY_PLAN.md`](../../Ontology/ONTOLOGY_PLAN.md)  
