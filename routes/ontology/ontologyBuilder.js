@@ -249,8 +249,10 @@ function uniqueKebab(base, used) {
 }
 
 /**
- * Collect anchor items for ontology suggest.
- * Priority: tables → class/interface → functions → methods (methods deprioritized for prompts).
+ * Collect non-table anchor items for ontology suggest (class/function/doc/method).
+ * Tables are loaded separately via collectTableAnchors (all tables, by degree) and
+ * merged in prepareSuggestContext — including them here with ORDER BY table-first
+ * + LIMIT would starve code anchors on large schemas (e.g. CARL 242 tables).
  */
 async function collectAnchors(dbService, contextCode, limit = 80) {
   const q = async (sql, params) => (await dbService.pgClient.query(sql, params)).rows;
@@ -264,12 +266,11 @@ async function collectAnchors(dbService, contextCode, limit = 80) {
        AND (l.source = ai.full_name OR l.target = ai.full_name)
      LEFT JOIN kosmos.chunk_vector cv ON cv.ai_item_id = ai.id
      WHERE ai.context_code = $1
-       AND ai.type IN ('function','method','class','table','md_doc','interface')
+       AND ai.type IN ('function','method','class','md_doc','interface')
      GROUP BY ai.full_name, ai.type, ai.h_name, ai.s_name
      HAVING count(DISTINCT cv.id) FILTER (WHERE cv.embedding IS NOT NULL) > 0
      ORDER BY
        CASE ai.type
-         WHEN 'table' THEN 0
          WHEN 'class' THEN 1
          WHEN 'interface' THEN 2
          WHEN 'function' THEN 3
@@ -302,7 +303,7 @@ async function collectTableAnchors(dbService, contextCode) {
      LEFT JOIN kosmos.chunk_vector cv ON cv.ai_item_id = ai.id
      WHERE ai.context_code = $1 AND ai.type = 'table'
      GROUP BY ai.full_name, ai.type, ai.h_name, ai.s_name
-     ORDER BY ai.full_name`,
+     ORDER BY degree DESC, ai.full_name`,
     [contextCode]
   );
 }
@@ -331,27 +332,82 @@ function buildPromptSeedList(userSeeds, existingIds, seedMode) {
 }
 
 /**
- * Merge anchors: tables always first, drop most methods from the prompt sample.
+ * Fraction of anchorCap reserved for tables before code anchors fill the rest.
+ * Tables never consume every slot on large contexts (process concepts need code anchors).
+ */
+const TABLE_BUDGET_RATIO = 0.5;
+
+function byDegreeThenName(a, b) {
+  const dd = (Number(b.degree) || 0) - (Number(a.degree) || 0);
+  if (dd !== 0) return dd;
+  return String(a.full_name || '').localeCompare(String(b.full_name || ''));
+}
+
+/**
+ * Build prompt anchor sample within cap:
+ * - tables ranked by L1 degree DESC (not alphabetically);
+ * - reserve ~half of cap for non-table anchors so tables cannot starve code;
+ * - backfill remaining slots with more tables by degree.
+ * Small contexts (tables ≤ budget): all tables kept + code fill — no regression.
  */
 function selectAnchorsForPrompt(anchors, tables, cap) {
+  const limit = Math.max(0, Math.floor(Number(cap) || 0));
+  if (limit === 0) return [];
+
   const byName = new Map();
-  for (const a of tables || []) byName.set(a.full_name, a);
+  for (const a of tables || []) {
+    if (a && a.full_name) byName.set(a.full_name, a);
+  }
   for (const a of anchors || []) {
-    if (!byName.has(a.full_name)) byName.set(a.full_name, a);
+    if (a && a.full_name && !byName.has(a.full_name)) byName.set(a.full_name, a);
   }
   const all = [...byName.values()];
-  const tablesList = all.filter((a) => a.type === 'table');
-  const classes = all.filter((a) => a.type === 'class' || a.type === 'interface');
-  const functions = all.filter((a) => a.type === 'function');
+
+  const tablesList = all.filter((a) => a.type === 'table').sort(byDegreeThenName);
+  const classes = all
+    .filter((a) => a.type === 'class' || a.type === 'interface')
+    .sort(byDegreeThenName);
+  const functions = all.filter((a) => a.type === 'function').sort(byDegreeThenName);
+  const docs = all.filter((a) => a.type === 'md_doc').sort(byDegreeThenName);
   // methods only if room — high degree, few
   const methods = all
     .filter((a) => a.type === 'method')
-    .sort((a, b) => (b.degree || 0) - (a.degree || 0))
+    .sort(byDegreeThenName)
     .slice(0, 6);
-  const docs = all.filter((a) => a.type === 'md_doc');
 
-  const ordered = [...tablesList, ...classes, ...functions, ...docs, ...methods];
-  return ordered.slice(0, cap);
+  const codeList = [...classes, ...functions, ...docs, ...methods];
+
+  // e.g. cap=32 → tableBudget = min(nTables, max(8, 16))
+  const tableBudget = Math.min(
+    tablesList.length,
+    Math.max(8, Math.round(limit * TABLE_BUDGET_RATIO))
+  );
+
+  const selected = [];
+  const seen = new Set();
+
+  for (const a of tablesList.slice(0, tableBudget)) {
+    if (selected.length >= limit) break;
+    selected.push(a);
+    seen.add(a.full_name);
+  }
+
+  for (const a of codeList) {
+    if (selected.length >= limit) break;
+    if (seen.has(a.full_name)) continue;
+    selected.push(a);
+    seen.add(a.full_name);
+  }
+
+  // Backfill when few code anchors (or leftover slots)
+  for (const a of tablesList) {
+    if (selected.length >= limit) break;
+    if (seen.has(a.full_name)) continue;
+    selected.push(a);
+    seen.add(a.full_name);
+  }
+
+  return selected.slice(0, limit);
 }
 
 /**
@@ -400,8 +456,8 @@ function heuristicConcepts(anchors, maxConcepts, seedSet, usedIds) {
  */
 /**
  * Runtime settings: ONLY from app config (System Settings → ontology_builder).
- * Factory text lives in ontologyBuilderDefaults and is merged via appConfigService.normalize
- * into GET/PATCH /api/config — never re-hardcode prompt bodies in the builder path.
+ * Factory defaults: config/ontology_builder.defaults.json via getDefaultOntologyBuilderConfig
+ * (merged in appConfigService.normalize). No prompt bodies in this module.
  */
 function getOntologyBuilderSettings() {
   try {
@@ -411,7 +467,8 @@ function getOntologyBuilderSettings() {
     }
     return { ...cfg.ontology_builder };
   } catch (e) {
-    // Last resort if config unreadable — still go through defaults module once
+    if (e && e.code === 'ONTOLOGY_DEFAULTS_MISSING') throw e;
+    // Last resort if config unreadable — load factory from external file (fail-hard if missing)
     console.error('[OntologyBuilder] App config unavailable:', e.message);
     return getDefaultOntologyBuilderConfig();
   }
@@ -1852,6 +1909,186 @@ async function getBuilderStatus(dbService, contextCode) {
   };
 }
 
+/**
+ * Clear ontology for a context: concept ai_items, onto_* links, concept chunks, optional MD files.
+ * Does NOT touch non-concept reality (functions, tables, etc.).
+ *
+ * @param {object} dbService
+ * @param {string} contextCode
+ * @param {object} [options]
+ * @param {boolean} [options.confirm=false] — must be true
+ * @param {boolean} [options.deleteDb=true]
+ * @param {boolean} [options.deleteFiles=true] — *.md in onto_loading.dirs
+ * @param {boolean} [options.dryRun=false]
+ */
+async function clearOntologyForContext(dbService, contextCode, options = {}) {
+  if (!options.confirm) {
+    const err = new Error(
+      'Для очистки онтологии передайте { "confirm": true }. ' +
+        'Опции: deleteDb (default true), deleteFiles (default true), dryRun.'
+    );
+    err.status = 400;
+    err.code = 'CONFIRM_REQUIRED';
+    err.userFacing = true;
+    throw err;
+  }
+
+  const deleteDb = options.deleteDb !== false;
+  const deleteFiles = options.deleteFiles !== false;
+  const dryRun = !!options.dryRun;
+  const client = dbService.pgClient;
+  const q = async (sql, params) => (await client.query(sql, params)).rows;
+
+  const report = {
+    contextCode,
+    dryRun,
+    deleteDb,
+    deleteFiles,
+    conceptsFound: 0,
+    conceptIds: [],
+    linksDeleted: 0,
+    chunksDeleted: 0,
+    aiItemsDeleted: 0,
+    filesDeletedDb: 0,
+    mdFilesDeleted: [],
+    mdFilesSkipped: [],
+    dirs: [],
+    warnings: []
+  };
+
+  // --- DB: concept items ---
+  const concepts = await q(
+    `SELECT id, full_name, file_id FROM kosmos.ai_item
+     WHERE context_code = $1 AND type = 'concept'
+     ORDER BY full_name`,
+    [contextCode]
+  );
+  report.conceptsFound = concepts.length;
+  report.conceptIds = concepts.map((c) => c.full_name);
+  const conceptPkIds = concepts.map((c) => c.id);
+  const fileIds = [...new Set(concepts.map((c) => c.file_id).filter(Boolean))];
+
+  if (deleteDb) {
+    // onto_* links + any link touching concept:* for this context
+    const linkCountSql = dryRun
+      ? `SELECT count(*)::int AS n FROM kosmos.link l
+         JOIN kosmos.link_type lt ON lt.id = l.link_type_id
+         WHERE l.context_code = $1
+           AND (lt.code LIKE 'onto_%' OR l.source LIKE 'concept:%' OR l.target LIKE 'concept:%')`
+      : null;
+
+    if (dryRun) {
+      const lr = await q(linkCountSql, [contextCode]);
+      report.linksDeleted = lr[0]?.n || 0;
+      if (conceptPkIds.length) {
+        const cr = await q(
+          `SELECT count(*)::int AS n FROM kosmos.chunk_vector WHERE ai_item_id = ANY($1)`,
+          [conceptPkIds]
+        );
+        report.chunksDeleted = cr[0]?.n || 0;
+      }
+      report.aiItemsDeleted = concepts.length;
+      report.filesDeletedDb = fileIds.length;
+    } else {
+      const delLinks = await client.query(
+        `DELETE FROM kosmos.link l
+         USING kosmos.link_type lt
+         WHERE l.link_type_id = lt.id
+           AND l.context_code = $1
+           AND (lt.code LIKE 'onto_%' OR l.source LIKE 'concept:%' OR l.target LIKE 'concept:%')`,
+        [contextCode]
+      );
+      report.linksDeleted = delLinks.rowCount || 0;
+
+      if (conceptPkIds.length) {
+        const delChunks = await client.query(
+          `DELETE FROM kosmos.chunk_vector WHERE ai_item_id = ANY($1)`,
+          [conceptPkIds]
+        );
+        report.chunksDeleted = delChunks.rowCount || 0;
+
+        const delItems = await client.query(
+          `DELETE FROM kosmos.ai_item WHERE context_code = $1 AND type = 'concept'`,
+          [contextCode]
+        );
+        report.aiItemsDeleted = delItems.rowCount || 0;
+      }
+
+      // Remove concept source files from kosmos.files if orphaned (only used by concepts)
+      if (fileIds.length) {
+        const delFiles = await client.query(
+          `DELETE FROM kosmos.files f
+           WHERE f.id = ANY($1)
+             AND f.context_code = $2
+             AND NOT EXISTS (SELECT 1 FROM kosmos.ai_item ai WHERE ai.file_id = f.id)
+             AND NOT EXISTS (SELECT 1 FROM kosmos.chunk_vector cv WHERE cv.file_id = f.id)`,
+          [fileIds, contextCode]
+        );
+        report.filesDeletedDb = delFiles.rowCount || 0;
+      }
+    }
+  }
+
+  // --- Files on disk ---
+  if (deleteFiles) {
+    let dirs = [];
+    try {
+      const resolved = await getOntoDirs(contextCode, {
+        createIfMissing: false,
+        persistConfig: false
+      });
+      dirs = resolved.dirs || [];
+    } catch (e) {
+      report.warnings.push(`onto dirs: ${e.message}`);
+    }
+    report.dirs = dirs;
+
+    for (const dir of dirs) {
+      if (!fs.existsSync(dir)) {
+        report.warnings.push(`dir missing: ${dir}`);
+        continue;
+      }
+      const mdFiles = fs.readdirSync(dir).filter((f) => f.endsWith('.md'));
+      for (const f of mdFiles) {
+        const fp = path.join(dir, f);
+        // Only delete files that look like concept MD (frontmatter type: concept) when possible
+        let isConcept = true;
+        try {
+          const head = fs.readFileSync(fp, 'utf8').slice(0, 800);
+          if (head.includes('type:') && !/type:\s*concept/.test(head)) {
+            isConcept = false;
+          }
+        } catch {
+          /* delete anyway if unreadable? skip */
+          isConcept = true;
+        }
+        if (!isConcept) {
+          report.mdFilesSkipped.push(fp);
+          continue;
+        }
+        if (dryRun) {
+          report.mdFilesDeleted.push(fp);
+        } else {
+          try {
+            fs.unlinkSync(fp);
+            report.mdFilesDeleted.push(fp);
+          } catch (e) {
+            report.warnings.push(`delete ${fp}: ${e.message}`);
+          }
+        }
+      }
+    }
+  }
+
+  report.clearedAt = new Date().toISOString();
+  report.success = true;
+  console.log(
+    `[Ontology-Clear] ${contextCode} dryRun=${dryRun}: concepts=${report.aiItemsDeleted}, ` +
+      `links=${report.linksDeleted}, md=${report.mdFilesDeleted.length}`
+  );
+  return report;
+}
+
 module.exports = {
   assertVectorizedReality,
   suggestOntology,
@@ -1859,6 +2096,7 @@ module.exports = {
   serializeConceptToMd,
   applyOntologyBuild,
   getBuilderStatus,
+  clearOntologyForContext,
   getOntoDirs,
   checkOntoLoadingConfig,
   parseOntoLoading,
@@ -1872,5 +2110,7 @@ module.exports = {
   importSuggestFromLlmText,
   prepareSuggestContext,
   runValidateReport,
-  toKebabId
+  toKebabId,
+  selectAnchorsForPrompt,
+  TABLE_BUDGET_RATIO
 };

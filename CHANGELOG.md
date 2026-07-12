@@ -4,6 +4,63 @@
 
 ---
 
+## [2.12.2] - 2026-07-11
+
+### Изменено
+
+#### Ontology Builder — factory = P2 (domain-agnostic)
+
+- `config/ontology_builder.defaults.json` запечён из `tools/ontology-tuning/variants/P2.*`
+  (system/user/outputRules/retry/byo); knobs без изменений
+- После bake: restart + `POST /api/config/reset` (live config := factory)
+- Тюнинг: KV 8/10 gold, CARL greenfield домен+процессы, HR=0
+- Инструмент: `tools/ontology-tuning/bake-factory.mjs`
+
+### Исправлено
+
+#### Ontology Builder — якоря по degree + бюджет кода
+
+- `selectAnchorsForPrompt`: таблицы по **L1 degree DESC** (не по алфавиту)
+- Резерв ~50% `anchorCap` под классы/функции/docs — большие контексты (CARL 242 tables)
+  больше не съедают все 32 слота
+- `collectTableAnchors` SQL: `ORDER BY degree DESC, full_name`
+- `collectAnchors`: только non-table (class/function/doc/method) — таблицы приходят из
+  `collectTableAnchors`; иначе LIMIT 120 + table-first на 242 tables обнулял код
+- Малые контексты (≤ budget tables) без регрессии
+- OpenSpec: `fix-anchor-selection-by-degree`
+
+---
+
+## [2.12.1] - 2026-07-11
+
+### Изменено
+
+#### Ontology Builder — factory-промпты вне кода
+
+- **NEW** `config/ontology_builder.defaults.json` — заводские тексты промптов + knobs
+- `packages/core/ontologyBuilderDefaults.js` только читает файл (кэш на процесс); тел промптов в `.js` нет
+- Missing/broken factory-файл → `ONTOLOGY_DEFAULTS_MISSING` (fail-hard, без recovery из кода)
+- Docs: `docs/ONTOLOGY_BUILDER_TUNING.md`, `KB/README_APP_CONFIG_API.md`
+- OpenSpec: `externalize-builder-prompt-defaults`
+
+---
+
+## [2.12.0] - 2026-07-11
+
+### Добавлено / изменено
+
+#### Ontology Builder settings, BYO LLM, clear, fail-fast
+
+- **Settings → Ontology Builder**: model, prompts (system/user/outputRules/retry/BYO/description), seedMode, exclude patterns
+- Промпты runtime **только из config** (`ontology_builder`); factory — seed
+- **BYO LLM**: `POST /api/ontology/build/suggest/export-prompt`, `.../import`
+- **Очистка онтологии**: `POST /api/ontology/clear` (concepts + onto-links + MD)
+- seedMode `user-only`, domain-first anchors, JSON salvage/retry, max_tokens
+- Принцип **«Без ИИ жизни нет!»** (LLM fail → stop): `KB/README_PRINCIPLES.md`
+- UI: шаги 1–3, BYO panel, clear ontology; OpenSpec `add-ontology-builder-settings`
+
+---
+
 ## [2.11.0] - 2026-07-11
 
 ### Добавлено

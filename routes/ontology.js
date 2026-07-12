@@ -287,17 +287,20 @@ module.exports = (dbService, embeddings) => {
         ? 409
         : err.code === 'EMPTY_LLM_RESPONSE'
           ? 400
-          : err.code === 'LLM_REQUIRED' || err.code === 'LLM_BAD_JSON'
-            ? err.code === 'LLM_BAD_JSON'
-              ? 502
-              : 503
-            : 500);
+          : err.code === 'ONTOLOGY_DEFAULTS_MISSING'
+            ? 500
+            : err.code === 'LLM_REQUIRED' || err.code === 'LLM_BAD_JSON'
+              ? err.code === 'LLM_BAD_JSON'
+                ? 502
+                : 503
+              : 500);
     if (
       err.userFacing ||
       err.code === 'LLM_REQUIRED' ||
       err.code === 'LLM_BAD_JSON' ||
       err.code === 'STEP4_REQUIRED' ||
-      err.code === 'EMPTY_LLM_RESPONSE'
+      err.code === 'EMPTY_LLM_RESPONSE' ||
+      err.code === 'ONTOLOGY_DEFAULTS_MISSING'
     ) {
       console.warn(`[${logTag}] ${err.code || status}: ${String(err.message).split('\n')[0]}`);
       return res.status(status).json({ error: err.message, code: err.code || undefined });
@@ -347,6 +350,29 @@ module.exports = (dbService, embeddings) => {
       res.json(draft);
     } catch (err) {
       sendSuggestError(res, err, 'Ontology-Build-Import');
+    }
+  });
+
+  // POST /api/ontology/clear — wipe ontology for context (concepts + onto links + optional MD)
+  // body: { confirm: true, deleteDb?: true, deleteFiles?: true, dryRun?: false }
+  router.post('/clear', async (req, res) => {
+    const contextCode = req.query['context-code'] || req.query.contextCode;
+    if (!contextCode) return res.status(400).json({ error: 'Обязателен параметр context-code' });
+    try {
+      const report = await ontologyBuilder.clearOntologyForContext(
+        dbService,
+        contextCode,
+        req.body || {}
+      );
+      res.json(report);
+    } catch (err) {
+      const status = err.status || 500;
+      if (err.userFacing || err.code === 'CONFIRM_REQUIRED') {
+        console.warn(`[Ontology-Clear] ${err.code || status}: ${err.message}`);
+        return res.status(status).json({ error: err.message, code: err.code });
+      }
+      console.error('[Ontology-Clear] Ошибка:', err);
+      res.status(status).json({ error: err.message, code: err.code });
     }
   });
 

@@ -1,0 +1,6 @@
+Context: {{contextCode}}. Up to {{maxConcepts}} DOMAIN concepts as JSON {"concepts":[...]}.
+Derive ids from the anchors below; do not reuse ids from unrelated domains.
+Avoid-list (optional): {{seedConcepts}}
+Existing (may reuse): {{existingConcepts}}
+Anchors n/t/d: {{anchors}}
+No method-only concepts. Cover central tables, and model key processes (loader, vectorization, pipeline, rag-answer). Complete JSON only.

@@ -1,0 +1,1 @@
+You output only valid compact domain ontology JSON. Return 8–10 concepts, ids derived from THIS system's anchors (reuse existing ids; never unrelated-domain ids). Skip peripheral tables (*_type/*_tag/*_info/*_history). Keep each concept tiny (≤3 anchors, ≤2 relations, rationale ≤60 chars) so the JSON is complete. Never truncate mid-string. Reply with {"concepts":[...]} only.
